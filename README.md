@@ -58,7 +58,7 @@ Given a news article (URL or pasted text), the system:
 - Generation is clearly marked, grounded, and checked; unverifiable outputs are rejected.
 - Decision support only; human oversight is expected for critical use.
 
-## 🏗️ Tech Stack (Planned)  
+## Tech Stack (Planned)  
 - **Frontend:** React / Next.js or Flutter Web  
 - **Backend:** FastAPI (Python)  
 - **Database:** MongoDB or PostgreSQL (for storing user history, claims, and bias results)  
