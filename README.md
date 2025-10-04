@@ -67,3 +67,9 @@ Given a news article (URL or pasted text), the system:
   - Bias detection: classifier trained on labeled partisan datasets  
   - Claim verification: retrieval + NLI pipeline with optional LLM fallback  
 - **Deployment:** Docker + cloud hosting (AWS/GCP/Azure)
+
+# Coding and Documentation Standards
+- For python backend, we should follow Pep 8 guidelines
+- With React/Node, we can follow the Google Typescript guide
+- For API building and usage, we can follow REST API although this is a lot more lenient
+- Document security measures, login credentials for hosting or any infrastructure
