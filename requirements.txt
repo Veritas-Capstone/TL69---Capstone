@@ -1,0 +1,9 @@
+# Recommended runtime dependencies for webscraping and baseline model
+curl-cffi
+trafilatura
+scikit-learn
+joblib
+
+# Optional: add other packages you use in the project
+# requests
+# beautifulsoup4
