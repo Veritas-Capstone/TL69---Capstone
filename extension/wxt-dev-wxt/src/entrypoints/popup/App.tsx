@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import './App.css';
 import fetchAPI from './fetchAPI';
+import '@/assets/tailwind.css';
 
 function App() {
 	const [text, setText] = useState('');
