@@ -1,13 +1,21 @@
 import pandas as pd
 from tqdm import tqdm  
 
+# !Change this depending on which dataset you want to test on
 # ------ Load Dataset ------
-df = pd.read_csv("datasets/allsides_balanced_news_headlines-texts.csv")
-df = df[["text", "bias_rating"]]  # Keep only required columns
+
+# allsides
+# df = pd.read_csv("datasets/allsides_balanced_news_headlines-texts.csv")
+# df = df[["text", "bias_rating"]]  # Keep only required columns
+# df = df.dropna()
+
+# babe
+df = pd.read_excel("datasets/final_labels_SG2.xlsx")
+df = df[["text", "type"]]  # Keep only required columns
 df = df.dropna()
 
 label_map = {"left": 0, "center": 1, "right": 2}
-df["label"] = df["bias_rating"].map(label_map)
+df["label"] = df["type"].map(label_map)
 print("Dataset loaded with", len(df), "samples.")
 
 
