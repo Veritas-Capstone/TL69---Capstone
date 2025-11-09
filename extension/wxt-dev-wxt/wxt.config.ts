@@ -27,6 +27,12 @@ export default defineConfig({
 			96: 'icons/96.png',
 			128: 'icons/128.png',
 		},
+		content_scripts: [
+			{
+				matches: ['<all_urls>'],
+				js: ['entrypoints/content.ts'],
+			},
+		],
 	},
 	srcDir: 'src',
 });
