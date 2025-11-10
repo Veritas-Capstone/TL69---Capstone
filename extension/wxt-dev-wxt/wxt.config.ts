@@ -18,7 +18,7 @@ export default defineConfig({
 		sizes: [16, 32, 48, 96, 128],
 	},
 	manifest: {
-		permissions: ['contextMenus', 'storage'],
+		permissions: ['contextMenus', 'storage', 'scripting', 'activeTab'],
 		name: 'Veritas',
 		icons: {
 			16: 'icons/16.png',

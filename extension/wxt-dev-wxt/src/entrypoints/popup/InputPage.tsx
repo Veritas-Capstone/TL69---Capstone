@@ -14,12 +14,19 @@ export default function InputPage({
 }) {
 	const [tempText, setTempText] = useState<string>();
 
-	async function handleClick() {
+	// selects text from entire webpage
+	async function scanEntirePage() {
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 		if (!tab?.id) return;
 
 		await browser.tabs.sendMessage(tab.id, { type: 'GET_PAGE_TEXT' });
 		callModel();
+	}
+
+	async function analyzeText() {
+		setText(tempText);
+		await browser.storage.local.set({ selectedText: tempText });
+		await callModel();
 	}
 
 	return (
@@ -41,7 +48,7 @@ export default function InputPage({
 								</div>
 							</div>
 						</div>
-						<Button className="text-xs" onClick={handleClick}>
+						<Button className="text-xs" onClick={scanEntirePage}>
 							<ScanIcon /> Scan Current Page
 						</Button>
 					</CardContent>
@@ -56,7 +63,7 @@ export default function InputPage({
 					placeholder="Paste text content here..."
 					className="max-h-[50px] bg-gray-100 text-sm"
 				/>
-				<Button variant={'outline'} disabled={!tempText} onClick={() => setText(tempText)}>
+				<Button variant={'outline'} disabled={!tempText} onClick={analyzeText}>
 					<SearchIcon /> Analyze Text
 				</Button>
 			</CardContent>
