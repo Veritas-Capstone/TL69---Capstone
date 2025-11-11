@@ -14,7 +14,7 @@ export default function InputPage({
 }) {
 	const [tempText, setTempText] = useState<string>();
 
-	// selects text from entire webpage
+	// call model on text from entire webpage
 	async function scanEntirePage() {
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 		if (!tab?.id) return;
@@ -23,6 +23,7 @@ export default function InputPage({
 		callModel();
 	}
 
+	// call model on text from the input
 	async function analyzeText() {
 		setText(tempText);
 		await browser.storage.local.set({ selectedText: tempText });
