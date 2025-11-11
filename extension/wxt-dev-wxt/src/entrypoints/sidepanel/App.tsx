@@ -20,53 +20,65 @@ function App() {
 	const [isLoading, setIsLoading] = useState(false);
 
 	// call model on selected text
-	// text can be selected manually through highlighting -> right click menu
-	// or by selecting "scan entire webpage" button in popup
 	async function callModel() {
-		const stored = await browser.storage.local.get('result');
+		const storedResult = await browser.storage.local.get('storedResult');
 		const selectedText = await browser.storage.local.get('selectedText');
 		setText(selectedText.selectedText);
 
-		if (Object.keys(stored).length === 0 && selectedText.selectedText) {
+		// call API if result isn't stored
+		if (Object.keys(storedResult).length === 0 && selectedText.selectedText) {
 			setIsLoading(true);
+
+			// clear selected text on webpage
+			const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+			await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+
+			// call model API
 			const data = await fetchAPI(selectedText.selectedText);
 			setResult(data);
-			await browser.storage.local.set({ result: data });
+			await browser.storage.local.set({ storedResult: data });
 
 			// underline claims on webpage
-			const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-			if (!tab?.id) {
-				return;
-			}
-			// "targets" are sentences that will be highlighted
-			await browser.tabs.sendMessage(tab.id, {
-				type: 'UNDERLINE_SELECTION_INVALID',
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: false,
 				targets: data?.claims.filter((x) => !x.valid).map((x) => x.text),
 			});
-			await browser.tabs.sendMessage(tab.id, {
-				type: 'UNDERLINE_SELECTION_VALID',
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: true,
 				targets: data?.claims.filter((x) => x.valid).map((x) => x.text),
 			});
-			window.getSelection()?.removeAllRanges();
+
 			setIsLoading(false);
-		} else {
-			setResult(stored.result);
+		}
+		// use stored result
+		else {
+			setResult(storedResult.result);
 		}
 	}
 
 	useEffect(() => {
-		// call model on selected text when popup opened
+		// call model on selected text when needed
+		const handleCallModel = (message: any) => {
+			if (message.type === 'CALL_MODEL') {
+				callModel();
+			}
+		};
+
 		callModel();
+		browser.runtime.onMessage.addListener(handleCallModel);
+		return () => browser.runtime.onMessage.removeListener(handleCallModel);
 	}, []);
 
 	return (
 		<>
-			<Card className="rounded-none min-w-[300px] overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
-				<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r">
+			<Card className="rounded-none min-w-[300px] flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
+				<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
 					<h1 className="font-semibold text-xl text-white">Veritas</h1>
 				</CardHeader>
 				{isLoading ? (
-					<CardContent className="w-full h-[100px] flex justify-center items-center gap-2">
+					<CardContent className="w-full h-full flex justify-center items-center gap-2">
 						<Spinner className="w-5 h-5" />
 						<p className="text-base">Analyzing Text...</p>
 					</CardContent>

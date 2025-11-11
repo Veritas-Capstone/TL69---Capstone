@@ -18,7 +18,7 @@ export default defineConfig({
 		sizes: [16, 32, 48, 96, 128],
 	},
 	manifest: {
-		permissions: ['contextMenus', 'storage', 'scripting', 'activeTab'],
+		permissions: ['contextMenus', 'storage', 'scripting', 'activeTab', 'sidePanel'],
 		name: 'Veritas',
 		icons: {
 			16: 'icons/16.png',
@@ -26,6 +26,9 @@ export default defineConfig({
 			48: 'icons/48.png',
 			96: 'icons/96.png',
 			128: 'icons/128.png',
+		},
+		side_panel: {
+			default_path: 'entrypoints/sidepanel.html',
 		},
 		content_scripts: [
 			{

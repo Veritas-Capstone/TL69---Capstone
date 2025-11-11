@@ -37,59 +37,50 @@ export default function AnalysisPage({
 		>
 	>;
 }) {
-	const [clicked, setClicked] = useState<string>();
+	const [currentHovered, setCurrentHovered] = useState<string>();
 
-	function normalizeSpaces(str: string) {
-		return str
-			.replace(/\s+/g, ' ')
-			.replace(/\u00A0/g, ' ')
-			.trim();
-	}
-
-	// when underlined text clicked, get the text and highlight corresponding claim
+	// highlights, scroll to claim on sidepanel
 	useEffect(() => {
-		async function getClicked() {
-			const { clickedText } = await browser.storage.local.get('clickedText');
-			await browser.storage.local.remove('clickedText');
-			setClicked(clickedText);
-		}
+		const highlightHoveredText = (message: any) => {
+			if (message.type === 'UNDERLINE_HOVER') {
+				setCurrentHovered(message.text);
+				const element = document.querySelector(`[claim-text="${CSS.escape(message.text)}"]`);
+				if (element) {
+					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
+			}
+		};
 
-		getClicked();
+		browser.runtime.onMessage.addListener(highlightHoveredText);
+		return () => browser.runtime.onMessage.removeListener(highlightHoveredText);
 	}, []);
 
-	// highlight specific text on webpage
+	// highlights sentence on webpage
 	async function handleHighlight(text: string) {
-		if (clicked === text) {
-			setClicked(undefined);
+		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+		if (!tab?.id) return;
+
+		if (text) {
+			await browser.tabs.sendMessage(tab.id, {
+				type: 'HIGHLIGHT_TEXT',
+				target: text,
+			});
+		} else {
+			await browser.tabs.sendMessage(tab.id, {
+				type: 'CLEAR_HIGHLIGHTS',
+			});
 		}
-		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-		if (!tab?.id) return;
-
-		await browser.tabs.sendMessage(tab.id, {
-			type: 'HIGHLIGHT_TEXT',
-			target: text,
-		});
 	}
 
-	// clears above highlights
-	async function clearHighlights() {
-		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-		if (!tab?.id) return;
-
-		await browser.tabs.sendMessage(tab.id, {
-			type: 'CLEAR_HIGHLIGHTS',
-		});
-	}
-
+	// resets analysis
 	async function newAnalysis() {
 		setText(undefined);
 		setResult(undefined);
-		await browser.storage.local.remove('result');
+		await browser.storage.local.remove('storedResult');
 		await browser.storage.local.remove('selectedText');
 
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-		if (!tab?.id) return;
-		await browser.tabs.sendMessage(tab.id, {
+		await browser.tabs.sendMessage(tab.id ?? 0, {
 			type: 'CLEAR_UNDERLINES',
 		});
 	}
@@ -147,10 +138,11 @@ export default function AnalysisPage({
 					{result?.claims.map((claim) => (
 						<div
 							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white ${
-								clicked === claim.text && 'border-yellow-200'
+								currentHovered === claim.text && 'border-yellow-200'
 							}`}
+							claim-text={claim.text}
 							onMouseEnter={() => handleHighlight(claim.text)}
-							onMouseLeave={clearHighlights}
+							onMouseLeave={() => handleHighlight('')}
 						>
 							{claim.valid ? (
 								<CheckCircleIcon className="w-12 h-12 text-green-400" />
