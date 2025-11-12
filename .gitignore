@@ -43,3 +43,7 @@ Thumbs.db
 # Archive/backups (optional)
 archive/
 .vscode
+
+# datasets
+/api/claim_verification/data/processed/averitec.csv
+/api/claim_verification/data/raw/averitec.json
