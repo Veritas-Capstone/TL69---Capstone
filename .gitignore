@@ -44,6 +44,9 @@ Thumbs.db
 archive/
 .vscode
 
-# datasets
-/api/claim_verification/data/processed/averitec.csv
+# specfic data file
 /api/claim_verification/data/raw/averitec.json
+/api/claim_verification/data/processed/averitec.csv
+
+# ignore baseline jupyter notebook
+/api/claim_verification/models/baseline.ipynb
