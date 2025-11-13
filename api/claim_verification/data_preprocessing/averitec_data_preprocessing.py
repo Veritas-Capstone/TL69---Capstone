@@ -17,7 +17,9 @@ def preprocess_to_csv(input_path=None, output_path=None, sample_output_path=None
                 if explanation:
                     evidence_sents.append(explanation.strip())
 
-        if evidence_sents and label in {"SUPPORTED", "REFUTED", "NOT ENOUGH INFO"}:
+        if evidence_sents and label in {"SUPPORTED", "REFUTED", "NOT ENOUGH INFO", "Conflicting Evidence/Cherry-picking"}:
+            if label == "CONFLICTING EVIDENCE/CHERRY-PICKING":
+                label = "NOT ENOUGH INFO"
             rows.append([claim, evidence_sents, label])
 
     with open(output_path, 'w', newline='') as csvfile:
@@ -31,4 +33,4 @@ def preprocess_to_csv(input_path=None, output_path=None, sample_output_path=None
         writer.writerows(rows[:sample_size])
     
 
-preprocess_to_csv('data/raw/averitec.json', 'data/processed/averitec.csv', 'data/processed/averitec_sample.csv', sample_size=50)
+preprocess_to_csv('../data/raw/averitec.json', '../data/processed/averitec.csv', '../data/processed/averitec_sample.csv', sample_size=50)
