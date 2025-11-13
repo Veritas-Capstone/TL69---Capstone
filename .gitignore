@@ -45,8 +45,12 @@ archive/
 .vscode
 
 # specfic data file
-/api/claim_verification/data/raw/averitec.json
+/api/claim_verification/data/raw/
 /api/claim_verification/data/processed/averitec.csv
+/api/claim_verification/data/processed/fever_train_claims.csv
+
+
 
 # ignore baseline jupyter notebook
-/api/claim_verification/models/baseline.ipynb
+/api/claim_verification/inference/baseline.ipynb
+/api/claim_verification/training/training_baseline.ipynb
