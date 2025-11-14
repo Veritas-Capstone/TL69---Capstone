@@ -7,17 +7,24 @@ import InputPage from './InputPage';
 import AnalysisPage from './AnalysisPage';
 import { Spinner } from '@/components/ui/spinner';
 
+export interface AnalysisResult {
+	checks: number;
+	issues: number;
+	overall_bias: string;
+	overall_probabilities: {
+		Left: number;
+		Center: number;
+		Right: number;
+	};
+	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
+	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
+}
+
 function App() {
 	const [text, setText] = useState<string>();
-	const [result, setResult] = useState<
-		| {
-				checks: number;
-				issues: number;
-				claims: { text: string; category: string; description: string; valid: boolean }[];
-		  }
-		| undefined
-	>();
+	const [result, setResult] = useState<AnalysisResult | undefined>();
 	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string>();
 
 	// call model on selected text
 	async function callModel() {
@@ -28,33 +35,41 @@ function App() {
 		// call API if result isn't stored
 		if (Object.keys(storedResult).length === 0 && selectedText.selectedText) {
 			setIsLoading(true);
+			setError(undefined);
 
-			// clear selected text on webpage
-			const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-			await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+			try {
+				// clear selected text on webpage
+				const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+				await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
 
-			// call model API
-			const data = await fetchAPI(selectedText.selectedText);
-			setResult(data);
-			await browser.storage.local.set({ storedResult: data });
+				// call model API
+				const data = await fetchAPI(selectedText.selectedText);
+				setResult(data);
+				await browser.storage.local.set({ storedResult: data });
 
-			// underline claims on webpage
-			await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				valid: false,
-				targets: data?.claims.filter((x) => !x.valid).map((x) => x.text),
-			});
-			await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				valid: true,
-				targets: data?.claims.filter((x) => x.valid).map((x) => x.text),
-			});
-
-			setIsLoading(false);
+				// underline claims on webpage
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: false,
+					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: true,
+					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+				});
+			} catch (err) {
+				console.error('Error calling API:', err);
+				setError(
+					'Failed to analyze text. Make sure the backend server is running on http://localhost:8000'
+				);
+			} finally {
+				setIsLoading(false);
+			}
 		}
 		// use stored result
 		else {
-			setResult(storedResult.result);
+			setResult(storedResult.storedResult);
 		}
 	}
 
@@ -77,6 +92,13 @@ function App() {
 				<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
 					<h1 className="font-semibold text-xl text-white">Veritas</h1>
 				</CardHeader>
+				{error && (
+					<CardContent className="w-full">
+						<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
+							{error}
+						</div>
+					</CardContent>
+				)}
 				{isLoading ? (
 					<CardContent className="w-full h-full flex justify-center items-center gap-2">
 						<Spinner className="w-5 h-5" />

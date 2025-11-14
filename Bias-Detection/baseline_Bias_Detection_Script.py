@@ -104,4 +104,5 @@ def main():
     print("Aggregated Probabilities:", totals.tolist())
 
 
-main()
+if __name__ == "__main__":
+    main()
