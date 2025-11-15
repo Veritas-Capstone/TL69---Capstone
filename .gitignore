@@ -49,8 +49,9 @@ archive/
 /api/claim_verification/data/processed/averitec.csv
 /api/claim_verification/data/processed/fever_train_claims.csv
 
-
-
 # ignore baseline jupyter notebook
 /api/claim_verification/inference/baseline.ipynb
 /api/claim_verification/training/training_baseline.ipynb
+
+# ignore model files
+/api/claim_verification/models/
