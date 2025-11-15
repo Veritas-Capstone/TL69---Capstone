@@ -1,0 +1,10 @@
+{
+    "MODEL": "FacebookAI/roberta-large-mnli",
+    "DATA_SET": "fever_train_claims",
+    "BATCH_SIZE": 16,
+    "MAX_LENGTH": 256,
+    "THRESHOLD": 0.05,
+    "NUM_EPOCHS": 4,
+    "PATIENCE": 2,
+    "LR": 2e-05
+}
