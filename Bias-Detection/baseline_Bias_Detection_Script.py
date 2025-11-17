@@ -122,8 +122,7 @@ def aggregate_bias_scores(probabilities_list, weights):
 # -----------------------
 def main():
     text = (
-        "The Department of Health and Human Services's Office for Civil Rights has released "
-        "guidelines reinforcing the Obamacare law... (your long text here)"
+        "The Department of Health and Human Services's Office for Civil Rights has released " "guidelines reinforcing the Obamacare law that warns more than 60,000 U.S. pharmacies " "against refusing to dispense abortion-inducing medication, stipulating that doing so " "is pregnancy discrimination. That includes discrimination based on current pregnancy, " "past pregnancy, potential or intended pregnancy, and medical conditions related to " "pregnancy or childbirth. HHS is committed to ensuring that everyone can access " "healthcare, free of discrimination."
     )
 
     model, tokenizer = load_model()
