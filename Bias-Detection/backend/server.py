@@ -40,6 +40,33 @@ def SplitIntoSentences(text):
 
 
 # -----------------------
+# Merge Short Sentences 
+# -----------------------
+def merge_short_sentences(sentences, min_tokens=30):
+    merged = []
+    buffer = ""
+
+    for sent in sentences:
+        num_tokens = len(sent.split())
+
+        if num_tokens < min_tokens:
+            # small sentence → merge into buffer
+            buffer += " " + sent
+        else:
+            # long sentence → flush buffer first
+            if buffer.strip():
+                merged.append(buffer.strip())
+                buffer = ""
+            merged.append(sent)
+
+    # leftover buffer
+    if buffer.strip():
+        merged.append(buffer.strip())
+
+    return merged
+
+
+# -----------------------
 # Load Model Once
 # -----------------------
 def load_model():
@@ -75,14 +102,38 @@ def baseline_bias_detection(model, tokenizer, sentence):
 
 
 # -----------------------
+# Apply Downweighting Rules
+# -----------------------
+def compute_weight(sentence, probs, low_conf_threshold=0.45):
+    peak = torch.max(probs).item()
+
+    weight = 1.0
+
+    # 1. Downweight low-confidence sentences
+    if peak < low_conf_threshold:
+        weight *= 0.3   # reduce weight by 70%
+
+    # 2. Downweight quotes / counterpoints
+    if sentence.startswith('"') or sentence.startswith("“"):
+        weight *= 0.5
+
+    return weight
+
+
+# -----------------------
 # Weighted Aggregate
 # -----------------------
-def AggregateBiasScores(probabilities_list):
+def AggregateBiasScores(probabilities_list, weights):
     """
     probabilities_list = [tensor([0.8, 0.1, 0.1]), tensor([0.2,0.3,0.5]), ...]
     We sum all probability vectors and choose the highest total.
     """
-    total = torch.stack(probabilities_list).sum(dim=0)
+    weighted_probs = []
+
+    for probs, w in zip(probabilities_list, weights):
+        weighted_probs.append(probs * w)
+
+    total = torch.stack(weighted_probs).sum(dim=0)
     idx = torch.argmax(total).item()
 
     label_map = {0: "Left", 1: "Center", 2: "Right"}
@@ -159,6 +210,7 @@ async def analyze_text(request: AnalysisRequest):
         
         # Use your existing functions
         sentences = SplitIntoSentences(text)
+        sentences = merge_short_sentences(sentences)
         
         if not sentences:
             raise HTTPException(status_code=400, detail="Could not split text into sentences")
@@ -166,6 +218,7 @@ async def analyze_text(request: AnalysisRequest):
         # Analyze each sentence
         probability_vectors = []
         sentence_results = []
+        weights = []
         
         for sentence in sentences:
             predicted_bias, probs = baseline_bias_detection(model, tokenizer, sentence)
@@ -173,6 +226,10 @@ async def analyze_text(request: AnalysisRequest):
             
             confidence = float(probs.max())
             category, description = categorize_bias(predicted_bias, confidence)
+
+            # compute per-sentence weight
+            w = compute_weight(sentence, probs)
+            weights.append(w)
             
             sentence_results.append(SentenceBias(
                 text=sentence,
@@ -187,8 +244,8 @@ async def analyze_text(request: AnalysisRequest):
                 }
             ))
         
-        # Use your aggregation function
-        overall_bias, totals = AggregateBiasScores(probability_vectors)
+        # Aggregate with weights
+        overall_bias, totals = AggregateBiasScores(probability_vectors, weights)
         
         # Normalize to get average probabilities
         avg_probs = totals / len(probability_vectors)
