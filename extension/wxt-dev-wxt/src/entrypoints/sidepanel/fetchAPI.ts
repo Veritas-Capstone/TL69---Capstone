@@ -87,18 +87,38 @@ function generateMockFactChecks(text: string): Array<{
 }> {
 	// TODO: Replace this with real fact-checking API call
 	// This is just mock data to show the UI framework
-	const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-	
+	const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+
 	// Generate 2-3 mock fact-check claims
 	const mockClaims = [];
 	const categories = [
-		{ name: 'Unverified Source', desc: 'Quotes or attributions lack confirmation from credible or official sources.', valid: false },
-		{ name: 'Accurate Contextual Information', desc: 'Statement is accurate and supported by credible, verifiable information.', valid: true },
-		{ name: 'False or Misleading', desc: 'Claims are not supported by verifiable sources or evidence.', valid: false },
-		{ name: 'Partially True', desc: 'Statement contains some truth but missing important context.', valid: true },
-		{ name: 'Needs Verification', desc: 'Claim requires further fact-checking from authoritative sources.', valid: false },
+		{
+			name: 'Unverified Source',
+			desc: 'Quotes or attributions lack confirmation from credible or official sources.',
+			valid: false,
+		},
+		{
+			name: 'Accurate Contextual Information',
+			desc: 'Statement is accurate and supported by credible, verifiable information.',
+			valid: true,
+		},
+		{
+			name: 'False or Misleading',
+			desc: 'Claims are not supported by verifiable sources or evidence.',
+			valid: false,
+		},
+		{
+			name: 'Partially True',
+			desc: 'Statement contains some truth but missing important context.',
+			valid: true,
+		},
+		{
+			name: 'Needs Verification',
+			desc: 'Claim requires further fact-checking from authoritative sources.',
+			valid: false,
+		},
 	];
-	
+
 	// Pick a few random sentences and assign mock fact-check results
 	const numClaims = Math.min(3, sentences.length);
 	for (let i = 0; i < numClaims; i++) {
@@ -113,7 +133,7 @@ function generateMockFactChecks(text: string): Array<{
 			});
 		}
 	}
-	
+
 	return mockClaims;
 }
 
@@ -134,7 +154,7 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 		// Transform the response to match the expected format
 		// Map sentence bias results to "claims" format for the UI
 		const bias_claims = data.sentences.map((sentence: SentenceBias) => ({
-			text: sentence.text,
+			text: normalizeSpaces(sentence.text),
 			category: sentence.category,
 			description: sentence.description,
 			// Mark as "valid" (green) if Center or low confidence, "invalid" (red) if biased
@@ -156,4 +176,8 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 		console.error('Error calling bias detection API:', error);
 		throw error;
 	}
+}
+
+function normalizeSpaces(str: string) {
+	return str.replace(/\u00A0/g, ' ');
 }
