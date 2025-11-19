@@ -109,8 +109,8 @@ export default defineContentScript({
 						let cursor = 0;
 
 						while (cursor < text.length) {
-							const normalizedText = text.slice(cursor).replace(/\u00A0/g, ' ');
-							const normalizedTarget = target.replace(/\u00A0/g, ' ');
+							const normalizedText = normalizeSpaces(text.slice(cursor));
+							const normalizedTarget = normalizeSpaces(target);
 
 							const index = normalizedText.indexOf(normalizedTarget);
 							if (index === -1) {
