@@ -44,6 +44,10 @@ Thumbs.db
 # Archive/backups (optional)
 archive/
 .vscode
+.Bias-Detection/biasenv
+.Bias-Detection/datasets
+
+
 
 # specfic data file
 /api/claim_verification/data/raw/
