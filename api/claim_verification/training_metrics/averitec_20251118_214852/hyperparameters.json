@@ -1,0 +1,11 @@
+{
+    "MODEL": "FacebookAI/roberta-large-mnli",
+    "DATA_SET": "averitec",
+    "BATCH_SIZE": 2,
+    "MAX_LENGTH": 256,
+    "THRESHOLD": 0.05,
+    "NUM_EPOCHS": 6,
+    "PATIENCE": 2,
+    "LR": 2e-05,
+    "INIT_WEIGHTS": "hf"
+}
