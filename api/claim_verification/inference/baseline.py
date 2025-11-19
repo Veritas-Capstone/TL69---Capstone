@@ -84,6 +84,7 @@ def run_inference(data_path=DATA_PATH_AVERITEC):
     predictions = []
     true_labels = []
     for claim, evid_list, true_label in ds:
+        i += 1
         if not evid_list: 
             continue
         enc = tokenizer(evid_list, [claim]*len(evid_list),
@@ -96,9 +97,9 @@ def run_inference(data_path=DATA_PATH_AVERITEC):
         predictions.append(pred)
         true_labels.append(classes[true_label])
         print(f"Claim: {claim}\nEvidences: {evid_list}\nTrue: {classes[true_label]}\nPredicted: {pred}\n")
-        i += 1
+        
         if i % 50 == 0:
-            print(f"Iteration: {i}")
+            print(f"Iteration: {i}/{ds}")
             print(f"Time Elapsed: {timeit.default_timer() - start}")
     print(classification_report(true_labels, predictions, labels=classes, zero_division=0))
     ConfusionMatrixDisplay.from_predictions(true_labels, predictions, labels=classes)

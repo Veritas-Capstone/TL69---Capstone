@@ -14,7 +14,7 @@
 import shutil
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, get_linear_schedule_with_warmup
 import pandas as pd
-import json
+import json as _json
 import torch, numpy as np
 from torch.utils.data import Dataset, DataLoader, Subset
 from sklearn.model_selection import train_test_split
@@ -150,7 +150,7 @@ def train_averitec(
         "LR": LR,
         "INIT_WEIGHTS": init_weights,
     }
-    import json as _json
+    
     with open(f'{run_dir}/hyperparameters.json', 'w') as f:
         _json.dump(run_hyperparams, f, indent=4)
 

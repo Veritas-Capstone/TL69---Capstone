@@ -1,0 +1,17 @@
+{
+    "model_name": "FacebookAI/roberta-large-mnli",
+    "init_weights": "hf",
+    "accuracy": 0.4549019607843137,
+    "precision_macro": 0.5296340301638782,
+    "recall_macro": 0.4469730309838711,
+    "f1_macro": 0.37627791918187165,
+    "precision_weighted": 0.6785871472637737,
+    "recall_weighted": 0.4549019607843137,
+    "f1_weighted": 0.4851300449185067,
+    "num_examples": 255,
+    "label_map": {
+        "REFUTED": 0,
+        "NOT ENOUGH INFO": 1,
+        "SUPPORTED": 2
+    }
+}

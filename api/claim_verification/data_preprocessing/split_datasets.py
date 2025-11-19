@@ -18,15 +18,16 @@ df1 = pd.read_csv(df1_path)
 df2 = pd.read_csv(df2_path)
 
 # --- Split each dataset 80/20 ---
-train1, test1 = train_test_split(df1, test_size=0.2, random_state=42, shuffle=True)
-train2, test2 = train_test_split(df2, test_size=0.2, random_state=42, shuffle=True)
+random_seed = 42
+train1, test1 = train_test_split(df1, test_size=0.2, random_state=random_seed, shuffle=True)
+# train2, test2 = train_test_split(df2, test_size=0.2, random_state=random_seed, shuffle=True)
 
 # --- Save to new CSV files ---
 train1.to_csv(df1_out_path, index=False)
 test1.to_csv(df1_out_path_2, index=False)
 
-train2.to_csv(df2_out_path, index=False)
-test2.to_csv(df2_out_path_2, index=False)
+# train2.to_csv(df2_out_path, index=False)
+# test2.to_csv(df2_out_path_2, index=False)
 
 print("Done! Files saved:")
 print(f"Saved to \n{df1_out_path}\n{df1_out_path_2}\n{df2_out_path}\n{df2_out_path_2}")
