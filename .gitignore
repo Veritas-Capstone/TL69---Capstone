@@ -28,6 +28,7 @@ var/
 venv/
 ENV/
 env/
+.gpu_venv/
 
 # Pytest cache
 .pytest_cache/
@@ -43,6 +44,10 @@ Thumbs.db
 # Archive/backups (optional)
 archive/
 .vscode
+.Bias-Detection/biasenv
+.Bias-Detection/datasets
+
+
 
 # specfic data file
 /api/claim_verification/data/raw/
@@ -53,7 +58,8 @@ archive/
 /api/claim_verification/data/processed/fever_train_claims_80.csv
 /api/claim_verification/data/processed/fever_train_claims_20.csv
 
+# ignore any python notebook file
+*.ipynb
 
-# ignore baseline jupyter notebook
-/api/claim_verification/inference/baseline.ipynb
-/api/claim_verification/training/training_baseline.ipynb
+# ignore model files
+/api/claim_verification/models/
