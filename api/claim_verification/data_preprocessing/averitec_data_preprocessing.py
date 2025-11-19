@@ -6,7 +6,15 @@ def preprocess_to_csv(input_path=None, output_path=None, sample_output_path=None
 
     rows = []
     for ex in data:
-        claim = ex.get("claim", "").strip()
+        claim = ex.get("claim", "")
+        if claim is None:
+            continue
+        claim = claim.strip()
+        
+        # skip empty or trivial claims
+        if claim == "" or len(claim.split()) < 2:
+            continue
+
         label = ex.get("label", "").strip().upper()
 
         evidence_sents = []
@@ -17,16 +25,16 @@ def preprocess_to_csv(input_path=None, output_path=None, sample_output_path=None
                     evidence_sents.append(explanation.strip())
 
         # normalize label
-        if label == "CONFLICTING EVIDENCE/CHERRYPICKING":
-            label = "NOT ENOUGH INFO"
-            
-        if label == "NOT ENOUGH EVIDENCE":
+        if label in {
+            "CONFLICTING EVIDENCE/CHERRYPICKING",
+            "NOT ENOUGH EVIDENCE"
+        }:
             label = "NOT ENOUGH INFO"
 
         valid_labels = {"SUPPORTED", "REFUTED", "NOT ENOUGH INFO"}
 
-        if evidence_sents and label in valid_labels:
-            # 🔥 convert list → JSON string
+        # final filtering
+        if claim and evidence_sents and label in valid_labels:
             evidence_json = json.dumps(evidence_sents)
             rows.append([claim, evidence_json, label])
 
@@ -42,11 +50,17 @@ def preprocess_to_csv(input_path=None, output_path=None, sample_output_path=None
         writer.writerow(["claim", "evidence", "label"])
         writer.writerows(rows[:sample_size])
 
-    print("Done. Saved:", output_path)
+    print(f"Done. Saved: {output_path}. Final count: {len(rows)}")
+    
+if __name__ == "__main__":
+    INPUT_PATH = "../data/raw/averitec.json"
+    OUTPUT_PATH = "../data/processed/averitec.csv"
+    SAMPLE_OUTPUT_PATH = "../data/processed/averitec_sample.csv"
 
-preprocess_to_csv(
-    input_path='../data/raw/averitec.json',
-    output_path='../data/processed/averitec.csv',
-    sample_output_path='../data/processed/averitec_sample.csv',
-    sample_size=50
-)
+    preprocess_to_csv(
+        input_path=INPUT_PATH,
+        output_path=OUTPUT_PATH,
+        sample_output_path=SAMPLE_OUTPUT_PATH,
+        sample_size=50
+    )
+
