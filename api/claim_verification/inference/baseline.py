@@ -14,6 +14,8 @@
 # ---
 
 # %%
+import os
+os.environ["TRANSFORMERS_NO_TORCHVISION"] = "1"
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import pandas as pd
 import torch, numpy as np
@@ -23,14 +25,19 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 from matplotlib import pyplot as plt
 from torch.utils.data import Subset
 import ast
+import timeit
 
 MODEL = "FacebookAI/roberta-large-mnli"
 tokenizer = AutoTokenizer.from_pretrained("FacebookAI/roberta-large-mnli")
-DATA_PATH_AVERITEC = "../data/processed/averitec_sample.csv"
-DATA_PATH_FEVER   = "../data/processed/fever_train_claims_sample.csv"
+# DATA_PATH_AVERITEC = "../data/processed/averitec_sample.csv"
+# DATA_PATH_FEVER   = "../data/processed/fever_train_claims_sample.csv"
+DATA_PATH_AVERITEC = "../data/processed/averitec_20.csv"
+DATA_PATH_FEVER   = "../data/processed/fever_train_claims_20.csv"
+
 
 LABEL_MAP = {"REFUTED": 0, "NOT ENOUGH INFO": 1, "SUPPORTED": 2}
 
+start = timeit.default_timer()
 
 # %%
 class ClaimBatchDataset(Dataset):
@@ -70,6 +77,7 @@ def aggregate(probs, margin=0.05, min_conf=0.5):
     return "NOT ENOUGH INFO"
 
 def run_inference(data_path=DATA_PATH_AVERITEC):
+    i = 0
     ds = ClaimBatchDataset(data_path)
     model_nli = AutoModelForSequenceClassification.from_pretrained(MODEL)
     model_nli.eval()
@@ -88,11 +96,16 @@ def run_inference(data_path=DATA_PATH_AVERITEC):
         predictions.append(pred)
         true_labels.append(classes[true_label])
         print(f"Claim: {claim}\nEvidences: {evid_list}\nTrue: {classes[true_label]}\nPredicted: {pred}\n")
+        i += 1
+        if i % 50 == 0:
+            print(f"Iteration: {i}")
+            print(f"Time Elapsed: {timeit.default_timer() - start}")
     print(classification_report(true_labels, predictions, labels=classes, zero_division=0))
     ConfusionMatrixDisplay.from_predictions(true_labels, predictions, labels=classes)
     plt.show()
     
 
-run_inference(DATA_PATH_FEVER)
-    
+run_inference(DATA_PATH_AVERITEC)
 
+end = timeit.default_timer()
+print(f"Time Elapsed: {end - start}")

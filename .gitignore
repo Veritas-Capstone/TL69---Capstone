@@ -47,8 +47,11 @@ archive/
 # specfic data file
 /api/claim_verification/data/raw/
 /api/claim_verification/data/processed/averitec.csv
+/api/claim_verification/data/processed/averitec_80.csv
+/api/claim_verification/data/processed/averitec_20.csv
 /api/claim_verification/data/processed/fever_train_claims.csv
-
+/api/claim_verification/data/processed/fever_train_claims_80.csv
+/api/claim_verification/data/processed/fever_train_claims_20.csv
 
 
 # ignore baseline jupyter notebook
