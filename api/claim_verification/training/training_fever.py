@@ -31,16 +31,13 @@ from training_helpers import PairwiseExpansionDataset, collate_pairwise
 MODEL = "FacebookAI/roberta-large-mnli"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
-DATA_SET = "fever_train_claims"
-DATA_PATH = f"../data/processed/{DATA_SET}.csv"
-
 LABEL_MAP = {"REFUTED": 0, "NOT ENOUGH INFO": 1, "SUPPORTED": 2}
 
 
 # %%
 def train_fever(
     init_weights = "hf",
-    data_set = DATA_SET,
+    data_set = None,
     data_path = None,
     batch_size = 16,
     max_length = 256,
@@ -272,7 +269,7 @@ def train_fever(
     print(f"  Model dir:   {model_dir}")
     
     if best_model_path is not None:
-        model_root = f"../models/{DATA_SET}"
+        model_root = f"../models/{data_set}"
         os.makedirs(model_root, exist_ok=True)   
 
         latest_path = os.path.join(model_root, "latest.pt")

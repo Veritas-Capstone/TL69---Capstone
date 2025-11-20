@@ -13,31 +13,30 @@
 #     name: python3
 # ---
 
-# %%
 import os
 os.environ["TRANSFORMERS_NO_TORCHVISION"] = "1"
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import pandas as pd
-import torch, numpy as np
-from torch.utils.data import Dataset, DataLoader
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, ConfusionMatrixDisplay
-from matplotlib import pyplot as plt
-from torch.utils.data import Subset
+
 import ast
 import timeit
+from pathlib import Path
+from typing import List, Tuple, Union
+
+import numpy as np
+import pandas as pd
+import torch
+from matplotlib import pyplot as plt
+from sklearn.metrics import classification_report, ConfusionMatrixDisplay
+from torch.utils.data import Dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 MODEL = "FacebookAI/roberta-large-mnli"
-tokenizer = AutoTokenizer.from_pretrained("FacebookAI/roberta-large-mnli")
-# DATA_PATH_AVERITEC = "../data/processed/averitec_sample.csv"
-# DATA_PATH_FEVER   = "../data/processed/fever_train_claims_sample.csv"
 DATA_PATH_AVERITEC = "../data/processed/averitec_20.csv"
-DATA_PATH_FEVER   = "../data/processed/fever_train_claims_20.csv"
-
+DATA_PATH_FEVER = "../data/processed/fever_train_claims_20.csv"
 
 LABEL_MAP = {"REFUTED": 0, "NOT ENOUGH INFO": 1, "SUPPORTED": 2}
-
-start = timeit.default_timer()
+LABELS = ["REFUTED", "NOT ENOUGH INFO", "SUPPORTED"]
+PKG_ROOT = Path(__file__).resolve().parents[1]
+MODELS_DIR = PKG_ROOT / "models"
 
 # %%
 class ClaimBatchDataset(Dataset):
@@ -70,43 +69,147 @@ def aggregate(probs, margin=0.05, min_conf=0.5):
     This is pretty rudimentary for now.
     """
     probs = np.asarray(probs)
-    E, R = probs[:,2].max(), probs[:,0].max()
-    if abs(E - R) < margin and max(E, R) >= min_conf: return "NOT ENOUGH INFO"
-    if E >= min_conf and E >= R + margin: return "SUPPORTED"
-    if R >= min_conf and R >= E + margin: return "REFUTED"
+    E, R = probs[:, 2].max(), probs[:, 0].max()
+    if abs(E - R) < margin and max(E, R) >= min_conf:
+        return "NOT ENOUGH INFO"
+    if E >= min_conf and E >= R + margin:
+        return "SUPPORTED"
+    if R >= min_conf and R >= E + margin:
+        return "REFUTED"
     return "NOT ENOUGH INFO"
 
-def run_inference(data_path=DATA_PATH_AVERITEC):
-    i = 0
+def resolve_latest_checkpoint(dataset: str) -> Path:
+    """
+    Return the path to the latest checkpoint for a given dataset split
+    (expects models/<dataset>/latest.pt).
+    """
+    ckpt = MODELS_DIR / dataset / "latest.pt"
+    if not ckpt.exists():
+        raise FileNotFoundError(f"Checkpoint not found for dataset '{dataset}' at {ckpt}")
+    return ckpt
+
+
+def list_available_checkpoints():
+    """
+    Return a mapping of dataset -> latest checkpoint path for all available runs.
+    """
+    if not MODELS_DIR.exists():
+        return {}
+    latest = {}
+    for dataset_dir in MODELS_DIR.iterdir():
+        if not dataset_dir.is_dir():
+            continue
+        candidate = dataset_dir / "latest.pt"
+        if candidate.exists():
+            latest[dataset_dir.name] = candidate
+    return latest
+
+
+def load_claim_verifier(
+    model_name: str = MODEL,
+    state_dict_path: Union[str, Path, None] = None,
+    map_location: Union[str, torch.device, None] = "cpu",
+):
+    """
+    Load tokenizer + model. If `state_dict_path` is provided, initialize from
+    the given .pt checkpoint (state_dict) after loading the base HF weights.
+    """
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+    if state_dict_path:
+        ckpt_path = Path(state_dict_path)
+        if not ckpt_path.is_absolute():
+            ckpt_path = ckpt_path.resolve()
+        if not ckpt_path.exists():
+            raise FileNotFoundError(f"Checkpoint not found at {ckpt_path}")
+        state_dict = torch.load(ckpt_path, map_location=map_location)
+        model.load_state_dict(state_dict)
+
+    model.eval()
+    return tokenizer, model
+
+
+def verify_claim(
+    claim: str,
+    evidence_list: List[str],
+    tokenizer: AutoTokenizer,
+    model: AutoModelForSequenceClassification,
+    margin: float = 0.05,
+    min_conf: float = 0.5,
+    max_length: int = 256,
+) -> Tuple[str, dict]:
+    """
+    Run the NLI model over a claim + evidence list and aggregate to a label.
+    """
+    evidence_list = [e.strip() for e in evidence_list if e and e.strip()]
+    if not evidence_list:
+        empty_probs = torch.tensor([0.0, 0.0, 1.0])
+        return "NOT ENOUGH INFO", {
+            LABELS[i]: float(empty_probs[i]) for i in range(len(LABELS))
+        }
+
+    enc = tokenizer(
+        evidence_list,
+        [claim] * len(evidence_list),
+        padding=True,
+        truncation=True,
+        max_length=max_length,
+        return_tensors="pt",
+    )
+
+    with torch.no_grad():
+        logits = model(**enc).logits
+        probs = torch.softmax(logits, dim=-1)
+
+    label = aggregate(probs.cpu().numpy(), margin=margin, min_conf=min_conf)
+    agg_probs = probs.mean(dim=0)
+    probs_dict = {LABELS[i]: float(agg_probs[i]) for i in range(len(LABELS))}
+    return label, probs_dict
+
+
+def run_inference(
+    data_path: str = DATA_PATH_AVERITEC,
+    tokenizer: AutoTokenizer = None,
+    model_nli: AutoModelForSequenceClassification = None,
+):
+    timer_start = timeit.default_timer()
+
+    if tokenizer is None or model_nli is None:
+        tokenizer, model_nli = load_claim_verifier()
+
     ds = ClaimBatchDataset(data_path)
-    model_nli = AutoModelForSequenceClassification.from_pretrained(MODEL)
-    model_nli.eval()
     predictions = []
     true_labels = []
-    for claim, evid_list, true_label in ds:
-        i += 1
-        if not evid_list: 
+    for i, (claim, evid_list, true_label) in enumerate(ds, start=1):
+        if not evid_list:
             continue
-        enc = tokenizer(evid_list, [claim]*len(evid_list),
-                        padding=True, truncation=True, max_length=256, return_tensors="pt")
-        with torch.no_grad():
-            logits = model_nli(**enc).logits
-            probs = torch.softmax(logits, dim=-1).cpu().numpy()
-        pred = aggregate(probs)
-        classes = ["REFUTED", "NOT ENOUGH INFO", "SUPPORTED"]
-        predictions.append(pred)
-        true_labels.append(classes[true_label])
-        print(f"Claim: {claim}\nEvidences: {evid_list}\nTrue: {classes[true_label]}\nPredicted: {pred}\n")
-        
+
+        pred_label, _ = verify_claim(
+            claim,
+            evid_list,
+            tokenizer=tokenizer,
+            model=model_nli,
+        )
+        predictions.append(pred_label)
+        true_labels.append(LABELS[true_label])
+        print(
+            f"Claim: {claim}\nEvidences: {evid_list}\n"
+            f"True: {LABELS[true_label]}\nPredicted: {pred_label}\n"
+        )
+
         if i % 50 == 0:
-            print(f"Iteration: {i}/{ds}")
-            print(f"Time Elapsed: {timeit.default_timer() - start}")
-    print(classification_report(true_labels, predictions, labels=classes, zero_division=0))
-    ConfusionMatrixDisplay.from_predictions(true_labels, predictions, labels=classes)
+            print(f"Iteration: {i}/{len(ds)}")
+            print(f"Time Elapsed: {timeit.default_timer() - timer_start}")
+
+    print(classification_report(true_labels, predictions, labels=LABELS, zero_division=0))
+    ConfusionMatrixDisplay.from_predictions(true_labels, predictions, labels=LABELS)
     plt.show()
-    
 
-run_inference(DATA_PATH_AVERITEC)
+    end = timeit.default_timer()
+    print(f"Time Elapsed: {end - timer_start}")
 
-end = timeit.default_timer()
-print(f"Time Elapsed: {end - start}")
+
+if __name__ == "__main__":
+    tok, model = load_claim_verifier()
+    run_inference(DATA_PATH_AVERITEC, tokenizer=tok, model_nli=model)

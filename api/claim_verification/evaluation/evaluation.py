@@ -30,19 +30,19 @@ MODELS_DIR = PKG_ROOT / "models"
 EVAL_PLAN = [
     # Example 1: HF baseline on AveriTeC
     {
-        "dataset": "averitec",
-        "dataset_path": DATA_DIR / "unprocessed" / f"averitec.csv",   # this needs to be baked invariant to cwd
+        "dataset": "fever_train_claims_20",
+        "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv",   # this needs to be baked invariant to cwd
         "mode": "eval",
         "init_from": "hf",          # <- baseline
     },
 
     # Example 2 (optional): evaluate AveriTeC model trained on AveriTeC
-    {
-        "dataset": "averitec",
-        "dataset_path": DATA_DIR / "unprocessed" / f"averitec.csv",
-        "mode": "eval",
-        "init_from": "fever_train_claims",   # <- use ../models/averitec/latest.pt
-    },
+    # {
+    #     "dataset": "averitec",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_sample.csv",
+    #     "mode": "eval",
+    #     "init_from": "fever_train_claims",   # <- use ../models/averitec/latest.pt
+    # },
 ]
 
 
@@ -81,7 +81,7 @@ def main():
             if mode != "eval":
                 raise ValueError(f"Unknown mode={mode!r} for dataset={dataset!r}; expected 'eval'.")
 
-            if dataset == "averitec":
+            if dataset == "averitec" or "fever_train_claims" in dataset:
                 eval_averitec(
                     init_weights=init_weights,
                     data_set=dataset,
