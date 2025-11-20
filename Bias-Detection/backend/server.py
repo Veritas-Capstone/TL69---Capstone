@@ -42,7 +42,7 @@ def SplitIntoSentences(text):
 # -----------------------
 # Merge Short Sentences 
 # -----------------------
-def merge_short_sentences(sentences, min_tokens=30):
+def merge_short_sentences(sentences, min_tokens=18):
     merged = []
     buffer = ""
 
