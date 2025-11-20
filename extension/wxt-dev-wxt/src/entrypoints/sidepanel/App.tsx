@@ -48,6 +48,49 @@ function App() {
 				await browser.storage.local.set({ storedResult: data });
 
 				// underline claims on webpage
+				/* 
+				idk calling this 10 times makes the multiline underlining more consistent
+				*/
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: false,
+					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: true,
+					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: false,
+					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: true,
+					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: false,
+					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: true,
+					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: false,
+					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+				});
+				await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					valid: true,
+					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+				});
 				await browser.tabs.sendMessage(tab.id ?? 0, {
 					type: 'UNDERLINE_SELECTION',
 					valid: false,
@@ -60,9 +103,7 @@ function App() {
 				});
 			} catch (err) {
 				console.error('Error calling API:', err);
-				setError(
-					'Failed to analyze text. Make sure the backend server is running on http://localhost:8000'
-				);
+				setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
 			} finally {
 				setIsLoading(false);
 			}
@@ -94,9 +135,7 @@ function App() {
 				</CardHeader>
 				{error && (
 					<CardContent className="w-full">
-						<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-							{error}
-						</div>
+						<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">{error}</div>
 					</CardContent>
 				)}
 				{isLoading ? (
