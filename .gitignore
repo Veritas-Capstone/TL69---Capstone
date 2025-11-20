@@ -44,6 +44,8 @@ Thumbs.db
 # Archive/backups (optional)
 archive/
 .vscode
+Bias-Detection/biasenv/
+Bias-Detection/datasets/
 .Bias-Detection/biasenv
 .Bias-Detection/datasets
 

@@ -1,10 +1,10 @@
 import os
 import json
 import csv
+from sklearn.model_selection import train_test_split
 
 FEVER_TRAIN_JSONL = "../data/raw/fever.jsonl"
 WIKI_PAGES_DIR    = "../data/raw/wiki-pages"
-OUTPUT_TRAIN_CSV  = "../data/processed/fever_train_claims.csv"
 OUTPUT_SAMPLE_CSV = "../data/processed/fever_train_claims_sample.csv"
 
 LABEL_MAP = {
@@ -134,12 +134,24 @@ def save_rows_to_csv(rows, out_path):
 
 if __name__ == "__main__":
     wiki_index = load_fever_wiki_jsonl(WIKI_PAGES_DIR)
-    train_rows = process_fever_split(FEVER_TRAIN_JSONL, wiki_index)
+    rows = process_fever_split(FEVER_TRAIN_JSONL, wiki_index)
 
-    save_rows_to_csv(train_rows, OUTPUT_TRAIN_CSV)
+    train_rows, test_rows = train_test_split(
+        rows,
+        test_size=0.2,
+        random_state=42,
+        shuffle=True,
+    )
 
-    # Create a small sample file for testing
+    # Save 80/20 splits
+    OUTPUT_TRAIN_80 = "../data/processed/fever_train_claims_80.csv"
+    OUTPUT_TRAIN_20 = "../data/processed/fever_train_claims_20.csv"
+
+    save_rows_to_csv(train_rows, OUTPUT_TRAIN_80)
+    save_rows_to_csv(test_rows, OUTPUT_TRAIN_20)
+
+    # Small sample from the training portion if you still want it
     if os.path.exists(OUTPUT_SAMPLE_CSV):
         os.remove(OUTPUT_SAMPLE_CSV)
-
     save_rows_to_csv(train_rows[:50], OUTPUT_SAMPLE_CSV)
+

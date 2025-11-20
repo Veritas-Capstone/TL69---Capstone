@@ -1,15 +1,23 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import {
-	CheckCircleIcon,
-	CircleXIcon,
-	ShieldIcon,
-	TextIcon,
-	TrendingUpDownIcon,
-	TriangleAlertIcon,
-} from 'lucide-react';
+import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
+import { TabsTrigger } from '@radix-ui/react-tabs';
+import { TextIcon } from 'lucide-react';
+import BiasTab from './BiasTab';
+import ClaimTab from './ClaimTab';
+
+interface AnalysisResult {
+	checks: number;
+	issues: number;
+	overall_bias: string;
+	overall_probabilities: {
+		Left: number;
+		Center: number;
+		Right: number;
+	};
+	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
+	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
+}
 
 export default function AnalysisPage({
 	text,
@@ -19,32 +27,19 @@ export default function AnalysisPage({
 }: {
 	text: string | undefined;
 	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
-	result:
-		| {
-				checks: number;
-				issues: number;
-				claims: { text: string; category: string; description: string; valid: boolean }[];
-		  }
-		| undefined;
-	setResult: React.Dispatch<
-		React.SetStateAction<
-			| {
-					checks: number;
-					issues: number;
-					claims: { text: string; category: string; description: string; valid: boolean }[];
-			  }
-			| undefined
-		>
-	>;
+	result: AnalysisResult | undefined;
+	setResult: React.Dispatch<React.SetStateAction<AnalysisResult | undefined>>;
 }) {
 	const [currentHovered, setCurrentHovered] = useState<string>();
+	const [currentTab, setCurrentTab] = useState<string>('bias');
 
 	// highlights, scroll to claim on sidepanel
 	useEffect(() => {
 		const highlightHoveredText = (message: any) => {
 			if (message.type === 'UNDERLINE_HOVER') {
 				setCurrentHovered(message.text);
-				const element = document.querySelector(`[claim-text="${CSS.escape(message.text)}"]`);
+				console.log(message.text);
+				const element = document.querySelector(`[claim-text*="${CSS.escape(message.text)}"]`);
 				if (element) {
 					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 				}
@@ -62,12 +57,35 @@ export default function AnalysisPage({
 
 		if (text) {
 			await browser.tabs.sendMessage(tab.id, {
+				type: 'CLEAR_UNDERLINES',
+			});
+			await browser.tabs.sendMessage(tab.id, {
 				type: 'HIGHLIGHT_TEXT',
 				target: text,
+				valid:
+					currentTab === 'bias'
+						? result?.bias_claims.filter((x) => x.text === text)[0].valid
+						: result?.fact_check_claims.filter((x) => x.cliam === text)[0].label === 'SUPPORTED',
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {
 				type: 'CLEAR_HIGHLIGHTS',
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: false,
+				targets:
+					currentTab === 'bias'
+						? result?.bias_claims.filter((x) => !x.valid).map((x) => x.text)
+						: result?.fact_check_claims.filter((x) => x.label !== 'SUPPORTED').map((x) => x.claim),
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: true,
+				targets:
+					currentTab === 'bias'
+						? result?.bias_claims.filter((x) => x.valid).map((x) => x.text)
+						: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').map((x) => x.claim),
 			});
 		}
 	}
@@ -83,6 +101,41 @@ export default function AnalysisPage({
 		await browser.tabs.sendMessage(tab.id ?? 0, {
 			type: 'CLEAR_UNDERLINES',
 		});
+	}
+
+	async function switchTab(value: string) {
+		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+		if (!tab?.id) return;
+
+		if (value === 'claims') {
+			await browser.tabs.sendMessage(tab.id, {
+				type: 'CLEAR_UNDERLINES',
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: false,
+				targets: result?.fact_check_claims.filter((x) => !x.label !== 'SUPPORTED').map((x) => x.claim),
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: true,
+				targets: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').map((x) => x.claim),
+			});
+		} else {
+			await browser.tabs.sendMessage(tab.id, {
+				type: 'CLEAR_UNDERLINES',
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: false,
+				targets: result?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: true,
+				targets: result?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+			});
+		}
 	}
 
 	return (
@@ -104,59 +157,46 @@ export default function AnalysisPage({
 					</div>
 				</CardContent>
 			</Card>
-			<div className="flex items-center justify-between gap-2">
-				<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
-					<CheckCircleIcon size="16" className="mb-2 text-green-400" />
-					<p>{result?.checks}</p>
-					<p>Checks</p>
-				</Card>
-				<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
-					<CircleXIcon size="16" className="mb-2 text-red-400" />
-					<p>{result?.issues}</p>
-					<p>Issues</p>
-				</Card>
-			</div>
-			<Card>
-				<CardHeader className="flex gap-2 items-center">
-					<TrendingUpDownIcon size={20} />
-					<p className="font-semibold text-base">Bias Analysis</p>
-				</CardHeader>
-				<CardContent className="flex flex-col gap-2">
-					<div className="flex justify-between">
-						<Badge className="bg-gray-400">Left wing</Badge>
-						<p className="text-xs text-gray-500">70%</p>
-					</div>
-					<Progress value={70} className="[&>*]:bg-green-400" />
-				</CardContent>
-			</Card>
-			<Card>
-				<CardHeader className="flex gap-2 items-center">
-					<ShieldIcon size={20} />
-					<p className="font-semibold text-base">Fact Checks</p>
-				</CardHeader>
-				<CardContent className="flex flex-col gap-2">
-					{result?.claims.map((claim) => (
-						<div
-							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white ${
-								currentHovered === claim.text && 'border-yellow-200'
-							}`}
-							claim-text={claim.text}
-							onMouseEnter={() => handleHighlight(claim.text)}
-							onMouseLeave={() => handleHighlight('')}
-						>
-							{claim.valid ? (
-								<CheckCircleIcon className="w-12 h-12 text-green-400" />
-							) : (
-								<TriangleAlertIcon className="w-12 h-12 text-red-400" />
-							)}
-							<div className="flex flex-col">
-								<h3 className="text-sm">{claim.category}</h3>
-								<p className="text-xs text-gray-400">{claim.description}</p>
-							</div>
-						</div>
-					))}
-				</CardContent>
-			</Card>
+
+			<Tabs
+				defaultValue="bias"
+				className="max-w-xs w-full gap-4"
+				onValueChange={(e) => {
+					setCurrentTab(e);
+					switchTab(e);
+				}}
+			>
+				<TabsList className="w-full h-fit flex justify-around p-2">
+					<TabsTrigger
+						value="bias"
+						className="data-[state=active]:bg-white w-full data-[state=active]:shadow-sm py-1 rounded-md text-sm text-gray-950 font-semibold"
+					>
+						Bias
+					</TabsTrigger>
+					<TabsTrigger
+						value="claims"
+						className="data-[state=active]:bg-white w-full data-[state=active]:shadow-sm py-1 rounded-md text-sm text-gray-950 font-semibold"
+					>
+						Claims
+					</TabsTrigger>
+				</TabsList>
+				<TabsContent value="bias" className="flex flex-col gap-4">
+					<BiasTab
+						key={currentTab}
+						result={result}
+						currentHovered={currentHovered}
+						handleHighlight={handleHighlight}
+					/>
+				</TabsContent>
+				<TabsContent value="claims">
+					<ClaimTab
+						key={currentTab}
+						result={result}
+						currentHovered={currentHovered}
+						handleHighlight={handleHighlight}
+					/>
+				</TabsContent>
+			</Tabs>
 		</CardContent>
 	);
 }
