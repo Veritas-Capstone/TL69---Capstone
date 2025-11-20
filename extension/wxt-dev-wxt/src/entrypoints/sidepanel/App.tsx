@@ -45,6 +45,7 @@ function App() {
 				// call model API
 				const data = await fetchAPI(selectedText.selectedText);
 				setResult(data);
+				console.log(data);
 				await browser.storage.local.set({ storedResult: data });
 
 				// underline claims on webpage
@@ -146,13 +147,7 @@ function App() {
 				) : !result ? (
 					<InputPage setText={setText} callModel={callModel} />
 				) : (
-					<AnalysisPage
-						text={text}
-						setText={setText}
-						result={result}
-						setResult={setResult}
-						data={result ?? []}
-					/>
+					<AnalysisPage text={text} setText={setText} result={result} setResult={setResult} />
 				)}
 			</Card>
 			<div className="flex flex-col justify-center gap-2 mt-8">
