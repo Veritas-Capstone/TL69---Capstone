@@ -32,11 +32,13 @@ export default function AnalysisPage({
 	setText,
 	result,
 	setResult,
+	data,
 }: {
 	text: string | undefined;
 	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
 	result: AnalysisResult | undefined;
 	setResult: React.Dispatch<React.SetStateAction<AnalysisResult | undefined>>;
+	data: any;
 }) {
 	const [currentHovered, setCurrentHovered] = useState<string>();
 
@@ -63,12 +65,25 @@ export default function AnalysisPage({
 
 		if (text) {
 			await browser.tabs.sendMessage(tab.id, {
+				type: 'CLEAR_UNDERLINES',
+			});
+			await browser.tabs.sendMessage(tab.id, {
 				type: 'HIGHLIGHT_TEXT',
 				target: text,
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {
 				type: 'CLEAR_HIGHLIGHTS',
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: false,
+				targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
+			});
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				valid: true,
+				targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
 			});
 		}
 	}

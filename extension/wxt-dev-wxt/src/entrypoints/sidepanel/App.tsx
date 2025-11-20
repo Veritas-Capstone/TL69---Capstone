@@ -146,7 +146,13 @@ function App() {
 				) : !result ? (
 					<InputPage setText={setText} callModel={callModel} />
 				) : (
-					<AnalysisPage text={text} setText={setText} result={result} setResult={setResult} />
+					<AnalysisPage
+						text={text}
+						setText={setText}
+						result={result}
+						setResult={setResult}
+						data={result ?? []}
+					/>
 				)}
 			</Card>
 			<div className="flex flex-col justify-center gap-2 mt-8">
