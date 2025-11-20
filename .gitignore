@@ -50,7 +50,7 @@ archive/
 
 
 # specfic data file
-/api/claim_verification/data/raw/
+/api/claim_verification/data/unprocessed/
 /api/claim_verification/data/processed/averitec.csv
 /api/claim_verification/data/processed/averitec_80.csv
 /api/claim_verification/data/processed/averitec_20.csv
@@ -63,3 +63,6 @@ archive/
 
 # ignore model files
 /api/claim_verification/models/
+
+# ignore evaluation log files
+/api/claim_verification/eval_metrics/

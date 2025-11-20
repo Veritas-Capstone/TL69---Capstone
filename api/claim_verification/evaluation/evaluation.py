@@ -25,7 +25,7 @@ import timeit
 PKG_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PKG_ROOT / "data" 
 EVAL_OUT_DIR = PKG_ROOT / "eval_metrics"
-MODELS_DIR = Path("../models")
+MODELS_DIR = PKG_ROOT / "models"
 
 EVAL_PLAN = [
     # Example 1: HF baseline on AveriTeC
@@ -35,7 +35,18 @@ EVAL_PLAN = [
         "mode": "eval",
         "init_from": "hf",          # <- baseline
     },
-
+    # {
+    #     "dataset": "fever",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv", 
+    #     "mode": "eval",
+    #     "init_from": "hf",         
+    # },
+    # {
+    #     "dataset": "fever",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_sample.csv",  
+    #     "mode": "eval",
+    #     "init_from": "hf",         
+    # },
     # Example 2 (optional): evaluate AveriTeC model trained on AveriTeC
     # {
     #     "dataset": "averitec",
@@ -81,6 +92,13 @@ def main():
                 raise ValueError(f"Unknown mode={mode!r} for dataset={dataset!r}; expected 'eval'.")
 
             if dataset == "averitec":
+                eval_averitec(
+                    init_weights=init_weights,
+                    data_set=dataset,
+                    data_path=step["dataset_path"],
+                    output_root=EVAL_OUT_DIR
+                )
+            elif dataset == "fever":
                 eval_averitec(
                     init_weights=init_weights,
                     data_set=dataset,
