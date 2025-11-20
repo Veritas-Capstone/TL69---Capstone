@@ -45,6 +45,7 @@ function App() {
 				// call model API
 				const data = await fetchAPI(selectedText.selectedText);
 				setResult(data);
+				console.log('HERE');
 				console.log(data);
 				await browser.storage.local.set({ storedResult: data });
 

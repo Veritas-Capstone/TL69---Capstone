@@ -139,7 +139,12 @@ function generateMockFactChecks(text: string): Array<{
 
 export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	try {
-		const response = await fetch(`${API_URL}/analyze`, {
+		const response = await fetch(`${API_URL}/bias/analyze`, {
+			headers: { 'Content-Type': 'application/json' },
+			method: 'POST',
+			body: JSON.stringify({ text }),
+		});
+		const response2 = await fetch(`${API_URL}/claim/verify-claims-from-passage`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
@@ -150,6 +155,8 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 		}
 
 		const data = await response.json();
+		const fact_checks_response = await response2.json();
+		console.log(fact_checks_response);
 
 		// Transform the response to match the expected format
 		// Map sentence bias results to "claims" format for the UI
@@ -170,7 +177,7 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 			overall_bias: data.overall_bias,
 			overall_probabilities: data.overall_probabilities,
 			bias_claims,
-			fact_check_claims,
+			fact_check_claims: fact_checks_response,
 		};
 	} catch (error) {
 		console.error('Error calling bias detection API:', error);

@@ -23,6 +23,7 @@ export default function ClaimTab({
 	currentHovered: string | undefined;
 	handleHighlight: Function;
 }) {
+	console.log(result);
 	return (
 		<>
 			<Card>
@@ -35,20 +36,22 @@ export default function ClaimTab({
 						<div
 							key={`fact-${idx}`}
 							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white ${
-								currentHovered && claim.text.includes(currentHovered) && 'border-yellow-200'
+								currentHovered && claim.claim.includes(currentHovered) && 'border-yellow-200'
 							}`}
-							claim-text={claim.text}
-							onMouseEnter={() => handleHighlight(claim.text)}
+							claim-text={claim.claim}
+							onMouseEnter={() => handleHighlight(claim.claim)}
 							onMouseLeave={() => handleHighlight('')}
 						>
 							{claim.valid ? (
-								<CheckCircleIcon className="w-12 h-12 text-green-400" />
+								<CheckCircleIcon className="min-w-6 h-6 text-green-400" />
 							) : (
-								<TriangleAlertIcon className="w-12 h-12 text-red-400" />
+								<TriangleAlertIcon className="min-w-6 h-6 text-red-400" />
 							)}
 							<div className="flex flex-col">
-								<h3 className="text-sm">{claim.category}</h3>
-								<p className="text-xs text-gray-400">{claim.description}</p>
+								<h3 className="text-sm">{claim.label}</h3>
+								{claim.evidence.map((ev) => (
+									<p className="text-xs text-gray-400">- {ev}</p>
+								))}
 							</div>
 						</div>
 					))}
