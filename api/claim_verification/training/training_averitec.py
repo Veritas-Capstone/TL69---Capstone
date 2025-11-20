@@ -27,9 +27,6 @@ from training_helpers import PairwiseExpansionDataset, collate_pairwise
 # Base HF model
 MODEL = "FacebookAI/roberta-large-mnli"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
-
-# Default dataset for this script (AveriTeC)
-# Change the name to match your processed CSV prefix if needed.
 DATA_SET = "averitec"
 DATA_PATH = f"../data/processed/{DATA_SET}.csv"
 

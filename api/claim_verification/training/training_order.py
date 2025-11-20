@@ -21,8 +21,8 @@ MODELS_DIR = Path("../models")
 
 TRAIN_PLAN = [
     {
-        "dataset": "averitec",
-        "mode": "train",       
+        "dataset": "fever_train_claims_80",
+        "mode": "retrain",       
         "init_from": "hf",  
     },
 ]
@@ -81,10 +81,10 @@ def main():
         else:
             raise ValueError(f"Unknown mode={mode!r} for dataset={dataset!r}")
 
-        if dataset == "fever_train_claims":
-            train_fever(init_weights=init_weights)
+        if "fever_train_claims" in dataset:
+            train_fever(init_weights=init_weights, data_set=dataset)
         elif dataset == "averitec":
-            train_averitec(init_weights=init_weights)
+            train_averitec(init_weights=init_weights, data_set=dataset)
         else:
             raise ValueError(f"Unknown dataset {dataset!r}")
 
