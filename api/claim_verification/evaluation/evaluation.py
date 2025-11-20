@@ -25,7 +25,7 @@ import timeit
 PKG_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PKG_ROOT / "data" 
 EVAL_OUT_DIR = PKG_ROOT / "eval_metrics"
-MODELS_DIR = Path("../models")
+MODELS_DIR = PKG_ROOT / "models"
 
 EVAL_PLAN = [
     # Example 1: HF baseline on AveriTeC
@@ -37,11 +37,12 @@ EVAL_PLAN = [
     },
 
     # Example 2 (optional): evaluate AveriTeC model trained on AveriTeC
-    # {
-    #     "dataset": "averitec",
-    #     "mode": "eval",
-    #     "init_from": "averitec",   # <- use ../models/averitec/latest.pt
-    # },
+    {
+        "dataset": "averitec",
+        "dataset_path": DATA_DIR / "unprocessed" / f"averitec.csv",
+        "mode": "eval",
+        "init_from": "fever_train_claims",   # <- use ../models/averitec/latest.pt
+    },
 ]
 
 
