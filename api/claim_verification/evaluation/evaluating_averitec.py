@@ -165,6 +165,7 @@ def eval_averitec(
             all_preds,
             target_names=list(LABEL_MAP.keys()),
             zero_division=0,
+            labels=[0, 1, 2],
         )
     )
 
@@ -207,6 +208,7 @@ def eval_averitec(
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm,
         display_labels=list(LABEL_MAP.keys()),
+        labels=[0, 1, 2],
     )
     disp.plot(cmap="Blues")
     plt.title(f"AveriTeC Confusion Matrix ({model_tag})")

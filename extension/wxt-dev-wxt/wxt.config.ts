@@ -36,6 +36,10 @@ export default defineConfig({
 				js: ['entrypoints/content.ts'],
 			},
 		],
+		host_permissions: [
+			'http://localhost:8000/*',
+			'http://127.0.0.1:8000/*',
+		],
 	},
 	srcDir: 'src',
 });
