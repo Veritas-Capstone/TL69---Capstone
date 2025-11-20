@@ -12,39 +12,50 @@ export default defineContentScript({
 				const { targets } = message;
 				if (!targets || !Array.isArray(targets)) return;
 
-				const walk = (node: Node) => {
+				const normalizedTargets = targets.map((t) => normalizeSpaces(t));
+				let firstMatch: HTMLElement | null = null;
+
+				// Collect all text nodes on the page
+				const textNodes: { node: Text; parent: Node }[] = [];
+				const collectTextNodes = (node: Node) => {
 					if (node.nodeType === Node.TEXT_NODE) {
-						const parent = node.parentNode;
-						if (!parent) return;
+						textNodes.push({ node: node as Text, parent: node.parentNode! });
+					} else if (node.nodeType === Node.ELEMENT_NODE) {
+						const tag = (node as HTMLElement).tagName;
+						if (tag !== 'SCRIPT' && tag !== 'STYLE') {
+							Array.from(node.childNodes).forEach(collectTextNodes);
+						}
+					}
+				};
+				collectTextNodes(document.body);
 
-						let text = node.nodeValue || '';
-						const frag = document.createDocumentFragment();
-						let cursor = 0;
+				// Concatenate normalized text of all nodes with spaces
+				const fullText = textNodes.map(({ node }) => normalizeSpaces(node.nodeValue || '')).join(' ');
 
-						while (cursor < text.length) {
-							let matchIndex = text.length;
-							let matchedTarget = '';
+				normalizedTargets.forEach((target) => {
+					const startIndex = fullText.indexOf(target);
+					if (startIndex === -1) return; // target not found
 
-							for (const target of targets) {
-								const normalizedText = normalizeSpaces(text.slice(cursor));
-								const normalizedTarget = normalizeSpaces(target);
+					const targetEnd = startIndex + target.length;
+					let charCount = 0;
 
-								const index = normalizedText.indexOf(normalizedTarget);
-								if (index !== -1 && cursor + index < matchIndex) {
-									matchIndex = cursor + index;
-									matchedTarget = text.slice(cursor + index, cursor + index + normalizedTarget.length);
-								}
+					for (const { node, parent } of textNodes) {
+						const nodeText = normalizeSpaces(node.nodeValue || '');
+						const nodeStart = charCount;
+						const nodeEnd = charCount + nodeText.length;
+
+						if (nodeEnd > startIndex && nodeStart < targetEnd) {
+							const frag = document.createDocumentFragment();
+							const originalText = node.nodeValue || '';
+
+							const overlapStart = Math.max(0, startIndex - nodeStart);
+							const overlapEnd = Math.min(nodeText.length, targetEnd - nodeStart);
+
+							if (overlapStart > 0) {
+								frag.append(document.createTextNode(originalText.slice(0, overlapStart)));
 							}
 
-							if (!matchedTarget) {
-								frag.append(document.createTextNode(text.slice(cursor)));
-								break;
-							}
-
-							if (matchIndex > cursor) {
-								frag.append(document.createTextNode(text.slice(cursor, matchIndex)));
-							}
-
+							const matchedText = originalText.slice(overlapStart, overlapEnd);
 							const span = document.createElement('span');
 							span.className = 'my-extension-underline';
 							span.style.textDecoration = 'underline';
@@ -53,13 +64,13 @@ export default defineContentScript({
 							span.style.paddingTop = '4px';
 							span.style.paddingBottom = '4px';
 							span.style.lineHeight = '2px';
-							span.textContent = matchedTarget;
 							span.style.cursor = 'pointer';
+							span.textContent = matchedText;
 
 							span.addEventListener('mouseenter', () => {
 								browser.runtime.sendMessage({
 									type: 'UNDERLINE_HOVER',
-									text: normalizeSpaces(matchedTarget),
+									text: normalizeSpaces(matchedText),
 								});
 							});
 
@@ -71,18 +82,19 @@ export default defineContentScript({
 							});
 
 							frag.append(span);
-							cursor = matchIndex + matchedTarget.length;
+
+							if (!firstMatch) firstMatch = span;
+
+							if (overlapEnd < originalText.length) {
+								frag.append(document.createTextNode(originalText.slice(overlapEnd)));
+							}
+
+							parent.replaceChild(frag, node);
 						}
 
-						parent.replaceChild(frag, node);
-					} else if (node.nodeType === Node.ELEMENT_NODE) {
-						const tag = (node as HTMLElement).tagName;
-						if (tag === 'SCRIPT' || tag === 'STYLE') return;
-						Array.from(node.childNodes).forEach(walk);
+						charCount += nodeText.length + 1; // +1 for space between nodes
 					}
-				};
-
-				walk(document.body);
+				});
 			}
 
 			// highlights text on webpage
@@ -90,62 +102,82 @@ export default defineContentScript({
 				const { target } = message;
 				if (!target) return;
 
-				// remove previous highlights
+				// Remove previous highlights
 				const existing = document.querySelectorAll('.highlight');
 				existing.forEach((span) => {
 					const parent = span.parentNode;
 					if (parent) parent.replaceChild(document.createTextNode(span.textContent || ''), span);
 				});
 
+				const normalizedTarget = normalizeSpaces(target);
 				let firstMatch: HTMLElement | null = null;
 
-				const walk = (node: Node) => {
+				// Flatten all text nodes on the page into an array with their parent references
+				const textNodes: { node: Text; parent: Node }[] = [];
+				const collectTextNodes = (node: Node) => {
 					if (node.nodeType === Node.TEXT_NODE) {
-						const parent = node.parentNode;
-						if (!parent) return;
+						textNodes.push({ node: node as Text, parent: node.parentNode! });
+					} else if (node.nodeType === Node.ELEMENT_NODE) {
+						const tag = (node as HTMLElement).tagName;
+						if (tag !== 'SCRIPT' && tag !== 'STYLE') {
+							Array.from(node.childNodes).forEach(collectTextNodes);
+						}
+					}
+				};
+				collectTextNodes(document.body);
 
-						let text = node.nodeValue || '';
+				// Concatenate all normalized text from nodes
+				const fullText = textNodes.map(({ node }) => normalizeSpaces(node.nodeValue || '')).join(' ');
+
+				// Find the start index of target in fullText
+				const startIndex = fullText.indexOf(normalizedTarget);
+				if (startIndex === -1) return; // target not found
+
+				// Walk through nodes and wrap the matching portion
+				let charCount = 0;
+				let targetStart = startIndex;
+				let targetEnd = startIndex + normalizedTarget.length;
+
+				for (const { node, parent } of textNodes) {
+					const nodeText = normalizeSpaces(node.nodeValue || '');
+					const nodeStart = charCount;
+					const nodeEnd = charCount + nodeText.length;
+
+					// Check if this node overlaps the target
+					if (nodeEnd > targetStart && nodeStart < targetEnd) {
 						const frag = document.createDocumentFragment();
-						let cursor = 0;
+						const nodeTextOriginal = node.nodeValue || '';
 
-						while (cursor < text.length) {
-							const normalizedText = text.slice(cursor).replace(/\u00A0/g, ' ');
-							const normalizedTarget = target.replace(/\u00A0/g, ' ');
+						let localCursor = 0;
+						const overlapStart = Math.max(0, targetStart - nodeStart);
+						const overlapEnd = Math.min(nodeText.length, targetEnd - nodeStart);
 
-							const index = normalizedText.indexOf(normalizedTarget);
-							if (index === -1) {
-								frag.append(document.createTextNode(text.slice(cursor)));
-								break;
-							}
+						if (overlapStart > 0) {
+							frag.append(document.createTextNode(nodeTextOriginal.slice(0, overlapStart)));
+						}
 
-							if (index > 0) frag.append(document.createTextNode(text.slice(cursor, cursor + index)));
+						const matchedText = nodeTextOriginal.slice(overlapStart, overlapEnd);
+						const span = document.createElement('span');
+						span.className = 'highlight';
+						span.style.backgroundColor = 'rgb(254, 240, 138)';
+						span.textContent = matchedText;
+						frag.append(span);
 
-							const matchedText = text.slice(cursor + index, cursor + index + normalizedTarget.length);
+						if (!firstMatch) firstMatch = span;
 
-							// css for highlighted text
-							const span = document.createElement('span');
-							span.className = 'highlight';
-							span.style.backgroundColor = 'rgb(254, 240, 138)';
-							span.textContent = matchedText;
-							frag.append(span);
-
-							if (!firstMatch) firstMatch = span;
-							cursor = cursor + index + normalizedTarget.length;
+						if (overlapEnd < nodeText.length) {
+							frag.append(document.createTextNode(nodeTextOriginal.slice(overlapEnd)));
 						}
 
 						parent.replaceChild(frag, node);
-					} else if (node.nodeType === Node.ELEMENT_NODE) {
-						const tag = (node as HTMLElement).tagName;
-						if (tag === 'SCRIPT' || tag === 'STYLE') return;
-						Array.from(node.childNodes).forEach(walk);
 					}
-				};
 
-				walk(document.body);
+					charCount += nodeText.length + 1; // +1 for space between nodes in concatenated string
+				}
 
-				// scroll to the corresponding sentence on webpage
+				// Scroll to the first matched element
 				if (firstMatch) {
-					(firstMatch as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+					firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
 				}
 			}
 
