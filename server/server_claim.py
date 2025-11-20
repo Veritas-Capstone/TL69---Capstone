@@ -146,15 +146,15 @@ def get_claims_and_evidence_for_demo(passage: str) -> List[ClaimEvidence]:
     demo_items = [
         # Example – replace these with your actual demo claims/evidence:
         ClaimEvidence(
-            claim="The Eiffel Tower is located in Paris, France.",
+            claim="The justice department has 30 days to release all files related to Epstein, including the investigation into his death by suicide in a federal prison cell.",
             evidence=[
-                "The Eiffel Tower is located in Paris, France."
+                "I saw it in a dream", "I also saw it in a vision", "This is backed up by official sources."
             ],
         ),
         ClaimEvidence(
-            claim="Nikolaj Coster-Waldau worked with the Fox Broadcasting Company.",
+            claim="Trump waffled on the issue for years before finally succumbing to political pressure. On the campaign trail, he pledged to release the Epstein files. Once in office, he changed his position, calling the issue a “hoax” and railing against those who wanted to make the documents public.",
             evidence=[
-                "He then played Detective John Amsterdam in the short-lived Fox television series New Amsterdam."
+                "Trump told me this directly"
             ],
         ),
     ]

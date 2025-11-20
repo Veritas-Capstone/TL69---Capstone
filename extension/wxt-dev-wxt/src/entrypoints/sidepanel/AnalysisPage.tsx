@@ -73,7 +73,7 @@ export default function AnalysisPage({
 				targets:
 					currentTab === 'bias'
 						? result?.bias_claims.filter((x) => !x.valid).map((x) => x.text)
-						: result?.fact_check_claims.filter((x) => !x.valid).map((x) => x.text),
+						: result?.fact_check_claims.filter((x) => x.label !== 'SUPPORTED').map((x) => x.claim),
 			});
 			await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
@@ -81,7 +81,7 @@ export default function AnalysisPage({
 				targets:
 					currentTab === 'bias'
 						? result?.bias_claims.filter((x) => x.valid).map((x) => x.text)
-						: result?.fact_check_claims.filter((x) => x.valid).map((x) => x.text),
+						: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').map((x) => x.claim),
 			});
 		}
 	}
@@ -110,12 +110,12 @@ export default function AnalysisPage({
 			await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
 				valid: false,
-				targets: result?.fact_check_claims.filter((x) => !x.valid).map((x) => x.text),
+				targets: result?.fact_check_claims.filter((x) => !x.label !== 'SUPPORTED').map((x) => x.claim),
 			});
 			await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
 				valid: true,
-				targets: result?.fact_check_claims.filter((x) => x.valid).map((x) => x.text),
+				targets: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').map((x) => x.claim),
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {
