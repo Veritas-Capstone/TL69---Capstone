@@ -88,7 +88,9 @@ export default defineContentScript({
 						const span = document.createElement('span');
 						span.className = 'my-extension-underline';
 						span.style.textDecoration = 'underline';
-						span.style.textDecorationColor = message.valid ? 'rgb(74, 222, 128)' : 'red';
+						span.style.textDecorationColor = message.valid
+							? 'rgba(74, 222, 128, 0.8)'
+							: 'rgba(244, 63, 94, 0.8)';
 						span.style.textDecorationThickness = '2px';
 						span.style.paddingTop = '4px';
 						span.style.paddingBottom = '4px';
@@ -244,7 +246,7 @@ export default defineContentScript({
 
 						const span = document.createElement('span');
 						span.className = 'highlight';
-						span.style.backgroundColor = 'rgb(254, 240, 138)';
+						span.style.backgroundColor = message.valid ? 'rgba(74, 222, 128, 0.4)' : 'rgba(244, 63, 94, 0.4)';
 						span.textContent = raw.slice(nodeStart, nodeEnd);
 						frag.appendChild(span);
 
@@ -315,7 +317,7 @@ export default defineContentScript({
 
 					const span = document.createElement('span');
 					span.className = 'highlight';
-					span.style.backgroundColor = 'rgb(254, 240, 138)';
+					span.style.backgroundColor = message.valid ? 'rgba(74, 222, 128, 0.4)' : 'rgba(244, 63, 94, 0.4)';
 					span.textContent = raw.slice(nodeStartOffset, nodeEndOffset);
 					frag.appendChild(span);
 

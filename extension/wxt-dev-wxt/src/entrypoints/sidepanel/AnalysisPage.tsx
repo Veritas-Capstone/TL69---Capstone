@@ -62,6 +62,10 @@ export default function AnalysisPage({
 			await browser.tabs.sendMessage(tab.id, {
 				type: 'HIGHLIGHT_TEXT',
 				target: text,
+				valid:
+					currentTab === 'bias'
+						? result?.bias_claims.filter((x) => x.text === text)[0].valid
+						: result?.fact_check_claims.filter((x) => x.cliam === text)[0].label === 'SUPPORTED',
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {
