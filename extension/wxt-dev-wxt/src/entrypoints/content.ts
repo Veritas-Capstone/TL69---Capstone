@@ -12,172 +12,233 @@ export default defineContentScript({
 				const { targets } = message;
 				if (!targets || !Array.isArray(targets)) return;
 
-				const normalizedTargets = targets.map((t) => normalizeSpaces(t));
+				const normalizedTargets = targets.map(normalizeSpacesForPattern);
 				let firstMatch: HTMLElement | null = null;
 
-				// Collect all text nodes on the page
+				// 1) collect all text nodes
 				const textNodes: { node: Text; parent: Node }[] = [];
-				const collectTextNodes = (node: Node) => {
-					if (node.nodeType === Node.TEXT_NODE) {
-						textNodes.push({ node: node as Text, parent: node.parentNode! });
-					} else if (node.nodeType === Node.ELEMENT_NODE) {
-						const tag = (node as HTMLElement).tagName;
-						if (tag !== 'SCRIPT' && tag !== 'STYLE') {
-							Array.from(node.childNodes).forEach(collectTextNodes);
-						}
+				const collect = (n: Node) => {
+					if (n.nodeType === Node.TEXT_NODE) {
+						textNodes.push({ node: n as Text, parent: n.parentNode! });
+					} else if (n.nodeType === Node.ELEMENT_NODE) {
+						const tag = (n as HTMLElement).tagName;
+						if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return;
+						Array.from(n.childNodes).forEach(collect);
 					}
 				};
-				collectTextNodes(document.body);
+				collect(document.body);
+				if (textNodes.length === 0) return;
 
-				// Concatenate normalized text of all nodes with spaces
-				const fullText = textNodes.map(({ node }) => normalizeSpaces(node.nodeValue || '')).join(' ');
+				// 2) concatenate all raw text nodes with a single space separator
+				const rawSeparator = ' ';
+				const nodeRawStrings = textNodes.map(({ node }) => node.nodeValue || '');
+				const rawConcat = nodeRawStrings.join(rawSeparator);
+				console.log(rawConcat);
 
 				normalizedTargets.forEach((target) => {
-					const startIndex = fullText.indexOf(target);
-					if (startIndex === -1) return; // target not found
+					const escaped = escapeForRegex(target);
+					const pattern = escaped.replace(/ +/g, '\\s+'); // flexible whitespace
+					const re = new RegExp(pattern, 'i'); // remove 'i' if you need case-sensitive
 
-					const targetEnd = startIndex + target.length;
-					let charCount = 0;
+					const match = re.exec(rawConcat);
+					if (!match || typeof match.index !== 'number') return;
 
-					for (const { node, parent } of textNodes) {
-						const nodeText = normalizeSpaces(node.nodeValue || '');
-						const nodeStart = charCount;
-						const nodeEnd = charCount + nodeText.length;
+					const matchStart = match.index;
+					const matchEnd = match.index + match[0].length;
 
-						if (nodeEnd > startIndex && nodeStart < targetEnd) {
-							const frag = document.createDocumentFragment();
-							const originalText = node.nodeValue || '';
+					// compute cumulative offsets for node mapping
+					const cumulative: number[] = [];
+					let acc = 0;
+					for (let i = 0; i < nodeRawStrings.length; i++) {
+						cumulative.push(acc);
+						acc += nodeRawStrings[i].length + rawSeparator.length;
+					}
 
-							const overlapStart = Math.max(0, startIndex - nodeStart);
-							const overlapEnd = Math.min(nodeText.length, targetEnd - nodeStart);
-
-							if (overlapStart > 0) {
-								frag.append(document.createTextNode(originalText.slice(0, overlapStart)));
-							}
-
-							const matchedText = originalText.slice(overlapStart, overlapEnd);
-							const span = document.createElement('span');
-							span.className = 'my-extension-underline';
-							span.style.textDecoration = 'underline';
-							span.style.textDecorationColor = message.valid ? 'rgb(74, 222, 128)' : 'red';
-							span.style.textDecorationThickness = '2px';
-							span.style.paddingTop = '4px';
-							span.style.paddingBottom = '4px';
-							span.style.lineHeight = '2px';
-							span.style.cursor = 'pointer';
-							span.textContent = matchedText;
-
-							span.addEventListener('mouseenter', () => {
-								browser.runtime.sendMessage({
-									type: 'UNDERLINE_HOVER',
-									text: normalizeSpaces(matchedText),
-								});
-							});
-
-							span.addEventListener('mouseleave', () => {
-								browser.runtime.sendMessage({
-									type: 'UNDERLINE_HOVER',
-									text: '',
-								});
-							});
-
-							frag.append(span);
-
-							if (!firstMatch) firstMatch = span;
-
-							if (overlapEnd < originalText.length) {
-								frag.append(document.createTextNode(originalText.slice(overlapEnd)));
-							}
-
-							parent.replaceChild(frag, node);
+					const findNodeForOffset = (offset: number) => {
+						for (let i = 0; i < nodeRawStrings.length; i++) {
+							const start = cumulative[i];
+							const end = start + nodeRawStrings[i].length;
+							if (offset >= start && offset < end) return { nodeIndex: i, localOffset: offset - start };
 						}
+						const last = nodeRawStrings.length - 1;
+						return { nodeIndex: last, localOffset: nodeRawStrings[last].length };
+					};
 
-						charCount += nodeText.length + 1; // +1 for space between nodes
+					const startMap = findNodeForOffset(matchStart);
+					const endMap = findNodeForOffset(Math.max(matchEnd - 1, matchStart));
+
+					// replace slices across nodes with underline spans
+					for (let ni = startMap.nodeIndex; ni <= endMap.nodeIndex; ni++) {
+						const { node, parent } = textNodes[ni];
+						const raw = node.nodeValue || '';
+
+						const nodeStartOffset = ni === startMap.nodeIndex ? startMap.localOffset : 0;
+						const nodeEndOffset = ni === endMap.nodeIndex ? endMap.localOffset + 1 : raw.length;
+
+						const rs = Math.max(0, Math.min(nodeStartOffset, raw.length));
+						const re_ = Math.max(0, Math.min(nodeEndOffset, raw.length));
+						if (rs >= re_) continue;
+
+						const frag = document.createDocumentFragment();
+						if (rs > 0) frag.appendChild(document.createTextNode(raw.slice(0, rs)));
+
+						const span = document.createElement('span');
+						span.className = 'my-extension-underline';
+						span.style.textDecoration = 'underline';
+						span.style.textDecorationColor = message.valid ? 'rgb(74, 222, 128)' : 'red';
+						span.style.textDecorationThickness = '2px';
+						span.style.paddingTop = '4px';
+						span.style.paddingBottom = '4px';
+						span.style.lineHeight = '2px';
+						span.style.cursor = 'pointer';
+						span.textContent = raw.slice(rs, re_);
+
+						// hover event to send text to sidepanel
+						span.addEventListener('mouseenter', () => {
+							browser.runtime.sendMessage({
+								type: 'UNDERLINE_HOVER',
+								text: normalizeSpacesForPattern(span.textContent || ''),
+							});
+						});
+						span.addEventListener('mouseleave', () => {
+							browser.runtime.sendMessage({
+								type: 'UNDERLINE_HOVER',
+								text: '',
+							});
+						});
+
+						frag.appendChild(span);
+						if (re_ < raw.length) frag.appendChild(document.createTextNode(raw.slice(re_)));
+
+						parent.replaceChild(frag, node);
+
+						if (!firstMatch) firstMatch = span;
 					}
 				});
+
+				// scroll first underlined element into view
+				if (firstMatch) {
+					firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
 			}
 
-			// highlights text on webpage
 			if (message.type === 'HIGHLIGHT_TEXT') {
 				const { target } = message;
 				if (!target) return;
 
+				console.log('HIGHLIGHT_TEXT message received:', target);
+
 				// Remove previous highlights
-				const existing = document.querySelectorAll('.highlight');
-				existing.forEach((span) => {
-					const parent = span.parentNode;
-					if (parent) parent.replaceChild(document.createTextNode(span.textContent || ''), span);
+				document.querySelectorAll('.highlight').forEach((el) => {
+					const p = el.parentNode;
+					if (p) {
+						console.log('Removing previous highlight:', el.textContent);
+						p.replaceChild(document.createTextNode(el.textContent || ''), el);
+					}
 				});
 
 				const normalizedTarget = normalizeSpaces(target);
-				let firstMatch: HTMLElement | null = null;
+				if (!normalizedTarget) return;
+				console.log('Normalized target:', normalizedTarget);
 
-				// Flatten all text nodes on the page into an array with their parent references
+				// 1) Collect all text nodes
 				const textNodes: { node: Text; parent: Node }[] = [];
-				const collectTextNodes = (node: Node) => {
-					if (node.nodeType === Node.TEXT_NODE) {
-						textNodes.push({ node: node as Text, parent: node.parentNode! });
-					} else if (node.nodeType === Node.ELEMENT_NODE) {
-						const tag = (node as HTMLElement).tagName;
-						if (tag !== 'SCRIPT' && tag !== 'STYLE') {
-							Array.from(node.childNodes).forEach(collectTextNodes);
+				const collect = (n: Node) => {
+					if (n.nodeType === Node.TEXT_NODE) {
+						textNodes.push({ node: n as Text, parent: n.parentNode! });
+					} else if (n.nodeType === Node.ELEMENT_NODE) {
+						const tag = (n as HTMLElement).tagName;
+						if (!['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(tag)) {
+							Array.from(n.childNodes).forEach(collect);
 						}
 					}
 				};
-				collectTextNodes(document.body);
+				collect(document.body);
+				console.log('Collected text nodes count:', textNodes.length);
 
-				// Concatenate all normalized text from nodes
-				const fullText = textNodes.map(({ node }) => normalizeSpaces(node.nodeValue || '')).join(' ');
+				const nodeRawStrings = textNodes.map(({ node }) => node.nodeValue || '');
+				const rawConcat = nodeRawStrings.join(' ');
+				console.log('Concatenated text:', rawConcat.slice(0, 500), '...');
 
-				// Find the start index of target in fullText
-				const startIndex = fullText.indexOf(normalizedTarget);
-				if (startIndex === -1) return; // target not found
+				// 2) Regex for matching ignoring multiple spaces
+				const escaped = normalizedTarget.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				const pattern = escaped.replace(/ +/g, '\\s+');
+				const re = new RegExp(pattern, 'i');
+				console.log('Regex pattern:', re);
 
-				// Walk through nodes and wrap the matching portion
-				let charCount = 0;
-				let targetStart = startIndex;
-				let targetEnd = startIndex + normalizedTarget.length;
-
-				for (const { node, parent } of textNodes) {
-					const nodeText = normalizeSpaces(node.nodeValue || '');
-					const nodeStart = charCount;
-					const nodeEnd = charCount + nodeText.length;
-
-					// Check if this node overlaps the target
-					if (nodeEnd > targetStart && nodeStart < targetEnd) {
-						const frag = document.createDocumentFragment();
-						const nodeTextOriginal = node.nodeValue || '';
-
-						let localCursor = 0;
-						const overlapStart = Math.max(0, targetStart - nodeStart);
-						const overlapEnd = Math.min(nodeText.length, targetEnd - nodeStart);
-
-						if (overlapStart > 0) {
-							frag.append(document.createTextNode(nodeTextOriginal.slice(0, overlapStart)));
-						}
-
-						const matchedText = nodeTextOriginal.slice(overlapStart, overlapEnd);
-						const span = document.createElement('span');
-						span.className = 'highlight';
-						span.style.backgroundColor = 'rgb(254, 240, 138)';
-						span.textContent = matchedText;
-						frag.append(span);
-
-						if (!firstMatch) firstMatch = span;
-
-						if (overlapEnd < nodeText.length) {
-							frag.append(document.createTextNode(nodeTextOriginal.slice(overlapEnd)));
-						}
-
-						parent.replaceChild(frag, node);
-					}
-
-					charCount += nodeText.length + 1; // +1 for space between nodes in concatenated string
+				const match = re.exec(rawConcat);
+				if (!match || typeof match.index !== 'number') {
+					console.log('Target not found in page text');
+					return;
 				}
 
-				// Scroll to the first matched element
-				if (firstMatch) {
-					firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				const matchStart = match.index;
+				const matchEnd = match.index + match[0].length;
+				console.log('Match found:', match[0]);
+				console.log('Match offsets:', matchStart, matchEnd);
+
+				// 3) Compute cumulative offsets
+				const cumulative: number[] = [];
+				let acc = 0;
+				for (let i = 0; i < nodeRawStrings.length; i++) {
+					cumulative.push(acc);
+					acc += nodeRawStrings[i].length + 1; // +1 for space separator
+				}
+				console.log('Cumulative offsets:', cumulative.slice(0, 20));
+
+				const findNodeForOffset = (offset: number) => {
+					for (let i = 0; i < nodeRawStrings.length; i++) {
+						const start = cumulative[i];
+						const end = start + nodeRawStrings[i].length;
+						if (offset >= start && offset < end) return { nodeIndex: i, localOffset: offset - start };
+					}
+					const last = nodeRawStrings.length - 1;
+					return { nodeIndex: last, localOffset: nodeRawStrings[last].length };
+				};
+
+				const startMap = findNodeForOffset(matchStart);
+				const endMap = findNodeForOffset(Math.max(matchEnd - 1, matchStart));
+				console.log('Start node mapping:', startMap, 'End node mapping:', endMap);
+
+				// 4) Replace text nodes with span
+				let firstMatchEl: HTMLElement | null = null;
+				for (let ni = startMap.nodeIndex; ni <= endMap.nodeIndex; ni++) {
+					const { node, parent } = textNodes[ni];
+					const raw = node.nodeValue || '';
+					const nodeStartOffset = ni === startMap.nodeIndex ? startMap.localOffset : 0;
+					const nodeEndOffset = ni === endMap.nodeIndex ? endMap.localOffset + 1 : raw.length;
+
+					console.log(`Processing node ${ni}: "${raw}"`, nodeStartOffset, nodeEndOffset);
+
+					if (nodeStartOffset >= nodeEndOffset) continue;
+
+					const frag = document.createDocumentFragment();
+					if (nodeStartOffset > 0) frag.appendChild(document.createTextNode(raw.slice(0, nodeStartOffset)));
+
+					const span = document.createElement('span');
+					span.className = 'highlight';
+					span.style.backgroundColor = 'rgb(254, 240, 138)';
+					span.textContent = raw.slice(nodeStartOffset, nodeEndOffset);
+					frag.appendChild(span);
+
+					if (!firstMatchEl) firstMatchEl = span;
+
+					if (nodeEndOffset < raw.length) frag.appendChild(document.createTextNode(raw.slice(nodeEndOffset)));
+
+					try {
+						parent.replaceChild(frag, node);
+						console.log('Replaced node with highlighted span');
+					} catch (e) {
+						console.error('Error replacing node:', e, node, parent);
+					}
+				}
+
+				if (firstMatchEl) {
+					try {
+						firstMatchEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					} catch (e) {
+						console.error('Error scrolling to first match:', e);
+					}
 				}
 			}
 
@@ -207,4 +268,18 @@ export default defineContentScript({
 
 function normalizeSpaces(str: string) {
 	return str.replace(/\u00A0/g, ' ');
+}
+
+// highlights text on webpage
+// helper: escape regex special chars
+function escapeForRegex(s: string) {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// helper: collapse multiple whitespace in target to single spaces for pattern building
+function normalizeSpacesForPattern(s: string) {
+	return s
+		.replace(/\u00A0/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
 }
