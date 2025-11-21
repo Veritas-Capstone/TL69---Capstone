@@ -78,7 +78,7 @@ def eval_averitec(
     # Same dataset object as training, but we use ALL examples (no split)
     pair_ds = PairwiseExpansionDataset(df, LABEL_MAP)
     # print(f"[EVAL] Total pairwise examples: {len(pair_ds)}")
-    print(f"[EVAL] Total pairwise examples: {len(df)}")
+    print(f"[EVAL] Total examples: {len(df)}")
 
     # Multiple Evidence input
     eval_loader = DataLoader(
@@ -101,7 +101,6 @@ def eval_averitec(
     # )
 
     num_labels = len(LABEL_MAP)
-    print("Number of Labels:", num_labels)
 
     # ---- Load model ----
     print("[EVAL] Loading model:")
@@ -129,8 +128,7 @@ def eval_averitec(
     all_preds = []
     all_labels = []
 
-    # i = 0
-    # check_every = num_labels // 20
+    print(f"Number of labels to evaluate on: {len(labels in eval_loader)}")
     with torch.no_grad():
         for enc, labels in tqdm(eval_loader, desc="Evaluating AveriTeC", unit="batch"):
             enc = {k: v.to(device) for k, v in enc.items()}
@@ -208,7 +206,7 @@ def eval_averitec(
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm,
         display_labels=list(LABEL_MAP.keys()),
-        labels=[0, 1, 2],
+        # labels=[0, 1, 2],
     )
     disp.plot(cmap="Blues")
     plt.title(f"AveriTeC Confusion Matrix ({model_tag})")

@@ -99,12 +99,14 @@ def collate_multi_evidence(batch, tokenizer, max_length=512, label_map=None):
         evidence_list = parse_evidence_field(item["evidence"])
 
         # NORMAL JOIN (no special separator token between evidence sentences)
+        # if len(evidence_list) == 0:
+        #     continue
         evidence_text = " ".join(evidence_list)
         # evidence_text = " </s> ".join(evidence_list)  # Seperator token version
 
         # RoBERTa-style input: claim </s></s> evidence_blob
-        input_text = f"{claim} </s></s> {evidence_text}"      # Aviertec RoBERTa input?
-        # input_text = f"{evidence_text} </s></s> {claim}"      # Fever RoBERTa input?
+        # input_text = f"{claim} </s></s> {evidence_text}"      # Aviertec RoBERTa input?
+        input_text = f"{evidence_text} </s></s> {claim}"      # Fever RoBERTa input?
 
         texts.append(input_text)
 

@@ -29,18 +29,18 @@ MODELS_DIR = PKG_ROOT / "models"
 
 EVAL_PLAN = [
     # Example 1: HF baseline on AveriTeC
-    {
-        "dataset": "fever_train_claims_20",
-        "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv",   # this needs to be baked invariant to cwd
-        "mode": "eval",
-        "init_from": "hf",          # <- baseline
-    },
     # {
-    #     "dataset": "fever",
-    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv", 
+    #     "dataset": "fever_train_claims_20",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv",   # this needs to be baked invariant to cwd
     #     "mode": "eval",
-    #     "init_from": "hf",         
+    #     "init_from": "hf",          # <- baseline
     # },
+    {
+        "dataset": "fever",
+        "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv", 
+        "mode": "eval",
+        "init_from": "hf",         
+    },
     # {
     #     "dataset": "fever",
     #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_sample.csv",  
