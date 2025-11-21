@@ -31,7 +31,7 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 
-from ..training.training_helpers import PairwiseExpansionDataset, collate_pairwise
+from .eval_helpers import collate_multi_evidence, PairwiseExpansionDataset, collate_pairwise
 
 # Base HF model (same as training)
 MODEL = "FacebookAI/roberta-large-mnli"
@@ -77,16 +77,31 @@ def eval_averitec(
 
     # Same dataset object as training, but we use ALL examples (no split)
     pair_ds = PairwiseExpansionDataset(df, LABEL_MAP)
-    print(f"[EVAL] Total pairwise examples: {len(pair_ds)}")
+    # print(f"[EVAL] Total pairwise examples: {len(pair_ds)}")
+    print(f"[EVAL] Total pairwise examples: {len(df)}")
 
+    # Multiple Evidence input
     eval_loader = DataLoader(
-        pair_ds,
+        df.to_dict("records"),  # or df.to_dict("records") if you prefer dicts over Series
         batch_size=batch_size,
         shuffle=False,
-        collate_fn=lambda batch: collate_pairwise(batch, tokenizer, max_length=max_length),
+        collate_fn=lambda batch: collate_multi_evidence(
+            batch,
+            tokenizer,
+            max_length=max_length,
+            label_map=LABEL_MAP,   # <-- important
+        ),
     )
+    # Pairwise
+    # eval_loader = DataLoader(
+    #     pair_ds,
+    #     batch_size=batch_size,
+    #     shuffle=False,
+    #     collate_fn=lambda batch: collate_pairwise(batch, tokenizer, max_length=max_length),
+    # )
 
     num_labels = len(LABEL_MAP)
+    print("Number of Labels:", num_labels)
 
     # ---- Load model ----
     print("[EVAL] Loading model:")
@@ -100,6 +115,7 @@ def eval_averitec(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
+    print("Device Used for Evaluation:", device)
 
     # If init_weights is not "hf", treat it as a checkpoint path
     if init_weights != "hf":
