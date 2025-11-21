@@ -135,12 +135,11 @@ def verify_claim(
     evidence_list: List[str],
     tokenizer: AutoTokenizer,
     model: AutoModelForSequenceClassification,
-    margin: float = 0.05,
-    min_conf: float = 0.5,
     max_length: int = 256,
 ) -> Tuple[str, dict]:
     """
-    Run the NLI model over a claim + evidence list and aggregate to a label.
+    Run the NLI model over a claim and all evidence concatenated together.
+    This replaces per-evidence aggregation with a single pass over the joined text.
     """
     evidence_list = [e.strip() for e in evidence_list if e and e.strip()]
     if not evidence_list:
@@ -149,9 +148,11 @@ def verify_claim(
             LABELS[i]: float(empty_probs[i]) for i in range(len(LABELS))
         }
 
+    # Join evidence sentences so the model reasons over the combined context once.
+    combined_evidence = " ".join(evidence_list)
     enc = tokenizer(
-        evidence_list,
-        [claim] * len(evidence_list),
+        combined_evidence,
+        claim,
         padding=True,
         truncation=True,
         max_length=max_length,
@@ -160,11 +161,11 @@ def verify_claim(
 
     with torch.no_grad():
         logits = model(**enc).logits
-        probs = torch.softmax(logits, dim=-1)
+        probs = torch.softmax(logits, dim=-1).squeeze(0)
 
-    label = aggregate(probs.cpu().numpy(), margin=margin, min_conf=min_conf)
-    agg_probs = probs.mean(dim=0)
-    probs_dict = {LABELS[i]: float(agg_probs[i]) for i in range(len(LABELS))}
+    label_idx = torch.argmax(probs).item()
+    label = LABELS[label_idx]
+    probs_dict = {LABELS[i]: float(probs[i]) for i in range(len(LABELS))}
     return label, probs_dict
 
 
