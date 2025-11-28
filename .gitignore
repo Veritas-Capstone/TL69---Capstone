@@ -1,4 +1,72 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.gpu_venv/
+
+# Pytest cache
+.pytest_cache/
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archive/backups (optional)
+archive/
 .vscode
+Bias-Detection/biasenv/
+Bias-Detection/datasets/
 .Bias-Detection/biasenv
 .Bias-Detection/datasets
 
+
+
+# specfic data file
+/api/claim_verification/data/unprocessed/
+/api/claim_verification/data/raw/
+/api/claim_verification/data/processed/averitec.csv
+/api/claim_verification/data/processed/averitec_80.csv
+/api/claim_verification/data/processed/averitec_20.csv
+/api/claim_verification/data/processed/fever_train_claims.csv
+/api/claim_verification/data/processed/fever_train_claims_80.csv
+/api/claim_verification/data/processed/fever_train_claims_20.csv
+
+# ignore any python notebook file
+*.ipynb
+
+# ignore model files
+/api/claim_verification/models/
+
+# ignore evaluation log files
+/api/claim_verification/eval_metrics/
+/api/claim_verification/training_metrics/
