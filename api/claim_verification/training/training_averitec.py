@@ -23,6 +23,7 @@ from matplotlib import pyplot as plt
 import os
 from datetime import datetime
 from training_helpers import PairwiseExpansionDataset, collate_pairwise
+from training_joint_helpers import JointEvidenceDataset, collate_joint_batch
 
 # Base HF model
 MODEL = "FacebookAI/roberta-large-mnli"
@@ -65,8 +66,9 @@ def train_averitec(
     df = pd.read_csv(data_path)
 
     print(f"Loading dataset from: {data_path}")
-    pair_ds = PairwiseExpansionDataset(df, LABEL_MAP)
-    print(f"Total pairwise examples: {len(pair_ds)}")
+    # pair_ds = PairwiseExpansionDataset(df, LABEL_MAP)
+    pair_ds = JointEvidenceDataset(df, LABEL_MAP, max_evidence=5)
+    print(f"Total examples: {len(pair_ds)}")
 
     # simple random split; good enough for a demo
     indices = np.arange(len(pair_ds))
@@ -86,14 +88,14 @@ def train_averitec(
         train_ds,
         batch_size=BATCH_SIZE,
         shuffle=True,
-        collate_fn=lambda batch: collate_pairwise(batch, tokenizer, max_length=MAX_LENGTH),
+        collate_fn=lambda batch: collate_joint_batch(batch, tokenizer, max_length=MAX_LENGTH),
     )
 
     val_loader = DataLoader(
         val_ds,
         batch_size=BATCH_SIZE,
         shuffle=False,
-        collate_fn=lambda batch: collate_pairwise(batch, tokenizer, max_length=MAX_LENGTH),
+        collate_fn=lambda batch: collate_joint_batch(batch, tokenizer, max_length=MAX_LENGTH),
     )
 
     num_labels = len(LABEL_MAP)

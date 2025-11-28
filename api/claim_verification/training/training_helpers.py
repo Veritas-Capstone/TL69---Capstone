@@ -23,6 +23,12 @@ class PairwiseExpansionDataset(Dataset):
             # Only keep string evidence
             evid_list = [ev.strip() for ev in evid_list if isinstance(ev, str) and ev.strip()]
 
+            # Ensure NOT ENOUGH INFO rows still contribute a training example.
+            # Otherwise NEI rows with empty evidence are dropped and the model never
+            # sees the NEI label during training.
+            if not evid_list:
+                evid_list = [" "]
+
             for ev in evid_list:
                 pairs.append((claim, ev, label_id))
 
@@ -48,3 +54,4 @@ def collate_pairwise(batch, tokenizer, max_length=256):
     )
     labels = torch.tensor(labels, dtype=torch.long)
     return enc, labels
+
