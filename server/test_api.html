@@ -69,7 +69,13 @@
 </head>
 <body>
     <h1>🧪 Veritas API Tester</h1>
-    <p>Use this page to test if your backend API is working correctly.</p>
+    <p>Use this page to test either backend API: bias detection or claim verification.</p>
+    
+    <label for="modeSelect"><strong>Select API:</strong></label>
+    <select id="modeSelect" onchange="checkHealth()">
+        <option value="bias">Bias Detection (server.py @ :8000)</option>
+        <option value="claim">Claim Verification (server_claim.py @ :8001)</option>
+    </select>
     
     <div class="status" id="healthStatus">Checking server status...</div>
     
@@ -82,10 +88,31 @@
     <div id="result"></div>
 
     <script>
-        const API_URL = 'http://localhost:8000';
+        const MODES = {
+            bias: {
+                name: 'Bias Detection',
+                apiUrl: 'http://localhost:8000/bias', // combined server prefix
+                healthPath: '/health',
+                testPath: '/analyze',
+                buildBody: (text) => ({ text }),
+            },
+            claim: {
+                name: 'Claim Verification',
+                apiUrl: 'http://localhost:8000/claim', // combined server prefix
+                healthPath: '/health',
+                testPath: '/verify-claims-from-passage', // uses stubbed claims/evidence
+                buildBody: (text) => ({ text }),
+            },
+        };
+
+        const modeSelect = document.getElementById('modeSelect');
 
         // Check health on load
         window.addEventListener('load', checkHealth);
+
+        function getModeConfig() {
+            return MODES[modeSelect.value] || MODES.bias;
+        }
 
         async function checkHealth() {
             const status = document.getElementById('healthStatus');
@@ -93,11 +120,15 @@
             status.className = 'status';
             
             try {
-                const response = await fetch(`${API_URL}/health`);
+                const mode = getModeConfig();
+                const response = await fetch(`${mode.apiUrl}${mode.healthPath}`);
                 const data = await response.json();
                 
                 if (response.ok) {
-                    status.textContent = `✅ Server is healthy! Model loaded: ${data.model_loaded}`;
+                    const desc = mode.name === 'Bias Detection'
+                        ? `Model loaded: ${data.model_loaded}`
+                        : `Component: ${data.component || 'claim_verification'}`;
+                    status.textContent = `✅ ${mode.name} server is healthy! ${desc}`;
                     status.className = 'status ok';
                     document.getElementById('testBtn').disabled = false;
                 } else {
@@ -117,6 +148,7 @@
             const resultDiv = document.getElementById('result');
             const text = document.getElementById('testText').value;
             const btn = document.getElementById('testBtn');
+            const mode = getModeConfig();
             
             if (!text.trim()) {
                 alert('Please enter some text to analyze');
@@ -127,15 +159,16 @@
             resultDiv.innerHTML = '<div class="result loading">⏳ Analyzing text...</div>';
             
             try {
-                console.log('Sending request to:', `${API_URL}/analyze`);
+                console.log('Sending request to:', `${mode.apiUrl}${mode.testPath}`);
+                console.log('Mode:', mode.name);
                 console.log('Text:', text);
                 
-                const response = await fetch(`${API_URL}/analyze`, {
+                const response = await fetch(`${mode.apiUrl}${mode.testPath}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ text }),
+                    body: JSON.stringify(mode.buildBody(text)),
                 });
                 
                 console.log('Response status:', response.status);
@@ -148,18 +181,8 @@
                 
                 const data = await response.json();
                 console.log('Success! Data:', data);
-                
-                resultDiv.innerHTML = `
-                    <div class="result success">
-                        <strong>✅ Success!</strong><br><br>
-                        <strong>Overall Bias:</strong> ${data.overall_bias}<br>
-                        <strong>Checks:</strong> ${data.checks}<br>
-                        <strong>Issues:</strong> ${data.issues}<br>
-                        <strong>Sentences Analyzed:</strong> ${data.sentences.length}<br><br>
-                        <strong>Full Response:</strong><br>
-                        ${JSON.stringify(data, null, 2)}
-                    </div>
-                `;
+
+                resultDiv.innerHTML = renderResult(mode.name, data);
                 
             } catch (error) {
                 console.error('API test failed:', error);
@@ -173,6 +196,49 @@
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        function renderResult(modeName, data) {
+            if (modeName === 'Bias Detection' && data && typeof data === 'object' && !Array.isArray(data) && 'overall_bias' in data) {
+                return `
+                    <div class="result success">
+                        <strong>✅ Success!</strong><br><br>
+                        <strong>Overall Bias:</strong> ${data.overall_bias}<br>
+                        <strong>Checks:</strong> ${data.checks}<br>
+                        <strong>Issues:</strong> ${data.issues}<br>
+                        <strong>Sentences Analyzed:</strong> ${data.sentences?.length || 0}<br><br>
+                        <strong>Full Response:</strong><br>
+                        ${JSON.stringify(data, null, 2)}
+                    </div>
+                `;
+            }
+
+            if (modeName === 'Claim Verification' && Array.isArray(data)) {
+                const formatted = data.map((item, idx) => {
+                    return [
+                        `#${idx + 1}: ${item.claim || ''}`,
+                        `Label: ${item.label || ''}`,
+                        `Evidence: ${(item.evidence || []).join(' | ')}`,
+                        `Probabilities: ${JSON.stringify(item.probabilities || {}, null, 2)}`
+                    ].join('\n');
+                }).join('\n\n');
+
+                return `
+                    <div class="result success">
+                        <strong>✅ Success!</strong><br><br>
+                        <pre>${formatted}</pre>
+                        <br><strong>Full Response:</strong><br>
+                        ${JSON.stringify(data, null, 2)}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="result success">
+                    <strong>✅ Success!</strong><br><br>
+                    ${JSON.stringify(data, null, 2)}
+                </div>
+            `;
         }
     </script>
 </body>
