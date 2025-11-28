@@ -69,3 +69,4 @@ Bias-Detection/datasets/
 
 # ignore evaluation log files
 /api/claim_verification/eval_metrics/
+/api/claim_verification/training_metrics/
