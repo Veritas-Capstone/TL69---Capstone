@@ -22,7 +22,7 @@ export default function BiasTab({
 	handleHighlight,
 }: {
 	result: AnalysisResult | undefined;
-	currentHovered: string | undefined;
+	currentHovered: number | undefined;
 	handleHighlight: Function;
 }) {
 	const getBiasDisplay = () => {
@@ -101,11 +101,11 @@ export default function BiasTab({
 						<div
 							key={`bias-${idx}`}
 							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white ${
-								currentHovered && claim.text.includes(currentHovered) && 'border-yellow-200'
+								currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'
 							}`}
-							claim-text={claim.text}
-							onMouseEnter={() => handleHighlight(claim.text)}
-							onMouseLeave={() => handleHighlight('')}
+							claim-idx={idx}
+							onMouseEnter={() => handleHighlight(idx)}
+							onMouseLeave={() => handleHighlight(undefined)}
 						>
 							{claim.valid ? (
 								<CheckCircleIcon className="w-12 h-12 text-green-400" />

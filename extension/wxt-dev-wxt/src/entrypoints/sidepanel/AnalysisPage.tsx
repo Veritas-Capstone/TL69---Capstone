@@ -30,16 +30,15 @@ export default function AnalysisPage({
 	result: AnalysisResult | undefined;
 	setResult: React.Dispatch<React.SetStateAction<AnalysisResult | undefined>>;
 }) {
-	const [currentHovered, setCurrentHovered] = useState<string>();
+	const [currentHovered, setCurrentHovered] = useState<number>();
 	const [currentTab, setCurrentTab] = useState<string>('bias');
 
 	// highlights, scroll to claim on sidepanel
 	useEffect(() => {
 		const highlightHoveredText = (message: any) => {
 			if (message.type === 'UNDERLINE_HOVER') {
-				setCurrentHovered(message.text);
-				console.log(message.text);
-				const element = document.querySelector(`[claim-text*="${CSS.escape(message.text)}"]`);
+				setCurrentHovered(message.idx);
+				const element = document.querySelector(`[claim-idx*="${message.idx}"]`);
 				if (element) {
 					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 				}
@@ -51,41 +50,19 @@ export default function AnalysisPage({
 	}, []);
 
 	// highlights sentence on webpage
-	async function handleHighlight(text: string) {
+	async function handleHighlight(idx: number) {
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 		if (!tab?.id) return;
 
-		if (text) {
-			await browser.tabs.sendMessage(tab.id, {
-				type: 'CLEAR_UNDERLINES',
-			});
+		if (idx !== undefined) {
 			await browser.tabs.sendMessage(tab.id, {
 				type: 'HIGHLIGHT_TEXT',
-				target: text,
-				valid:
-					currentTab === 'bias'
-						? result?.bias_claims.filter((x) => x.text === text)[0].valid
-						: result?.fact_check_claims.filter((x) => x.cliam === text)[0].label === 'SUPPORTED',
+				sentences: result,
+				idx: idx,
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {
 				type: 'CLEAR_HIGHLIGHTS',
-			});
-			await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				valid: false,
-				targets:
-					currentTab === 'bias'
-						? result?.bias_claims.filter((x) => !x.valid).map((x) => x.text)
-						: result?.fact_check_claims.filter((x) => x.label !== 'SUPPORTED').map((x) => x.claim),
-			});
-			await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				valid: true,
-				targets:
-					currentTab === 'bias'
-						? result?.bias_claims.filter((x) => x.valid).map((x) => x.text)
-						: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').map((x) => x.claim),
 			});
 		}
 	}
@@ -104,6 +81,7 @@ export default function AnalysisPage({
 	}
 
 	async function switchTab(value: string) {
+		/*
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 		if (!tab?.id) return;
 
@@ -136,6 +114,7 @@ export default function AnalysisPage({
 				targets: result?.bias_claims.filter((x) => x.valid).map((x) => x.text),
 			});
 		}
+			*/
 	}
 
 	return (

@@ -1,17 +1,47 @@
 export default defineContentScript({
 	matches: ['<all_urls>'],
 	main() {
-		browser.runtime.onMessage.addListener(async (message) => {
+		browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 			// selects text from entire webpage
 			if (message.type === 'GET_PAGE_TEXT') {
 				await browser.storage.local.set({ selectedText: document.body.innerText });
 			}
 
+			if (message.type === 'GET_SELECTION_PARAGRAPHS') {
+				const selection = window.getSelection();
+				if (!selection || selection.rangeCount === 0) {
+					return Promise.resolve({ paragraphs: [] });
+				}
+
+				const range = selection.getRangeAt(0);
+
+				const container = document.createElement('div');
+				container.appendChild(range.cloneContents());
+
+				const paragraphs: string[] = [];
+
+				container.querySelectorAll('p, div, li').forEach((el) => {
+					const text = el.textContent?.trim();
+					if (text) paragraphs.push(text);
+				});
+
+				if (paragraphs.length === 0) {
+					const text = container.textContent?.trim();
+					if (text) paragraphs.push(text);
+				}
+
+				console.log('Extracted paragraphs:', paragraphs);
+				sendResponse(paragraphs);
+				return true;
+			}
+
 			// underlines sentences on webpage
 			if (message.type === 'UNDERLINE_SELECTION') {
-				const { targets } = message;
-				if (!targets || !Array.isArray(targets) || targets.length === 0) return;
+				const { sentences } = message;
+				console.log(sentences);
+				underlineSentences(sentences);
 
+				/*
 				console.log('HIGHLIGHT_TEXT message received:', targets);
 
 				// 1) Remove previous highlights
@@ -117,12 +147,24 @@ export default defineContentScript({
 						if (!firstMatchEl) firstMatchEl = span;
 					}
 				});
+				*/
 			}
 
 			if (message.type === 'HIGHLIGHT_TEXT') {
-				const { target } = message;
-				if (!target) return;
+				const { idx } = message;
+				const spans = document.querySelectorAll(`span.underline-${idx}`);
 
+				spans.forEach((span) => {
+					// Add yellow background
+					(span as HTMLElement).style.backgroundColor = 'yellow';
+				});
+
+				const firstSpan = spans[0] as HTMLElement | undefined;
+				if (firstSpan) {
+					firstSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
+
+				/*
 				console.log('HIGHLIGHT_TEXT message received:', target);
 
 				// Remove previous highlights
@@ -340,24 +382,30 @@ export default defineContentScript({
 						console.error('Error scrolling to first match:', e);
 					}
 				}
+				*/
 			}
 
 			// clears highlights from webpage
 			if (message.type === 'CLEAR_HIGHLIGHTS') {
-				const existing = document.querySelectorAll('.highlight');
-				existing.forEach((span) => {
-					const parent = span.parentNode;
-					if (parent) parent.replaceChild(document.createTextNode(span.textContent || ''), span);
+				const underlinedSpans = document.querySelectorAll('span[class^="underline"]');
+
+				underlinedSpans.forEach((span) => {
+					(span as HTMLElement).style.backgroundColor = '';
 				});
 			}
 			// clears underlines from webpage
 			if (message.type === 'CLEAR_UNDERLINES') {
-				const existing = document.querySelectorAll('.my-extension-underline');
-				existing.forEach((span) => {
+				const underlinedSpans = document.querySelectorAll('span[class^="underline-"]');
+
+				underlinedSpans.forEach((span) => {
 					const parent = span.parentNode;
-					if (parent) parent.replaceChild(document.createTextNode(span.textContent || ''), span);
+					if (!parent) return;
+
+					// Replace the <span> with its text content
+					parent.replaceChild(document.createTextNode(span.textContent || ''), span);
 				});
 			}
+
 			// clear selected text from webpage
 			if (message.type === 'CLEAR_SELECTION') {
 				window.getSelection()?.removeAllRanges();
@@ -382,4 +430,103 @@ function normalizeSpacesForPattern(s: string) {
 		.replace(/\u00A0/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();
+}
+
+function underlineSentences(sentences: { text: string; valid: boolean }[]) {
+	const normalize = (str: string) =>
+		str.replace(/\s+/g, ' ').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
+
+	// Select text elements, skip figures/media
+	const allElements = Array.from(
+		document.querySelectorAll<HTMLElement>('p, h1, h2, h3, h4, h5, h6, div, li, span')
+	);
+
+	const textElements = allElements.filter((el) => {
+		// Only include elements with at least one direct text node
+		return Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+	});
+
+	// Flatten text
+	const elementTexts = textElements.map((el) => el.textContent || '');
+	const flatText = elementTexts.join('\n');
+	const normalizedFlat = normalize(flatText);
+
+	// Precompute sentence matches in flat text
+	const matches = sentences
+		.map((s, idx) => {
+			const start = normalizedFlat.indexOf(normalize(s.text));
+			if (start === -1) return null;
+			return {
+				idx,
+				valid: s.valid,
+				start,
+				end: start + normalize(s.text).length,
+			};
+		})
+		.filter(Boolean) as {
+		idx: number;
+		valid: boolean;
+		start: number;
+		end: number;
+	}[];
+
+	let flatCursor = 0;
+
+	textElements.forEach((el) => {
+		const elText = el.textContent || '';
+		const normalizedElText = normalize(elText);
+		const elStart = flatCursor;
+		const elEnd = flatCursor + normalizedElText.length;
+
+		// Matches overlapping this element
+		const elMatches = matches
+			.filter((m) => m.start < elEnd && m.end > elStart)
+			.map((m) => ({
+				...m,
+				localStart: Math.max(0, m.start - elStart),
+				localEnd: Math.min(normalizedElText.length, m.end - elStart),
+			}))
+			.sort((a, b) => a.localStart - b.localStart);
+
+		if (!elMatches.length) {
+			flatCursor += normalizedElText.length + 1;
+			return;
+		}
+
+		const fragment = document.createDocumentFragment();
+		let cursor = 0;
+
+		elMatches.forEach(({ localStart, localEnd, idx, valid }) => {
+			if (cursor < localStart) {
+				fragment.appendChild(document.createTextNode(elText.slice(cursor, localStart)));
+			}
+
+			const span = document.createElement('span');
+			span.className = `underline-${idx}`;
+			span.style.cursor = 'pointer';
+			span.style.textDecoration = 'underline';
+			span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
+			span.dataset.underlined = 'true';
+			span.textContent = elText.slice(localStart, localEnd);
+
+			span.addEventListener('mouseenter', () => {
+				browser.runtime.sendMessage({ type: 'UNDERLINE_HOVER', idx });
+			});
+			span.addEventListener('mouseleave', () => {
+				browser.runtime.sendMessage({ type: 'UNDERLINE_HOVER', idx: undefined });
+			});
+
+			fragment.appendChild(span);
+			cursor = localEnd;
+		});
+
+		if (cursor < elText.length) {
+			fragment.appendChild(document.createTextNode(elText.slice(cursor)));
+		}
+
+		el.textContent = '';
+		el.appendChild(fragment);
+
+		flatCursor += normalizedElText.length + 1;
+	});
 }

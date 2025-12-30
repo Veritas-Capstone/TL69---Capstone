@@ -156,7 +156,7 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 
 		const data = await response.json();
 		const fact_checks_response = await response2.json();
-		console.log(fact_checks_response);
+		//console.log(fact_checks_response);
 
 		// Transform the response to match the expected format
 		// Map sentence bias results to "claims" format for the UI

@@ -28,80 +28,31 @@ function App() {
 
 	// call model on selected text
 	async function callModel() {
-		const storedResult = await browser.storage.local.get('storedResult');
+		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+		// const storedResult = await browser.storage.local.get('storedResult');
 		const selectedText = await browser.storage.local.get('selectedText');
 		setText(selectedText.selectedText);
 
 		// call API if result isn't stored
-		if (Object.keys(storedResult).length === 0 && selectedText.selectedText) {
+		if (true) {
 			setIsLoading(true);
 			setError(undefined);
 
 			try {
 				// clear selected text on webpage
 				const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-				await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+				//await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
 
 				// call model API
 				const data = await fetchAPI(selectedText.selectedText);
 				setResult(data);
-				console.log('HERE');
-				console.log(data);
 				await browser.storage.local.set({ storedResult: data });
 
 				// underline claims on webpage
-				/* 
-				idk calling this 10 times makes the multiline underlining more consistent
-				*/
 				await browser.tabs.sendMessage(tab.id ?? 0, {
 					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+					sentences: data?.bias_claims,
 				});
 			} catch (err) {
 				console.error('Error calling API:', err);
