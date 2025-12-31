@@ -2,30 +2,16 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircleIcon, CircleXIcon, TrendingUpDownIcon, TriangleAlertIcon } from 'lucide-react';
+import { AnalysisResult } from '@/types';
 
-interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
-	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
-}
+type BiasTabProps = {
+	result?: AnalysisResult;
+	currentHovered?: number;
+	handleHighlight: (index: number | undefined) => void;
+};
 
-export default function BiasTab({
-	result,
-	currentHovered,
-	handleHighlight,
-}: {
-	result: AnalysisResult | undefined;
-	currentHovered: number | undefined;
-	handleHighlight: Function;
-}) {
-	const getBiasDisplay = () => {
+export default function BiasTab({ result, currentHovered, handleHighlight }: BiasTabProps) {
+	function getBiasDisplay() {
 		if (!result) return { label: 'Center', percentage: 50, color: 'bg-gray-400' };
 
 		const probs = result.overall_probabilities;
@@ -51,9 +37,7 @@ export default function BiasTab({
 				color: 'bg-gray-400',
 			};
 		}
-	};
-
-	const biasDisplay = getBiasDisplay();
+	}
 
 	return (
 		<>
@@ -76,10 +60,10 @@ export default function BiasTab({
 				</CardHeader>
 				<CardContent className="flex flex-col gap-2">
 					<div className="flex justify-between">
-						<Badge className={biasDisplay.color}>{biasDisplay.label}</Badge>
-						<p className="text-xs text-gray-500">{biasDisplay.percentage}%</p>
+						<Badge className={getBiasDisplay().color}>{getBiasDisplay().label}</Badge>
+						<p className="text-xs text-gray-500">{getBiasDisplay().percentage}%</p>
 					</div>
-					<Progress value={biasDisplay.percentage} className={`[&>*]:${biasDisplay.color}`} />
+					<Progress value={getBiasDisplay().percentage} className={`[&>*]:${getBiasDisplay().color}`} />
 					{result && (
 						<div className="text-xs text-gray-500 mt-2">
 							<div className="flex justify-between">
@@ -100,9 +84,8 @@ export default function BiasTab({
 					{result?.bias_claims.map((claim, idx) => (
 						<div
 							key={`bias-${idx}`}
-							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white ${
-								currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'
-							}`}
+							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white
+								${currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'}`}
 							claim-idx={idx}
 							onMouseEnter={() => handleHighlight(idx)}
 							onMouseLeave={() => handleHighlight(undefined)}

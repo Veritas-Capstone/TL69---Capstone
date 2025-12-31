@@ -1,28 +1,14 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { ShieldIcon, CheckCircleIcon, TriangleAlertIcon } from 'lucide-react';
+import { AnalysisResult } from '@/types';
 
-interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
-	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
-}
+type ClaimTabProps = {
+	result?: AnalysisResult;
+	currentHovered?: number;
+	handleHighlight: (index: number | undefined) => void;
+};
 
-export default function ClaimTab({
-	result,
-	currentHovered,
-	handleHighlight,
-}: {
-	result: AnalysisResult | undefined;
-	currentHovered: string | undefined;
-	handleHighlight: Function;
-}) {
+export default function ClaimTab({ result, currentHovered, handleHighlight }: ClaimTabProps) {
 	return (
 		<>
 			<Card>
@@ -35,10 +21,10 @@ export default function ClaimTab({
 						<div
 							key={`fact-${idx}`}
 							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white 
-								${/*currentHovered && claim.claim.includes(currentHovered) && 'border-yellow-200'*/ ''}`}
-							/*claim-text={claim.claim}*/
-							onMouseEnter={() => handleHighlight(claim.claim)}
-							onMouseLeave={() => handleHighlight('')}
+								${currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'}`}
+							claim-idx={idx}
+							onMouseEnter={() => handleHighlight(idx)}
+							onMouseLeave={() => handleHighlight(undefined)}
 						>
 							{claim.valid ? (
 								<CheckCircleIcon className="min-w-6 h-6 text-green-400" />

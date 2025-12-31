@@ -11,18 +11,8 @@ export default defineBackground(() => {
 	browser.contextMenus.onClicked.addListener(async (info, tab) => {
 		if (info.menuItemId === 'analyzeHighlightedText') {
 			if (!tab?.id) return;
-
-			/*
-			await browser.sidePanel.open({ tabId: tab.id });
-			await browser.storage.local.remove('storedResult');
-			await browser.runtime.sendMessage({
-				type: 'CALL_MODEL',
-			});
-			*/
-
 			// open sidepanel, store selected text, call model on text
 			await browser.sidePanel.open({ tabId: tab.id });
-			await browser.storage.local.remove('storedResult');
 			await browser.storage.local.set({ selectedText: info.selectionText });
 			await browser.runtime.sendMessage({
 				type: 'CALL_MODEL',

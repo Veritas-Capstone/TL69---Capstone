@@ -6,19 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import InputPage from './InputPage';
 import AnalysisPage from './AnalysisPage';
 import { Spinner } from '@/components/ui/spinner';
-
-export interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
-	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
-}
+import { AnalysisResult } from '@/types';
 
 function App() {
 	const [text, setText] = useState<string>();
@@ -28,42 +16,31 @@ function App() {
 
 	// call model on selected text
 	async function callModel() {
-		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-
-		// const storedResult = await browser.storage.local.get('storedResult');
 		const selectedText = await browser.storage.local.get('selectedText');
 		setText(selectedText.selectedText);
 
-		// call API if result isn't stored
-		if (true) {
-			setIsLoading(true);
-			setError(undefined);
+		setIsLoading(true);
+		setError(undefined);
 
-			try {
-				// clear selected text on webpage
-				const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-				//await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+		try {
+			const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 
-				// call model API
-				const data = await fetchAPI(selectedText.selectedText);
-				setResult(data);
-				await browser.storage.local.set({ storedResult: data });
+			// clear selected text on webpage
+			await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
 
-				// underline claims on webpage
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					sentences: data?.bias_claims,
-				});
-			} catch (err) {
-				console.error('Error calling API:', err);
-				setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
-			} finally {
-				setIsLoading(false);
-			}
-		}
-		// use stored result
-		else {
-			setResult(storedResult.storedResult);
+			// call model API
+			const data = await fetchAPI(selectedText.selectedText);
+			setResult(data);
+
+			// underline claims on webpage
+			await browser.tabs.sendMessage(tab.id ?? 0, {
+				type: 'UNDERLINE_SELECTION',
+				sentences: data?.bias_claims,
+			});
+		} catch (err) {
+			setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
+		} finally {
+			setIsLoading(false);
 		}
 	}
 

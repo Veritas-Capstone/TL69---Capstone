@@ -5,31 +5,16 @@ import { TabsTrigger } from '@radix-ui/react-tabs';
 import { TextIcon } from 'lucide-react';
 import BiasTab from './BiasTab';
 import ClaimTab from './ClaimTab';
+import { AnalysisResult } from '@/types';
 
-interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
-	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
-}
-
-export default function AnalysisPage({
-	text,
-	setText,
-	result,
-	setResult,
-}: {
+type AnalysisProps = {
 	text: string | undefined;
 	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
 	result: AnalysisResult | undefined;
 	setResult: React.Dispatch<React.SetStateAction<AnalysisResult | undefined>>;
-}) {
+};
+
+export default function AnalysisPage({ text, setText, result, setResult }: AnalysisProps) {
 	const [currentHovered, setCurrentHovered] = useState<number>();
 	const [currentTab, setCurrentTab] = useState<string>('bias');
 
@@ -50,14 +35,14 @@ export default function AnalysisPage({
 	}, []);
 
 	// highlights sentence on webpage
-	async function handleHighlight(idx: number) {
+	async function handleHighlight(idx: number | undefined) {
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 		if (!tab?.id) return;
 
 		if (idx !== undefined) {
 			await browser.tabs.sendMessage(tab.id, {
 				type: 'HIGHLIGHT_TEXT',
-				sentences: result,
+				valid: currentTab === 'bias' ? result?.bias_claims[idx].valid : result?.fact_check_claims[idx].valid,
 				idx: idx,
 			});
 		} else {
@@ -71,7 +56,6 @@ export default function AnalysisPage({
 	async function newAnalysis() {
 		setText(undefined);
 		setResult(undefined);
-		await browser.storage.local.remove('storedResult');
 		await browser.storage.local.remove('selectedText');
 
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
@@ -80,41 +64,25 @@ export default function AnalysisPage({
 		});
 	}
 
+	// switch between bias and claims tabs
 	async function switchTab(value: string) {
-		/*
 		const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 		if (!tab?.id) return;
 
+		await browser.tabs.sendMessage(tab.id, {
+			type: 'CLEAR_UNDERLINES',
+		});
 		if (value === 'claims') {
-			await browser.tabs.sendMessage(tab.id, {
-				type: 'CLEAR_UNDERLINES',
-			});
 			await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
-				valid: false,
-				targets: result?.fact_check_claims.filter((x) => !x.label !== 'SUPPORTED').map((x) => x.claim),
-			});
-			await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				valid: true,
-				targets: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').map((x) => x.claim),
+				sentences: result?.fact_check_claims,
 			});
 		} else {
-			await browser.tabs.sendMessage(tab.id, {
-				type: 'CLEAR_UNDERLINES',
-			});
 			await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
-				valid: false,
-				targets: result?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-			});
-			await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				valid: true,
-				targets: result?.bias_claims.filter((x) => x.valid).map((x) => x.text),
+				sentences: result?.bias_claims,
 			});
 		}
-			*/
 	}
 
 	return (

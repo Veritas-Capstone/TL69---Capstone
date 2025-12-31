@@ -5,13 +5,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { GlobeIcon, ScanIcon, SearchIcon } from 'lucide-react';
 
-export default function InputPage({
-	setText,
-	callModel,
-}: {
+type InputPageProps = {
 	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
 	callModel: Function;
-}) {
+};
+
+export default function InputPage({ setText, callModel }: InputPageProps) {
 	const [tempText, setTempText] = useState<string>();
 
 	// call model on text from entire webpage

@@ -1,3 +1,5 @@
+import { AnalysisResult } from '@/types';
+
 // sample fetch
 const API_URL = 'http://localhost:8000';
 
@@ -12,30 +14,6 @@ export interface SentenceBias {
 		Center: number;
 		Right: number;
 	};
-}
-
-export interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: Array<{
-		text: string;
-		category: string;
-		description: string;
-		valid: boolean;
-	}>;
-	// Mock fact-check claims
-	fact_check_claims: Array<{
-		text: string;
-		category: string;
-		description: string;
-		valid: boolean;
-	}>;
 }
 
 // export default async function fetchAPI(text: string) {
