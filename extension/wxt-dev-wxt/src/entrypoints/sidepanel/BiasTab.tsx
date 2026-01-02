@@ -8,9 +8,15 @@ type BiasTabProps = {
 	result?: AnalysisResult;
 	currentHovered?: number;
 	handleHighlight: (index: number | undefined) => void;
+	failedUnderlinesArr: number[];
 };
 
-export default function BiasTab({ result, currentHovered, handleHighlight }: BiasTabProps) {
+export default function BiasTab({
+	result,
+	currentHovered,
+	handleHighlight,
+	failedUnderlinesArr,
+}: BiasTabProps) {
 	function getBiasDisplay() {
 		if (!result) return { label: 'Center', percentage: 50, color: 'bg-gray-400' };
 
@@ -39,70 +45,91 @@ export default function BiasTab({ result, currentHovered, handleHighlight }: Bia
 		}
 	}
 
-	return (
-		<>
-			<div className="flex items-center justify-between gap-2">
-				<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
-					<CheckCircleIcon size="16" className="mb-2 text-green-400" />
-					<p>{result?.checks}</p>
-					<p>Checks</p>
-				</Card>
-				<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
-					<CircleXIcon size="16" className="mb-2 text-red-400" />
-					<p>{result?.issues}</p>
-					<p>Issues</p>
-				</Card>
-			</div>
+	if ((result?.bias_claims.length ?? 0) - failedUnderlinesArr.length < 1) {
+		return (
 			<Card>
 				<CardHeader className="flex gap-2 items-center">
-					<TrendingUpDownIcon size={20} />
-					<p className="font-semibold text-base">Bias Analysis</p>
+					<p className="font-semibold text-base">No Text Detected</p>
 				</CardHeader>
-				<CardContent className="flex flex-col gap-2">
-					<div className="flex justify-between">
-						<Badge className={getBiasDisplay().color}>{getBiasDisplay().label}</Badge>
-						<p className="text-xs text-gray-500">{getBiasDisplay().percentage}%</p>
-					</div>
-					<Progress value={getBiasDisplay().percentage} className={`[&>*]:${getBiasDisplay().color}`} />
-					{result && (
-						<div className="text-xs text-gray-500 mt-2">
+				<CardContent className="flex flex-col gap-2">Please try again</CardContent>
+			</Card>
+		);
+	} else {
+		return (
+			<>
+				<div className="flex items-center justify-between gap-2">
+					<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
+						<CheckCircleIcon size="16" className="mb-2 text-green-400" />
+						<p>{(result?.bias_claims.length ?? 0) - failedUnderlinesArr.length}</p>
+						<p>Checks</p>
+					</Card>
+					<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
+						<CircleXIcon size="16" className="mb-2 text-red-400" />
+						<p>
+							{
+								result?.bias_claims.filter((claim, idx) => !claim.valid && !failedUnderlinesArr.includes(idx))
+									.length
+							}
+						</p>
+						<p>Issues</p>
+					</Card>
+				</div>
+				<>
+					<Card>
+						<CardHeader className="flex gap-2 items-center">
+							<TrendingUpDownIcon size={20} />
+							<p className="font-semibold text-base">Bias Analysis</p>
+						</CardHeader>
+						<CardContent className="flex flex-col gap-2">
 							<div className="flex justify-between">
-								<span>Left: {Math.round(result.overall_probabilities.Left * 100)}%</span>
-								<span>Center: {Math.round(result.overall_probabilities.Center * 100)}%</span>
-								<span>Right: {Math.round(result.overall_probabilities.Right * 100)}%</span>
+								<Badge className={getBiasDisplay().color}>{getBiasDisplay().label}</Badge>
+								<p className="text-xs text-gray-500">{getBiasDisplay().percentage}%</p>
 							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
-			<Card>
-				<CardHeader className="flex gap-2 items-center">
-					<TrendingUpDownIcon size={20} />
-					<p className="font-semibold text-base">Sentence-Level Bias</p>
-				</CardHeader>
-				<CardContent className="flex flex-col gap-2">
-					{result?.bias_claims.map((claim, idx) => (
-						<div
-							key={`bias-${idx}`}
-							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white
-								${currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'}`}
-							claim-idx={idx}
-							onMouseEnter={() => handleHighlight(idx)}
-							onMouseLeave={() => handleHighlight(undefined)}
-						>
-							{claim.valid ? (
-								<CheckCircleIcon className="w-12 h-12 text-green-400" />
-							) : (
-								<TriangleAlertIcon className="w-12 h-12 text-red-400" />
+							<Progress value={getBiasDisplay().percentage} className={`[&>*]:${getBiasDisplay().color}`} />
+							{result && (
+								<div className="text-xs text-gray-500 mt-2">
+									<div className="flex justify-between">
+										<span>Left: {Math.round(result.overall_probabilities.Left * 100)}%</span>
+										<span>Center: {Math.round(result.overall_probabilities.Center * 100)}%</span>
+										<span>Right: {Math.round(result.overall_probabilities.Right * 100)}%</span>
+									</div>
+								</div>
 							)}
-							<div className="flex flex-col">
-								<h3 className="text-sm">{claim.category}</h3>
-								<p className="text-xs text-gray-400">{claim.description}</p>
-							</div>
-						</div>
-					))}
-				</CardContent>
-			</Card>
-		</>
-	);
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader className="flex gap-2 items-center">
+							<TrendingUpDownIcon size={20} />
+							<p className="font-semibold text-base">Sentence-Level Bias</p>
+						</CardHeader>
+						<CardContent className="flex flex-col gap-2">
+							{result?.bias_claims.map(
+								(claim, idx) =>
+									!failedUnderlinesArr.includes(idx) && (
+										<div
+											key={`bias-${idx}`}
+											className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white
+											${currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'}`}
+											claim-idx={idx}
+											onMouseEnter={() => handleHighlight(idx)}
+											onMouseLeave={() => handleHighlight(undefined)}
+										>
+											{claim.valid ? (
+												<CheckCircleIcon className="w-12 h-12 text-green-400" />
+											) : (
+												<TriangleAlertIcon className="w-12 h-12 text-red-400" />
+											)}
+											<div className="flex flex-col">
+												<h3 className="text-sm">{claim.category}</h3>
+												<p className="text-xs text-gray-400">{claim.description}</p>
+											</div>
+										</div>
+									)
+							)}
+						</CardContent>
+					</Card>
+				</>
+			</>
+		);
+	}
 }

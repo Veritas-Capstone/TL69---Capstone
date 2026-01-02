@@ -12,7 +12,8 @@ export default defineContentScript({
 			// underlines sentences on webpage
 			if (message.type === 'UNDERLINE_SELECTION') {
 				const { sentences } = message;
-				underlineSentences(sentences);
+				const res = underlineSentences(sentences);
+				sendResponse(res);
 			}
 
 			// highlight specific sentence

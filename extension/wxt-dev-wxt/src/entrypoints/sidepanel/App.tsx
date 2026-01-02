@@ -13,6 +13,7 @@ function App() {
 	const [result, setResult] = useState<AnalysisResult | undefined>();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string>();
+	const [failedUnderlinesArr, setFailedUnderlinesArr] = useState<number[]>([]);
 
 	// call model on selected text
 	async function callModel() {
@@ -33,10 +34,13 @@ function App() {
 			setResult(data);
 
 			// underline claims on webpage
-			await browser.tabs.sendMessage(tab.id ?? 0, {
+			const failed = await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
 				sentences: data?.bias_claims,
 			});
+			console.log('HERE');
+			console.log(failed);
+			setFailedUnderlinesArr(failed);
 		} catch (err) {
 			setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
 		} finally {
@@ -76,7 +80,14 @@ function App() {
 				) : !result ? (
 					<InputPage setText={setText} callModel={callModel} />
 				) : (
-					<AnalysisPage text={text} setText={setText} result={result} setResult={setResult} />
+					<AnalysisPage
+						text={text}
+						setText={setText}
+						result={result}
+						setResult={setResult}
+						failedUnderlinesArr={failedUnderlinesArr}
+						setFailedUnderlinesArr={setFailedUnderlinesArr}
+					/>
 				)}
 			</Card>
 			<div className="flex flex-col justify-center gap-2 mt-8">

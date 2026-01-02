@@ -12,9 +12,18 @@ type AnalysisProps = {
 	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
 	result: AnalysisResult | undefined;
 	setResult: React.Dispatch<React.SetStateAction<AnalysisResult | undefined>>;
+	failedUnderlinesArr: number[];
+	setFailedUnderlinesArr: React.Dispatch<React.SetStateAction<number[]>>;
 };
 
-export default function AnalysisPage({ text, setText, result, setResult }: AnalysisProps) {
+export default function AnalysisPage({
+	text,
+	setText,
+	result,
+	setResult,
+	failedUnderlinesArr,
+	setFailedUnderlinesArr,
+}: AnalysisProps) {
 	const [currentHovered, setCurrentHovered] = useState<number>();
 	const [currentTab, setCurrentTab] = useState<string>('bias');
 
@@ -73,15 +82,17 @@ export default function AnalysisPage({ text, setText, result, setResult }: Analy
 			type: 'CLEAR_UNDERLINES',
 		});
 		if (value === 'claims') {
-			await browser.tabs.sendMessage(tab.id ?? 0, {
+			const failed = await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
 				sentences: result?.fact_check_claims,
 			});
+			setFailedUnderlinesArr(failed);
 		} else {
-			await browser.tabs.sendMessage(tab.id ?? 0, {
+			const failed = await browser.tabs.sendMessage(tab.id ?? 0, {
 				type: 'UNDERLINE_SELECTION',
 				sentences: result?.bias_claims,
 			});
+			setFailedUnderlinesArr(failed);
 		}
 	}
 
@@ -133,14 +144,16 @@ export default function AnalysisPage({ text, setText, result, setResult }: Analy
 						result={result}
 						currentHovered={currentHovered}
 						handleHighlight={handleHighlight}
+						failedUnderlinesArr={failedUnderlinesArr}
 					/>
 				</TabsContent>
-				<TabsContent value="claims">
+				<TabsContent value="claims" className="flex flex-col gap-4">
 					<ClaimTab
 						key={currentTab}
 						result={result}
 						currentHovered={currentHovered}
 						handleHighlight={handleHighlight}
+						failedUnderlinesArr={failedUnderlinesArr}
 					/>
 				</TabsContent>
 			</Tabs>

@@ -1,5 +1,4 @@
 /* don't look at this, chatGPT wrote it all and I do not know what it does 🔥🔥🔥 */
-
 export function underlineSentences(sentences: { text?: string; claim?: string; valid: boolean }[]) {
 	const normalize = (str: string) =>
 		str.replace(/\s+/g, ' ').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
@@ -37,54 +36,52 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 		return rawIdx;
 	}
 
-	/**
-	 * 🔥 Deep unwrap inline tags (handles <a><em>text</em></a>)
-	 */
 	function unwrapInlineTags(root: ParentNode) {
 		const nodes = root.querySelectorAll('a, em, strong, cite, span');
-
 		nodes.forEach((node) => {
-			// 🚫 Ignore anything inside <nav>
 			if (node.closest('nav')) return;
-
 			const parent = node.parentNode;
 			if (!parent) return;
-
-			while (node.firstChild) {
-				parent.insertBefore(node.firstChild, node);
-			}
+			while (node.firstChild) parent.insertBefore(node.firstChild, node);
 			parent.removeChild(node);
 		});
 	}
 
-	// 1️⃣ Select candidate containers FIRST
 	const containers = Array.from(
 		document.querySelectorAll<HTMLElement>(
 			'p, h1, h2, h3, h4, h5, h6, li, span, figcaption, blockquote, footer, aside, cite'
 		)
 	).filter((el) => !el.closest('script, style'));
 
-	// 2️⃣ UNWRAP INLINE TAGS BEFORE FILTERING
 	containers.forEach(unwrapInlineTags);
 
-	// 3️⃣ Now safely find real text elements
 	const textElements = containers.filter((el) =>
 		Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())
 	);
 
-	// 4️⃣ Flatten text
 	const elementTexts = textElements.map((el) => el.textContent || '');
 	const flatText = elementTexts.join('\n');
 	const normalizedFlat = normalize(flatText);
 
-	// 5️⃣ Match sentences
+	// 🔴 NEW: track missing indices
+	const missingIndices: number[] = [];
+
 	const matches = sentences
 		.map((s, idx) => {
 			const sentenceText = s.text ?? s.claim;
-			if (!sentenceText) return null;
+			if (!sentenceText) {
+				missingIndices.push(idx);
+				return null;
+			}
+
 			const normalizedSentence = normalize(sentenceText);
 			const start = normalizedFlat.indexOf(normalizedSentence);
-			if (start === -1) return null;
+
+			if (start === -1) {
+				missingIndices.push(idx);
+				return null;
+			}
+
 			return {
 				idx,
 				valid: s.valid,
@@ -96,7 +93,6 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 
 	let flatCursor = 0;
 
-	// 6️⃣ Underline pass
 	textElements.forEach((el) => {
 		const elText = el.textContent || '';
 		const normalizedElText = normalize(elText);
@@ -158,4 +154,6 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 
 		flatCursor += normalizedElText.length + 1;
 	});
+
+	return missingIndices;
 }
