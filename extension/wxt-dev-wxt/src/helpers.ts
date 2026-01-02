@@ -1,10 +1,9 @@
+/* don't look at this, chatGPT wrote it all and I do not know what it does 🔥🔥🔥 */
+
 export function underlineSentences(sentences: { text?: string; claim?: string; valid: boolean }[]) {
 	const normalize = (str: string) =>
 		str.replace(/\s+/g, ' ').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
 
-	/**
-	 * Map normalized index to raw text index safely
-	 */
 	function mapNormalizedIndexToRaw(raw: string, normalizedIndex: number, inclusive = false) {
 		let rawIdx = 0;
 		let normIdx = 0;
@@ -38,27 +37,47 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 		return rawIdx;
 	}
 
-	// Select all text elements, skip script/style/figure/blockquote if desired
-	const allElements = Array.from(
+	/**
+	 * 🔥 Deep unwrap inline tags (handles <a><em>text</em></a>)
+	 */
+	function unwrapInlineTags(root: ParentNode) {
+		const nodes = root.querySelectorAll('a, em, strong, cite, span');
+
+		nodes.forEach((node) => {
+			// 🚫 Ignore anything inside <nav>
+			if (node.closest('nav')) return;
+
+			const parent = node.parentNode;
+			if (!parent) return;
+
+			while (node.firstChild) {
+				parent.insertBefore(node.firstChild, node);
+			}
+			parent.removeChild(node);
+		});
+	}
+
+	// 1️⃣ Select candidate containers FIRST
+	const containers = Array.from(
 		document.querySelectorAll<HTMLElement>(
-			'p, h1, h2, h3, h4, h5, h6, li, div, span, figcaption, strong, em, blockquote, footer, aside'
+			'p, h1, h2, h3, h4, h5, h6, li, span, figcaption, blockquote, footer, aside, cite'
 		)
+	).filter((el) => !el.closest('script, style'));
+
+	// 2️⃣ UNWRAP INLINE TAGS BEFORE FILTERING
+	containers.forEach(unwrapInlineTags);
+
+	// 3️⃣ Now safely find real text elements
+	const textElements = containers.filter((el) =>
+		Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())
 	);
 
-	const textElements = allElements.filter((el) => {
-		// Skip elements inside script/style
-		if (el.closest('script, style')) return false;
-
-		// Only elements with at least one direct text node
-		return Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
-	});
-
-	// Flatten text
+	// 4️⃣ Flatten text
 	const elementTexts = textElements.map((el) => el.textContent || '');
 	const flatText = elementTexts.join('\n');
 	const normalizedFlat = normalize(flatText);
 
-	// Precompute matches
+	// 5️⃣ Match sentences
 	const matches = sentences
 		.map((s, idx) => {
 			const sentenceText = s.text ?? s.claim;
@@ -77,6 +96,7 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 
 	let flatCursor = 0;
 
+	// 6️⃣ Underline pass
 	textElements.forEach((el) => {
 		const elText = el.textContent || '';
 		const normalizedElText = normalize(elText);
@@ -104,24 +124,18 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 			const rawCursor = mapNormalizedIndexToRaw(elText, cursor);
 			const rawLocalStart = mapNormalizedIndexToRaw(elText, localStart);
 
-			// Add text before the span
 			if (rawLocalStart > rawCursor) {
 				fragment.appendChild(document.createTextNode(elText.slice(rawCursor, rawLocalStart)));
 			}
 
-			// Add the span
-			const rawStart = rawLocalStart;
 			const rawEnd = mapNormalizedIndexToRaw(elText, localEnd, true);
 
 			const span = document.createElement('span');
 			span.className = `underline-${idx}`;
 			span.style.cursor = 'pointer';
-			span.style.paddingTop = '2px';
-			span.style.paddingBottom = '2px';
 			span.style.textDecoration = 'underline';
 			span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
-			span.dataset.underlined = 'true';
-			span.textContent = elText.slice(rawStart, rawEnd);
+			span.textContent = elText.slice(rawLocalStart, rawEnd);
 
 			span.addEventListener('mouseenter', () => {
 				browser.runtime.sendMessage({ type: 'UNDERLINE_HOVER', idx });
@@ -134,7 +148,6 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 			cursor = localEnd;
 		});
 
-		// Remaining text after last span
 		if (cursor < normalizedElText.length) {
 			const rawCursor = mapNormalizedIndexToRaw(elText, cursor);
 			fragment.appendChild(document.createTextNode(elText.slice(rawCursor)));
