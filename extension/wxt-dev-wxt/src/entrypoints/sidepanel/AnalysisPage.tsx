@@ -53,6 +53,7 @@ export default function AnalysisPage({
 				type: 'HIGHLIGHT_TEXT',
 				valid: currentTab === 'bias' ? result?.bias_claims[idx].valid : result?.fact_check_claims[idx].valid,
 				idx: idx,
+				category: result?.bias_claims[idx].category,
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {
@@ -97,13 +98,14 @@ export default function AnalysisPage({
 	}
 
 	return (
-		<CardContent className="w-full flex flex-col gap-4">
+		<>
 			<div className="flex items-center justify-between">
 				<h1 className="font-semibold text-sm">Analysis Results</h1>
 				<Button variant="link" className="p-0" onClick={newAnalysis}>
 					New Analysis
 				</Button>
 			</div>
+			{/* 
 			<Card className="gap-2 h-[125px] overflow-y-auto py-3">
 				<CardHeader className="flex gap-2 items-center">
 					<TextIcon size={20} />
@@ -115,10 +117,11 @@ export default function AnalysisPage({
 					</div>
 				</CardContent>
 			</Card>
+			*/}
 
 			<Tabs
 				defaultValue="bias"
-				className="max-w-xs w-full gap-4"
+				className="w-full gap-4"
 				onValueChange={(e) => {
 					setCurrentTab(e);
 					switchTab(e);
@@ -157,6 +160,6 @@ export default function AnalysisPage({
 					/>
 				</TabsContent>
 			</Tabs>
-		</CardContent>
+		</>
 	);
 }

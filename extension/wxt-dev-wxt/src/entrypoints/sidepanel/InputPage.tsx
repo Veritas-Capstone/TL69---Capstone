@@ -34,7 +34,7 @@ export default function InputPage({ setText, callModel }: InputPageProps) {
 			<CardDescription className="text-xs text-gray-500">
 				Detect bias, verify facts, find perspectives
 			</CardDescription>
-			<CardContent className="w-full flex flex-col gap-4">
+			<div className="w-full flex flex-col gap-4">
 				<Card className="bg-gray-100">
 					<CardContent className="flex flex-col gap-4">
 						<div className="flex gap-2">
@@ -66,7 +66,7 @@ export default function InputPage({ setText, callModel }: InputPageProps) {
 				<Button variant={'outline'} disabled={!tempText} onClick={analyzeText}>
 					<SearchIcon /> Analyze Text
 				</Button>
-			</CardContent>
+			</div>
 		</>
 	);
 }

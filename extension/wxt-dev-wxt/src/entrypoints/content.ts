@@ -18,13 +18,22 @@ export default defineContentScript({
 
 			// highlight specific sentence
 			if (message.type === 'HIGHLIGHT_TEXT') {
-				const { idx, valid } = message;
+				const { idx, valid, category } = message;
 				const spans = document.querySelectorAll(`span.underline-${idx}`);
 
 				spans.forEach((span) => {
-					(span as HTMLElement).style.backgroundColor = valid
-						? 'rgba(74, 222, 128, 0.5)'
-						: 'rgba(244, 63, 94, 0.5)';
+					if (category) {
+						(span as HTMLElement).style.backgroundColor =
+							category === 'Left-leaning'
+								? 'rgba(59, 130, 246, 0.5)'
+								: category === 'Right-leaning'
+								? 'rgba(239, 68, 68, 0.5)'
+								: 'rgba(139, 92, 246, 0.5)';
+					} else {
+						(span as HTMLElement).style.backgroundColor = valid
+							? 'rgba(74, 222, 128, 0.5)'
+							: 'rgba(244, 63, 94, 0.5)';
+					}
 				});
 
 				const firstSpan = spans[0] as HTMLElement | undefined;

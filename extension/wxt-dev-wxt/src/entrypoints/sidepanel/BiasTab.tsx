@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircleIcon, CircleXIcon, TrendingUpDownIcon, TriangleAlertIcon } from 'lucide-react';
+import { PieChart, Pie, Cell, Label } from 'recharts';
+import { ChartColumnBigIcon, SearchCheckIcon } from 'lucide-react';
 import { AnalysisResult } from '@/types';
 
 type BiasTabProps = {
@@ -17,33 +17,29 @@ export default function BiasTab({
 	handleHighlight,
 	failedUnderlinesArr,
 }: BiasTabProps) {
-	function getBiasDisplay() {
-		if (!result) return { label: 'Center', percentage: 50, color: 'bg-gray-400' };
-
-		const probs = result.overall_probabilities;
-		const maxProb = Math.max(probs.Left, probs.Center, probs.Right);
-		const percentage = Math.round(maxProb * 100);
-
-		if (result.overall_bias === 'Left') {
-			return {
-				label: 'Left wing',
-				percentage,
-				color: 'bg-blue-400',
-			};
-		} else if (result.overall_bias === 'Right') {
-			return {
-				label: 'Right wing',
-				percentage,
-				color: 'bg-red-400',
-			};
-		} else {
-			return {
-				label: 'Centrist',
-				percentage,
-				color: 'bg-gray-400',
-			};
-		}
-	}
+	const chartData = [
+		{
+			name: 'Left',
+			value:
+				result?.bias_claims.filter(
+					(x, idx) => x.category === 'Left-leaning' && !failedUnderlinesArr.includes(idx)
+				).length ?? 0,
+		},
+		{
+			name: 'Right',
+			value:
+				result?.bias_claims.filter(
+					(x, idx) => x.category === 'Right-leaning' && !failedUnderlinesArr.includes(idx)
+				).length ?? 0,
+		},
+		{
+			name: 'Center',
+			value:
+				result?.bias_claims.filter(
+					(x, idx) => x.category === 'Centrist' && !failedUnderlinesArr.includes(idx)
+				).length ?? 0,
+		},
+	];
 
 	if ((result?.bias_claims.length ?? 0) - failedUnderlinesArr.length < 1) {
 		return (
@@ -57,41 +53,62 @@ export default function BiasTab({
 	} else {
 		return (
 			<>
-				<div className="flex items-center justify-between gap-2">
-					<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
-						<CheckCircleIcon size="16" className="mb-2 text-green-400" />
-						<p>{(result?.bias_claims.length ?? 0) - failedUnderlinesArr.length}</p>
-						<p>Checks</p>
-					</Card>
-					<Card className="flex flex-col gap-0 items-center justify-center w-full py-3">
-						<CircleXIcon size="16" className="mb-2 text-red-400" />
-						<p>
-							{
-								result?.bias_claims.filter((claim, idx) => !claim.valid && !failedUnderlinesArr.includes(idx))
-									.length
-							}
-						</p>
-						<p>Issues</p>
-					</Card>
-				</div>
 				<>
-					<Card>
+					<Card className="gap-0">
 						<CardHeader className="flex gap-2 items-center">
-							<TrendingUpDownIcon size={20} />
-							<p className="font-semibold text-base">Bias Analysis</p>
+							<ChartColumnBigIcon size={20} />
+							<p className="font-semibold text-base">Bias Summary</p>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-2">
-							<div className="flex justify-between">
-								<Badge className={getBiasDisplay().color}>{getBiasDisplay().label}</Badge>
-								<p className="text-xs text-gray-500">{getBiasDisplay().percentage}%</p>
-							</div>
-							<Progress value={getBiasDisplay().percentage} className={`[&>*]:${getBiasDisplay().color}`} />
+							<PieChart className="w-[70%] max-w-[150px] min-h-[150px] m-auto" responsive>
+								<Pie
+									data={chartData}
+									dataKey="value"
+									nameKey="name"
+									fill="#8884d8"
+									isAnimationActive={true}
+									innerRadius={45}
+								>
+									<Label value={`${result?.bias_claims.length} Checks`} position={'center'} />
+									{chartData.map((entry) => (
+										<Cell
+											fill={
+												entry.name === 'Left' ? '#3b82f6' : entry.name === 'Right' ? '#ef4444' : '#8b5cf6'
+											}
+										/>
+									))}
+								</Pie>
+							</PieChart>
 							{result && (
-								<div className="text-xs text-gray-500 mt-2">
-									<div className="flex justify-between">
-										<span>Left: {Math.round(result.overall_probabilities.Left * 100)}%</span>
-										<span>Center: {Math.round(result.overall_probabilities.Center * 100)}%</span>
-										<span>Right: {Math.round(result.overall_probabilities.Right * 100)}%</span>
+								<div className="text-xs max-w-[225px] ml-auto mr-auto text-gray-500">
+									<div className="flex justify-between gap-4">
+										<span>
+											Left:{' '}
+											{Math.round(
+												(chartData[0].value /
+													(chartData[0].value + chartData[1].value + chartData[2].value)) *
+													100
+											)}
+											%
+										</span>
+										<span>
+											Center:{' '}
+											{Math.round(
+												(chartData[2].value /
+													(chartData[0].value + chartData[1].value + chartData[2].value)) *
+													100
+											)}
+											%
+										</span>
+										<span>
+											Right:{' '}
+											{Math.round(
+												(chartData[1].value /
+													(chartData[0].value + chartData[1].value + chartData[2].value)) *
+													100
+											)}
+											%
+										</span>
 									</div>
 								</div>
 							)}
@@ -99,7 +116,7 @@ export default function BiasTab({
 					</Card>
 					<Card>
 						<CardHeader className="flex gap-2 items-center">
-							<TrendingUpDownIcon size={20} />
+							<SearchCheckIcon size={20} />
 							<p className="font-semibold text-base">Sentence-Level Bias</p>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-2">
@@ -109,15 +126,31 @@ export default function BiasTab({
 										<div
 											key={`bias-${idx}`}
 											className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white
-											${currentHovered !== undefined && idx === currentHovered && 'border-yellow-200'}`}
+											${
+												currentHovered !== undefined &&
+												idx === currentHovered &&
+												(claim.category === 'Left-leaning'
+													? 'border-blue-500!'
+													: claim.category === 'Right-leaning'
+													? 'border-red-500!'
+													: 'border-purple-500!')
+											}`}
 											claim-idx={idx}
 											onMouseEnter={() => handleHighlight(idx)}
 											onMouseLeave={() => handleHighlight(undefined)}
 										>
-											{claim.valid ? (
-												<CheckCircleIcon className="w-12 h-12 text-green-400" />
+											{claim.category === 'Left-leaning' ? (
+												<div className="bg-blue-500 text-white font-bold min-w-6 h-6 flex justify-center items-center text-lg">
+													L
+												</div>
+											) : claim.category === 'Right-leaning' ? (
+												<div className="bg-red-500 text-white font-bold min-w-6 h-6 flex justify-center items-center text-lg">
+													R
+												</div>
 											) : (
-												<TriangleAlertIcon className="w-12 h-12 text-red-400" />
+												<div className="bg-purple-500 text-white font-bold min-w-6 h-6 flex justify-center items-center text-lg">
+													C
+												</div>
 											)}
 											<div className="flex flex-col">
 												<h3 className="text-sm">{claim.category}</h3>

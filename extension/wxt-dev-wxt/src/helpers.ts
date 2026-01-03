@@ -1,5 +1,8 @@
 /* don't look at this, chatGPT wrote it all and I do not know what it does 🔥🔥🔥 */
-export function underlineSentences(sentences: { text?: string; claim?: string; valid: boolean }[]) {
+export function underlineSentences(
+	sentences: { text?: string; category?: string; claim?: string; valid: boolean }[]
+) {
+	console.log(sentences);
 	const normalize = (str: string) =>
 		str.replace(/\s+/g, ' ').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
 
@@ -129,8 +132,19 @@ export function underlineSentences(sentences: { text?: string; claim?: string; v
 			const span = document.createElement('span');
 			span.className = `underline-${idx}`;
 			span.style.cursor = 'pointer';
+			span.style.paddingTop = '4px';
+			span.style.paddingBottom = '4px';
 			span.style.textDecoration = 'underline';
-			span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
+			if (sentences[idx].category) {
+				span.style.textDecorationColor =
+					sentences[idx].category === 'Left-leaning'
+						? '#3b82f6'
+						: sentences[idx].category === 'Right-leaning'
+						? '#ef4444'
+						: '#8b5cf6';
+			} else {
+				span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
+			}
 			span.textContent = elText.slice(rawLocalStart, rawEnd);
 
 			span.addEventListener('mouseenter', () => {

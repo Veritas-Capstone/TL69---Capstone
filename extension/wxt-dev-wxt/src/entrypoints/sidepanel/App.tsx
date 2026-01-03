@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import fetchAPI from './fetchAPI';
 import '@/assets/tailwind.css';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import InputPage from './InputPage';
 import AnalysisPage from './AnalysisPage';
@@ -38,8 +38,6 @@ function App() {
 				type: 'UNDERLINE_SELECTION',
 				sentences: data?.bias_claims,
 			});
-			console.log('HERE');
-			console.log(failed);
 			setFailedUnderlinesArr(failed);
 		} catch (err) {
 			setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
@@ -62,39 +60,41 @@ function App() {
 	}, []);
 
 	return (
-		<>
-			<Card className="rounded-none min-w-[300px] flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
-				<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
-					<h1 className="font-semibold text-xl text-white">Veritas</h1>
-				</CardHeader>
-				{error && (
-					<CardContent className="w-full">
-						<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">{error}</div>
-					</CardContent>
-				)}
+		<Card className="rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
+			<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
+				<h1 className="font-semibold text-xl text-white">Veritas</h1>
+			</CardHeader>
+			<CardContent className="w-full flex-1 flex flex-col gap-4">
 				{isLoading ? (
-					<CardContent className="w-full h-full flex justify-center items-center gap-2">
+					<div className="w-full flex-1 flex justify-center items-center gap-2">
 						<Spinner className="w-5 h-5" />
 						<p className="text-base">Analyzing Text...</p>
-					</CardContent>
-				) : !result ? (
-					<InputPage setText={setText} callModel={callModel} />
+					</div>
 				) : (
-					<AnalysisPage
-						text={text}
-						setText={setText}
-						result={result}
-						setResult={setResult}
-						failedUnderlinesArr={failedUnderlinesArr}
-						setFailedUnderlinesArr={setFailedUnderlinesArr}
-					/>
+					<>
+						{error && (
+							<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">{error}</div>
+						)}
+						{!result ? (
+							<InputPage setText={setText} callModel={callModel} />
+						) : (
+							<AnalysisPage
+								text={text}
+								setText={setText}
+								result={result}
+								setResult={setResult}
+								failedUnderlinesArr={failedUnderlinesArr}
+								setFailedUnderlinesArr={setFailedUnderlinesArr}
+							/>
+						)}
+					</>
 				)}
-			</Card>
-			<div className="flex flex-col justify-center gap-2 mt-8">
+			</CardContent>
+			<CardFooter className="flex flex-col w-full gap-2 mt-8">
 				<Separator className="mt-2" />
 				<CardDescription className="mx-auto mb-3 text-xs">Powered by Veritas AI</CardDescription>
-			</div>
-		</>
+			</CardFooter>
+		</Card>
 	);
 }
 
