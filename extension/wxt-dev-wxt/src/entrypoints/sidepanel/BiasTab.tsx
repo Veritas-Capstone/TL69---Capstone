@@ -69,7 +69,12 @@ export default function BiasTab({
 									isAnimationActive={true}
 									innerRadius={45}
 								>
-									<Label value={`${result?.bias_claims.length} Checks`} position={'center'} />
+									<Label
+										value={`${
+											result?.bias_claims.filter((_, idx) => !failedUnderlinesArr.includes(idx)).length
+										} Checks`}
+										position={'center'}
+									/>
 									{chartData.map((entry) => (
 										<Cell
 											fill={

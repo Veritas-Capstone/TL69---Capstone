@@ -12,9 +12,7 @@ To build and load the chrome extension:
 
 ### Known Issues
 
-- highlighting/underlining is inconsistent and may not work
-  - chance of failing increases with longer passages of text + text that is broken up (new lines, embedded links)
-  - big issue since "scan entire page" functionality will break highlighting/underlining a lot
-- cannot highlight with underlines active
-  - connects to first point, underlining breaks up text -> can no longer highlight
-  - smaller issue since having both highlight + underline is repeated info
+- underlining is inconsistent and may not work
+  - chance of failing increases when selecting problematic items like videos and buttons
+  - should consistently work when selecting only "basic" text
+  - see underlineSentences() in helpers.ts

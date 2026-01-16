@@ -135,6 +135,7 @@ export function underlineSentences(
 			span.style.paddingTop = '4px';
 			span.style.paddingBottom = '4px';
 			span.style.textDecoration = 'underline';
+			span.style.backgroundClip = 'content-box';
 			if (sentences[idx].category) {
 				span.style.textDecorationColor =
 					sentences[idx].category === 'Left-leaning'
