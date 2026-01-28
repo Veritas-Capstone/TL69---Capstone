@@ -54,7 +54,7 @@ function App() {
 			}
 		};
 
-		callModel();
+		//callModel();
 		browser.runtime.onMessage.addListener(handleCallModel);
 		return () => browser.runtime.onMessage.removeListener(handleCallModel);
 	}, []);
@@ -90,10 +90,7 @@ function App() {
 					</>
 				)}
 			</CardContent>
-			<CardFooter className="flex flex-col w-full gap-2 mt-8">
-				<Separator className="mt-2" />
-				<CardDescription className="mx-auto mb-3 text-xs">Powered by Veritas AI</CardDescription>
-			</CardFooter>
+			<CardFooter className="flex flex-col w-full gap-2"></CardFooter>
 		</Card>
 	);
 }

@@ -99,26 +99,9 @@ export default function AnalysisPage({
 
 	return (
 		<>
-			<div className="flex items-center justify-between">
-				<h1 className="font-semibold text-sm">Analysis Results</h1>
-				<Button variant="link" className="p-0" onClick={newAnalysis}>
-					New Analysis
-				</Button>
-			</div>
-			{/* 
-			<Card className="gap-2 h-[125px] overflow-y-auto py-3">
-				<CardHeader className="flex gap-2 items-center">
-					<TextIcon size={20} />
-					<p className="font-semibold text-base">Inputted Text</p>
-				</CardHeader>
-				<CardContent className="flex flex-col">
-					<div className="bg-gray-50 flex rounded-b-sm items-center">
-						<p className="text-xs/relaxed text-gray-400">{text}</p>
-					</div>
-				</CardContent>
-			</Card>
-			*/}
-
+			<Button variant="outline" className="w-full" onClick={newAnalysis}>
+				New Analysis
+			</Button>
 			<Tabs
 				defaultValue="bias"
 				className="w-full gap-4"
@@ -127,16 +110,16 @@ export default function AnalysisPage({
 					switchTab(e);
 				}}
 			>
-				<TabsList className="w-full h-fit flex justify-around p-2">
+				<TabsList className="w-full h-fit flex justify-around p-2 rounded-full">
 					<TabsTrigger
 						value="bias"
-						className="data-[state=active]:bg-white w-full data-[state=active]:shadow-sm py-1 rounded-md text-sm text-gray-950 font-semibold"
+						className="data-[state=active]:bg-white w-full data-[state=active]:shadow-sm py-1 rounded-full text-sm text-gray-950 font-semibold"
 					>
 						Bias
 					</TabsTrigger>
 					<TabsTrigger
 						value="claims"
-						className="data-[state=active]:bg-white w-full data-[state=active]:shadow-sm py-1 rounded-md text-sm text-gray-950 font-semibold"
+						className="data-[state=active]:bg-white w-full data-[state=active]:shadow-sm py-1 rounded-full text-sm text-gray-950 font-semibold"
 					>
 						Claims
 					</TabsTrigger>
