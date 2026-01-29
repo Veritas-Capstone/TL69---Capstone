@@ -18,8 +18,11 @@ function App() {
 	// call model on selected text
 	async function callModel() {
 		const selectedText = await browser.storage.local.get('selectedText');
-		setText(selectedText.selectedText);
+		if (!selectedText.selectedText) {
+			return;
+		}
 
+		setText(selectedText.selectedText);
 		setIsLoading(true);
 		setError(undefined);
 
@@ -30,7 +33,14 @@ function App() {
 			await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
 
 			// call model API
-			const data = await fetchAPI(selectedText.selectedText);
+			const storedResult = await browser.storage.local.get('storedResult');
+			let data;
+			if (!storedResult.storedResult) {
+				data = await fetchAPI(selectedText.selectedText);
+				await browser.storage.local.set({ storedResult: data });
+			} else {
+				data = storedResult.storedResult;
+			}
 			setResult(data);
 
 			// underline claims on webpage
@@ -54,7 +64,7 @@ function App() {
 			}
 		};
 
-		//callModel();
+		callModel();
 		browser.runtime.onMessage.addListener(handleCallModel);
 		return () => browser.runtime.onMessage.removeListener(handleCallModel);
 	}, []);

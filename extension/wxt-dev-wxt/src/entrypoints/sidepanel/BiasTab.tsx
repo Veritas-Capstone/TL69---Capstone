@@ -165,7 +165,7 @@ export default function BiasTab({
 												<h3 className="text-base">{claim.category}</h3>
 											</CardHeader>
 											<CardContent className="p-3! w-full">
-												<p className="text-sm line-clamp-6 text-gray-600">"{claim.text}"</p>
+												<p className="text-sm line-clamp-6 text-gray-600">{claim.text}</p>
 											</CardContent>
 										</Card>
 									),

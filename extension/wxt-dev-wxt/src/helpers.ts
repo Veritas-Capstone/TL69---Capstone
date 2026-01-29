@@ -1,6 +1,6 @@
 /* don't look at this, chatGPT wrote it all and I do not know what it does 🔥🔥🔥 */
 export function underlineSentences(
-	sentences: { text?: string; category?: string; claim?: string; valid: boolean }[]
+	sentences: { text?: string; category?: string; claim?: string; valid: boolean }[],
 ) {
 	console.log(sentences);
 	const normalize = (str: string) =>
@@ -16,10 +16,10 @@ export function underlineSentences(
 				char === '“' || char === '”'
 					? '"'
 					: char === '‘' || char === '’'
-					? "'"
-					: /\s/.test(char)
-					? ' '
-					: char;
+						? "'"
+						: /\s/.test(char)
+							? ' '
+							: char;
 
 			if (normalizedChar === ' ') {
 				if (normIdx === normalizedIndex) break;
@@ -52,14 +52,14 @@ export function underlineSentences(
 
 	const containers = Array.from(
 		document.querySelectorAll<HTMLElement>(
-			'p, h1, h2, h3, h4, h5, h6, li, span, figcaption, blockquote, footer, aside, cite'
-		)
+			'p, h1, h2, h3, h4, h5, h6, li, span, figcaption, blockquote, footer, aside, cite',
+		),
 	).filter((el) => !el.closest('script, style'));
 
 	containers.forEach(unwrapInlineTags);
 
 	const textElements = containers.filter((el) =>
-		Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())
+		Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim()),
 	);
 
 	const elementTexts = textElements.map((el) => el.textContent || '');
@@ -141,8 +141,8 @@ export function underlineSentences(
 					sentences[idx].category === 'Left-leaning'
 						? '#3b82f6'
 						: sentences[idx].category === 'Right-leaning'
-						? '#ef4444'
-						: '#8b5cf6';
+							? '#ef4444'
+							: '#8b5cf6';
 			} else {
 				span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
 			}
@@ -153,6 +153,13 @@ export function underlineSentences(
 			});
 			span.addEventListener('mouseleave', () => {
 				browser.runtime.sendMessage({ type: 'UNDERLINE_HOVER', idx: undefined });
+			});
+			span.addEventListener('click', (e) => {
+				e.stopPropagation();
+
+				browser.runtime.sendMessage({
+					type: 'OPEN_SIDEBAR',
+				});
 			});
 
 			fragment.appendChild(span);

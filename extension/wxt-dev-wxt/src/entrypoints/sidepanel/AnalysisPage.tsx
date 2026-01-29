@@ -72,6 +72,7 @@ export default function AnalysisPage({
 		await browser.tabs.sendMessage(tab.id ?? 0, {
 			type: 'CLEAR_UNDERLINES',
 		});
+		await browser.storage.local.clear();
 	}
 
 	// switch between bias and claims tabs
