@@ -163,6 +163,8 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	}
 }
 
+
+
 function normalizeSpaces(str: string) {
 	return str.replace(/\u00A0/g, ' ');
 }

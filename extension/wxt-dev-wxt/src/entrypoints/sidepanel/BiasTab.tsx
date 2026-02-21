@@ -1,7 +1,5 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, Label } from 'recharts';
-import { ChartColumnBigIcon, SearchCheckIcon } from 'lucide-react';
 import { AnalysisResult } from '@/types';
 
 type BiasTabProps = {
