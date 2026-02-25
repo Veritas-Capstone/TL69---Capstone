@@ -83,19 +83,41 @@ These are earlier iterations that `pipeline.py` replaced:
 
 ## Current Results (Pre-Fine-Tuning)
 
-Evaluated on BASIL — an out-of-distribution benchmark (the model was NOT trained on this data):
+Demo examples (hand-picked): **4/4 correct** — the model handles overt political signals well.
+
+Evaluated on BASIL (out-of-distribution — the model was NOT trained on this data):
 
 | Benchmark | Accuracy | Macro F1 |
 |---|---|---|
-| BASIL (source labels: HPO=Left, NYT=Center, FOX=Right) | ~47% | ~0.45 |
-| BASIL (annotation labels: expert-annotated stance) | ~37% | ~0.35 |
-| Calibration (best threshold tuning) | ~52% | — |
+| BASIL (source labels: HPO=Left, NYT=Center, FOX=Right) | 47.7% | 0.404 |
+| BASIL (annotation labels: expert-annotated stance) | 34.3% | 0.307 |
+| Calibration (best threshold tuning) | 52.0% | 0.451 |
 
-**Why the numbers look low:** The Volf model achieves 83.7% F1 on its training data, but the paper itself shows out-of-distribution accuracy drops to 38–67% depending on the dataset. BASIL articles are mainstream news (NYT, HuffPost, Fox) covering the *same events* — the bias differences are subtle framing choices, not the overt ideological signals the model was trained on. The model essentially can't distinguish Center from Left/Right in this domain.
+### Per-Class Breakdown (Source Labels)
+
+| Class | Precision | Recall | F1 | Support |
+|---|---|---|---|---|
+| Left | 0.419 | 0.960 | 0.584 | 100 |
+| Center | 0.048 | 0.010 | 0.017 | 100 |
+| Right | 0.920 | 0.460 | 0.613 | 100 |
+
+The model has a strong Left-prediction bias: 98 out of 100 Center articles get misclassified as Left, and 35 out of 100 Right articles do too. Right precision is excellent (0.92) but recall is low — when the model says Right, it's almost always correct, but it misses over half of them.
+
+### Within-Event Analysis
+
+BASIL has 100 events where the same story is covered by all 3 outlets (HPO, NYT, FOX):
+
+- All 3 correct: 0/100 (0%) — the model never gets all three right for the same event
+- Partially correct: 100/100 (100%) — it always gets at least one right
+- Model sees a difference (>1 unique prediction across the 3 outlets): 65/100 (65%)
+
+### Why the numbers look low
+
+The Volf model achieves 83.7% F1 on its training data, but the paper itself shows out-of-distribution accuracy drops to 38–67% depending on the dataset. BASIL articles are mainstream news (NYT, HuffPost, Fox) covering the *same events* — the bias differences are subtle framing choices, not the overt ideological signals the model was trained on. The model essentially can't distinguish Center from Left in this domain.
 
 ### What calibration showed
 
-Grid search over logit bias offsets and temperature scaling maxed out at ~52% accuracy. The Center class F1 stays at 0.000 regardless of thresholds — this confirms the model genuinely can't detect centrist reporting in BASIL without weight updates (fine-tuning).
+Grid search over logit bias offsets and temperature scaling maxed out at 52.0% accuracy / 0.451 macro F1 (bias_L=0.50, bias_C=-2.00, T=0.50). The Center class F1 stays near 0.0 regardless of thresholds — this confirms the model genuinely can't detect centrist reporting in BASIL without weight updates (fine-tuning).
 
 ## Next Step: Fine-Tuning
 
