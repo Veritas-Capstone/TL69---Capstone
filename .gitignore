@@ -55,3 +55,24 @@ archive/
 
 # ignore model files
 /api/claim_verification/models/
+# virtual env
+gpu_venv/
+api/claim_verification/gpu_venv/
+
+# python cache
+__pycache__/
+*.pyc
+api/claim_verification/retrieval/__pycache__/
+
+# large data
+api/claim_verification/data/
+
+# experiments
+experiments/
+
+# logs
+*.log
+hs_err_pid*
+
+# generated figures
+*.png

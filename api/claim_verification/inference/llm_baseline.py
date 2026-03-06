@@ -33,7 +33,7 @@ import ast
 import json
 import time
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from collections import Counter
 from pathlib import Path
 
@@ -41,6 +41,10 @@ import numpy as np
 import pandas as pd
 import requests
 from torch.utils.data import Dataset
+
+# NEW: for confusion matrix & metrics “popup”
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix as sk_confusion_matrix, classification_report
 
 # =========================
 # Config (file-anchored)
@@ -77,7 +81,9 @@ OLLAMA_HOST = (
     else f"http://{_raw_host}"
 )
 
-LLM_MODEL = os.environ.get("LLM_MODEL", "mistral:7b-instruct")
+# Use a model that actually exists on this server by default
+# (override with: export LLM_MODEL="mistral:7b-instruct-v0.3-q3_K_M" etc.)
+LLM_MODEL = os.environ.get("LLM_MODEL", "mistral:7b")
 
 LABELS = ["REFUTED", "NOT ENOUGH INFO", "SUPPORTED"]
 LABEL_SET = set(LABELS)
@@ -85,7 +91,7 @@ LABEL_TO_ID = {l: i for i, l in enumerate(LABELS)}
 ID_TO_LABEL = {i: l for l, i in LABEL_TO_ID.items()}
 
 # Post-processing thresholds
-SUPPORTED_MIN_CONF = 0.90      # how strict we are about calling something SUPPORTED
+SUPPORTED_MIN_CONF = 0.90        # how strict we are about calling something SUPPORTED
 NEI_TO_REFUTED_THRESHOLD = 0.75  # NEI with conf < this => REFUTED
 
 # =========================
@@ -251,31 +257,30 @@ def llm_classify_claim(
     claim: str,
     evidences: List[str],
 ) -> Optional[ClaimResult]:
-    """Call local Mistral via Ollama to classify a single claim+evidence set."""
+    """Call local LLM via Ollama /api/generate to classify a single claim+evidence set."""
+
+    # Combine system prompt + user prompt into a single prompt string
+    prompt = SYSTEM_PROMPT + "\n\n" + build_user_prompt(claim, evidences)
+
     payload = {
         "model": LLM_MODEL,
         "options": {
             "temperature": 0,
             "repeat_penalty": 1.05,
         },
-        "format": "json",
+        "format": "json",       # ask Ollama to give us JSON
         "stream": False,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": build_user_prompt(claim, evidences)},
-        ],
+        "prompt": prompt,
     }
 
     try:
-        r = requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, timeout=120)
+        r = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=120)
         r.raise_for_status()
         data = r.json()
+        # Standard Ollama /api/generate response has "response" with the text
         content = ""
         if isinstance(data, dict):
-            if "message" in data and isinstance(data["message"], dict):
-                content = data["message"].get("content", "") or ""
-            elif "messages" in data and isinstance(data["messages"], list) and data["messages"]:
-                content = data["messages"][-1].get("content", "") or ""
+            content = data.get("response", "") or ""
         out = extract_first_json(content)
     except Exception as e:
         print(f"[WARN] LLM call failed for idx={idx}: {e}")
@@ -400,7 +405,7 @@ def run_llm_over_dataset(
     return out
 
 # =========================
-# Metrics
+# Metrics helpers
 # =========================
 
 def compute_metrics(preds: List[str], golds: List[str]) -> Dict[str, Any]:
@@ -429,17 +434,111 @@ def compute_metrics(preds: List[str], golds: List[str]) -> Dict[str, Any]:
     macro_f1 = sum(f1s) / len(f1s) if f1s else 0.0
     return {"accuracy": acc, "macro_f1": macro_f1, "per_class": per_class}
 
-def confusion_matrix(preds: List[str], golds: List[str]) -> pd.DataFrame:
-    idx = {L: i for i, L in enumerate(LABELS)}
-    M = np.zeros((len(LABELS), len(LABELS)), dtype=int)
-    for p, g in zip(preds, golds):
-        if g in idx and p in idx:
-            M[idx[g], idx[p]] += 1
-    return pd.DataFrame(
-        M,
-        index=[f"gold_{l}" for l in LABELS],
-        columns=[f"pred_{l}" for l in LABELS],
+# =========================
+# Visualization
+# =========================
+
+def plot_confusion_matrix_and_metrics(
+    golds: List[str],
+    preds: List[str],
+    metrics: Dict[str, Any],
+    labels: List[str],
+    save_prefix: str = "llm_baseline_",
+):
+    """
+    Use sklearn + matplotlib to show:
+    - Confusion matrix heatmap
+    - Metrics table (accuracy, macro-F1, per-class)
+    Also saves both as PNGs to disk.
+    """
+    # Confusion matrix (sklearn)
+    cm = sk_confusion_matrix(golds, preds, labels=labels)
+
+    # ---- Confusion matrix heatmap ----
+    fig_cm, ax_cm = plt.subplots(figsize=(6, 5))
+    im = ax_cm.imshow(cm, interpolation="nearest", cmap="Blues")
+    ax_cm.figure.colorbar(im, ax=ax_cm)
+    ax_cm.set(
+        xticks=np.arange(len(labels)),
+        yticks=np.arange(len(labels)),
+        xticklabels=labels,
+        yticklabels=labels,
+        ylabel="Gold label",
+        xlabel="Predicted label",
+        title="Confusion Matrix – LLM Baseline on Averitec",
     )
+
+    # Rotate x-axis labels for readability
+    plt.setp(ax_cm.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+    # Annotate cells
+    thresh = cm.max() / 2.0 if cm.max() > 0 else 0.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax_cm.text(
+                j,
+                i,
+                format(cm[i, j], "d"),
+                ha="center",
+                va="center",
+                color="white" if cm[i, j] > thresh else "black",
+            )
+
+    fig_cm.tight_layout()
+    cm_path = f"{save_prefix}_confusion_matrix.png"
+    fig_cm.savefig(cm_path, dpi=150)
+    print(f"[Info] Saved confusion matrix figure to {cm_path}")
+
+    # ---- Metrics table popup ----
+    # We'll build a small table figure for overall + per-class metrics.
+    overall_acc = metrics["accuracy"]
+    overall_macro_f1 = metrics["macro_f1"]
+
+    # Flatten per-class metrics into rows
+    table_data = [["Class", "Precision", "Recall", "F1", "Support"]]
+    for L in labels:
+        m = metrics["per_class"][L]
+        table_data.append([
+            L,
+            f"{m['precision']:.3f}",
+            f"{m['recall']:.3f}",
+            f"{m['f1']:.3f}",
+            f"{m['support']}",
+        ])
+
+    # Add overall row
+    table_data.append([
+        "OVERALL",
+        "-", "-",
+        f"{overall_macro_f1:.3f} (macro F1)",
+        f"{overall_acc:.3f} (acc)",
+    ])
+
+    fig_tbl, ax_tbl = plt.subplots(figsize=(7, 0.6 * len(table_data) + 1))
+    ax_tbl.axis("off")
+    tbl = ax_tbl.table(
+        cellText=table_data,
+        colLabels=None,
+        loc="center",
+        cellLoc="center",
+    )
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(9)
+    tbl.scale(1.1, 1.2)
+    ax_tbl.set_title("LLM Baseline – Metrics Overview", pad=12)
+
+    fig_tbl.tight_layout()
+    metrics_path = f"{save_prefix}_metrics_table.png"
+    fig_tbl.savefig(metrics_path, dpi=150)
+    print(f"[Info] Saved metrics table figure to {metrics_path}")
+
+    # If you’re running with a GUI (e.g., locally or X11 forwarding),
+    # this will “popup” the figures. On headless servers you’ll just get PNGs.
+    try:
+        plt.show()
+    except Exception:
+        # On a headless cluster, show() may fail; PNGs are still saved.
+        pass
 
 # =========================
 # Main
@@ -484,16 +583,20 @@ if __name__ == "__main__":
             preds.append(postprocess_claim_label(res.label, res.confidence))
 
     metrics = compute_metrics(preds, golds)
-    print("[Report] Claim-level metrics (global):",
-          {"accuracy": metrics["accuracy"], "macro_f1": metrics["macro_f1"]})
 
-    print("[Report] Per-class metrics:")
-    for L in LABELS:
-        m = metrics["per_class"][L]
-        print(
-            f"  {L:<16} | precision={m['precision']:.3f} "
-            f"recall={m['recall']:.3f} f1={m['f1']:.3f} (support={m['support']})"
-        )
+    # Instead of printing a giant matrix + per-class numbers, we:
+    # 1) Save/“popup” confusion matrix heatmap
+    # 2) Save/“popup” a metrics table
+    plot_confusion_matrix_and_metrics(
+        golds=golds,
+        preds=preds,
+        metrics=metrics,
+        labels=LABELS,
+        save_prefix="llm_baseline_",
+    )
 
-    cm = confusion_matrix(preds, golds)
-    print("[Report] Confusion matrix (rows=gold, cols=pred):\n", cm)
+    # If you still want a quick text summary in the terminal, you can leave this:
+    print(
+        "[Report] Claim-level metrics (global):",
+        {"accuracy": metrics["accuracy"], "macro_f1": metrics["macro_f1"]},
+    )
