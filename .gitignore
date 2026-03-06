@@ -28,6 +28,7 @@ var/
 venv/
 ENV/
 env/
+.gpu_venv/
 
 # Pytest cache
 .pytest_cache/
@@ -43,18 +44,29 @@ Thumbs.db
 # Archive/backups (optional)
 archive/
 .vscode
+Bias-Detection/biasenv/
+Bias-Detection/datasets/
+.Bias-Detection/biasenv
+.Bias-Detection/datasets
+
+
 
 # specfic data file
+/api/claim_verification/data/unprocessed/
 /api/claim_verification/data/raw/
 /api/claim_verification/data/processed/averitec.csv
+/api/claim_verification/data/processed/averitec_80.csv
+/api/claim_verification/data/processed/averitec_20.csv
 /api/claim_verification/data/processed/fever_train_claims.csv
+/api/claim_verification/data/processed/fever_train_claims_80.csv
+/api/claim_verification/data/processed/fever_train_claims_20.csv
 
-# ignore baseline jupyter notebook
-/api/claim_verification/inference/baseline.ipynb
-/api/claim_verification/training/training_baseline.ipynb
+# ignore any python notebook file
+*.ipynb
 
 # ignore model files
 /api/claim_verification/models/
+<<<<<<< HEAD
 # virtual env
 gpu_venv/
 api/claim_verification/gpu_venv/
@@ -76,3 +88,9 @@ hs_err_pid*
 
 # generated figures
 *.png
+=======
+
+# ignore evaluation log files
+/api/claim_verification/eval_metrics/
+/api/claim_verification/training_metrics/
+>>>>>>> 5d51c0452af8fcac16fd1157f8782737d5114acb

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester - Veritas</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            font-family: inherit;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d1fae5;
+            border: 2px solid #059669;
+        }
+        .error {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+        }
+        .loading {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        .status.ok { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Veritas API Tester</h1>
+    <p>Use this page to test either backend API: bias detection or claim verification.</p>
+    
+    <label for="modeSelect"><strong>Select API:</strong></label>
+    <select id="modeSelect" onchange="checkHealth()">
+        <option value="bias">Bias Detection (server.py @ :8000)</option>
+        <option value="claim">Claim Verification (server_claim.py @ :8001)</option>
+    </select>
+    
+    <div class="status" id="healthStatus">Checking server status...</div>
+    
+    <h2>Test Analysis</h2>
+    <textarea id="testText" placeholder="Enter text to analyze...">The Department of Health and Human Services's Office for Civil Rights has released guidelines reinforcing the Obamacare law that warns more than 60,000 U.S. pharmacies against refusing to dispense abortion-inducing medication.</textarea>
+    
+    <button id="testBtn" onclick="testAPI()">Test API</button>
+    <button onclick="checkHealth()">Check Health</button>
+    
+    <div id="result"></div>
+
+    <script>
+        const MODES = {
+            bias: {
+                name: 'Bias Detection',
+                apiUrl: 'http://localhost:8000/bias', // combined server prefix
+                healthPath: '/health',
+                testPath: '/analyze',
+                buildBody: (text) => ({ text }),
+            },
+            claim: {
+                name: 'Claim Verification',
+                apiUrl: 'http://localhost:8000/claim', // combined server prefix
+                healthPath: '/health',
+                testPath: '/verify-claims-from-passage', // uses stubbed claims/evidence
+                buildBody: (text) => ({ text }),
+            },
+        };
+
+        const modeSelect = document.getElementById('modeSelect');
+
+        // Check health on load
+        window.addEventListener('load', checkHealth);
+
+        function getModeConfig() {
+            return MODES[modeSelect.value] || MODES.bias;
+        }
+
+        async function checkHealth() {
+            const status = document.getElementById('healthStatus');
+            status.textContent = 'Checking server...';
+            status.className = 'status';
+            
+            try {
+                const mode = getModeConfig();
+                const response = await fetch(`${mode.apiUrl}${mode.healthPath}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const desc = mode.name === 'Bias Detection'
+                        ? `Model loaded: ${data.model_loaded}`
+                        : `Component: ${data.component || 'claim_verification'}`;
+                    status.textContent = `✅ ${mode.name} server is healthy! ${desc}`;
+                    status.className = 'status ok';
+                    document.getElementById('testBtn').disabled = false;
+                } else {
+                    status.textContent = '❌ Server returned error';
+                    status.className = 'status error';
+                    document.getElementById('testBtn').disabled = true;
+                }
+            } catch (error) {
+                status.textContent = `❌ Cannot connect to server at ${API_URL}. Make sure it's running!`;
+                status.className = 'status error';
+                document.getElementById('testBtn').disabled = true;
+                console.error('Health check failed:', error);
+            }
+        }
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            const text = document.getElementById('testText').value;
+            const btn = document.getElementById('testBtn');
+            const mode = getModeConfig();
+            
+            if (!text.trim()) {
+                alert('Please enter some text to analyze');
+                return;
+            }
+            
+            btn.disabled = true;
+            resultDiv.innerHTML = '<div class="result loading">⏳ Analyzing text...</div>';
+            
+            try {
+                console.log('Sending request to:', `${mode.apiUrl}${mode.testPath}`);
+                console.log('Mode:', mode.name);
+                console.log('Text:', text);
+                
+                const response = await fetch(`${mode.apiUrl}${mode.testPath}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(mode.buildBody(text)),
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API returned ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Success! Data:', data);
+
+                resultDiv.innerHTML = renderResult(mode.name, data);
+                
+            } catch (error) {
+                console.error('API test failed:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Error</strong><br><br>
+                        ${error.message}<br><br>
+                        Check the browser console (F12) for more details.
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderResult(modeName, data) {
+            if (modeName === 'Bias Detection' && data && typeof data === 'object' && !Array.isArray(data) && 'overall_bias' in data) {
+                return `
+                    <div class="result success">
+                        <strong>✅ Success!</strong><br><br>
+                        <strong>Overall Bias:</strong> ${data.overall_bias}<br>
+                        <strong>Checks:</strong> ${data.checks}<br>
+                        <strong>Issues:</strong> ${data.issues}<br>
+                        <strong>Sentences Analyzed:</strong> ${data.sentences?.length || 0}<br><br>
+                        <strong>Full Response:</strong><br>
+                        ${JSON.stringify(data, null, 2)}
+                    </div>
+                `;
+            }
+
+            if (modeName === 'Claim Verification' && Array.isArray(data)) {
+                const formatted = data.map((item, idx) => {
+                    return [
+                        `#${idx + 1}: ${item.claim || ''}`,
+                        `Label: ${item.label || ''}`,
+                        `Evidence: ${(item.evidence || []).join(' | ')}`,
+                        `Probabilities: ${JSON.stringify(item.probabilities || {}, null, 2)}`
+                    ].join('\n');
+                }).join('\n\n');
+
+                return `
+                    <div class="result success">
+                        <strong>✅ Success!</strong><br><br>
+                        <pre>${formatted}</pre>
+                        <br><strong>Full Response:</strong><br>
+                        ${JSON.stringify(data, null, 2)}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="result success">
+                    <strong>✅ Success!</strong><br><br>
+                    ${JSON.stringify(data, null, 2)}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
