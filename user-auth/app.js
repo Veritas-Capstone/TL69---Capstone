@@ -10,7 +10,7 @@ var app = express();
 
 // set up mongoose connection
 var mongoose = require('mongoose');
-var mongoDB = 'mongodb+srv://doanl7:vAzE0oa8xlsNrZmN@cluster0.vwo2a0j.mongodb.net/veritas?appName=Cluster0';
+var mongoDB = process.env.DATABASE;
 mongoose.connect(mongoDB);
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
