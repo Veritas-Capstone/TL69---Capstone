@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import fetchAPI from './fetchAPI';
 import '@/assets/tailwind.css';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import InputPage from './InputPage';
 import AnalysisPage from './AnalysisPage';
 import { Spinner } from '@/components/ui/spinner';
 import { AnalysisResult } from '@/types';
 import { Button } from '@/components/ui/button';
 import Profile from './Profile';
-import { ArrowLeftIcon } from 'lucide-react';
+import logo from '../../assets/logo.png';
 
 function App() {
 	const [text, setText] = useState<string>();
@@ -53,30 +52,34 @@ function App() {
 				sentences: data?.bias_claims,
 			});
 
-			// update user stats
-			if (localStorage.getItem('username')) {
-				await fetch(`http://localhost:8080/stats`, {
-					headers: { 'Content-Type': 'application/json' },
-					method: 'POST',
-					body: JSON.stringify({
-						username: localStorage.getItem('username'),
-						leftBias:
-							data?.bias_claims.filter((x, idx) => x.category === 'Left-leaning' && !failed.includes(idx))
-								.length ?? 0,
-						rightBias:
-							data?.bias_claims.filter((x, idx) => x.category === 'Right-leaning' && !failed.includes(idx))
-								.length ?? 0,
-						centerBias:
-							data?.bias_claims.filter((x, idx) => x.category === 'Centrist' && !failed.includes(idx))
-								.length ?? 0,
-					}),
-				});
-			}
+			await updateStats(data, failed);
 			setFailedUnderlinesArr(failed);
 		} catch (err) {
 			setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
 		} finally {
 			setIsLoading(false);
+		}
+	}
+
+	// update user stats in profile
+	async function updateStats(data: AnalysisResult, failed: [number]) {
+		if (localStorage.getItem('username')) {
+			await fetch(`http://localhost:8080/stats`, {
+				headers: { 'Content-Type': 'application/json' },
+				method: 'POST',
+				body: JSON.stringify({
+					username: localStorage.getItem('username'),
+					leftBias:
+						data?.bias_claims.filter((x, idx) => x.category === 'Left-leaning' && !failed.includes(idx))
+							.length ?? 0,
+					rightBias:
+						data?.bias_claims.filter((x, idx) => x.category === 'Right-leaning' && !failed.includes(idx))
+							.length ?? 0,
+					centerBias:
+						data?.bias_claims.filter((x, idx) => x.category === 'Centrist' && !failed.includes(idx)).length ??
+						0,
+				}),
+			});
 		}
 	}
 
@@ -96,8 +99,8 @@ function App() {
 	return (
 		<Card className="rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
 			<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
-				<div className="flex items-center justify-between">
-					<h1 className="font-semibold text-xl text-white">Veritas</h1>
+				<div className="flex items-center justify-between h-full">
+					<img src={logo} className="h-[80%] w-[120px]" />
 					{!profile ? (
 						<Button className="text-white" variant={'link'} onClick={() => setProfile(true)}>
 							Profile
