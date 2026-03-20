@@ -43,6 +43,7 @@ export function underlineSentences(
 		const nodes = root.querySelectorAll('a, em, strong, cite, span');
 		nodes.forEach((node) => {
 			if (node.closest('nav')) return;
+			if (node.closest('div')) return;
 			const parent = node.parentNode;
 			if (!parent) return;
 			while (node.firstChild) parent.insertBefore(node.firstChild, node);

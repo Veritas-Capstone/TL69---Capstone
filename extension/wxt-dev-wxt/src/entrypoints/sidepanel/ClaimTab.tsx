@@ -38,7 +38,7 @@ export default function ClaimTab({
 						<p>
 							{
 								result?.fact_check_claims.filter(
-									(claim, idx) => !claim.valid && !failedUnderlinesArr.includes(idx)
+									(claim, idx) => !claim.valid && !failedUnderlinesArr.includes(idx),
 								).length
 							}
 						</p>
@@ -74,7 +74,7 @@ export default function ClaimTab({
 											))}
 										</div>
 									</div>
-								)
+								),
 						)}
 					</CardContent>
 				</Card>

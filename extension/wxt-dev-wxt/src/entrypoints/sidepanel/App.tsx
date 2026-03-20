@@ -69,15 +69,9 @@ function App() {
 				method: 'POST',
 				body: JSON.stringify({
 					username: localStorage.getItem('username'),
-					leftBias:
-						data?.bias_claims.filter((x, idx) => x.category === 'Left-leaning' && !failed.includes(idx))
-							.length ?? 0,
-					rightBias:
-						data?.bias_claims.filter((x, idx) => x.category === 'Right-leaning' && !failed.includes(idx))
-							.length ?? 0,
-					centerBias:
-						data?.bias_claims.filter((x, idx) => x.category === 'Centrist' && !failed.includes(idx)).length ??
-						0,
+					leftBias: data?.bias_claims.filter((x, idx) => x.category === 'Left-leaning').length ?? 0,
+					rightBias: data?.bias_claims.filter((x, idx) => x.category === 'Right-leaning').length ?? 0,
+					centerBias: data?.bias_claims.filter((x, idx) => x.category === 'Neutral/Balanced').length ?? 0,
 				}),
 			});
 		}
@@ -100,7 +94,7 @@ function App() {
 		<Card className="rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
 			<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
 				<div className="flex items-center justify-between h-full">
-					<img src={logo} className="h-[80%] w-[120px]" />
+					<img src={logo} className="h-[25px] w-[90px]" />
 					{!profile ? (
 						<Button className="text-white" variant={'link'} onClick={() => setProfile(true)}>
 							Profile

@@ -1,6 +1,8 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import { AnalysisResult } from '@/types';
+import { SearchXIcon } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type BiasTabProps = {
 	result?: AnalysisResult;
@@ -18,24 +20,15 @@ export default function BiasTab({
 	const chartData = [
 		{
 			name: 'Left',
-			value:
-				result?.bias_claims.filter(
-					(x, idx) => x.category === 'Left-leaning' && !failedUnderlinesArr.includes(idx),
-				).length ?? 0,
+			value: result?.bias_claims.filter((x) => x.category === 'Left-leaning').length ?? 0,
 		},
 		{
 			name: 'Right',
-			value:
-				result?.bias_claims.filter(
-					(x, idx) => x.category === 'Right-leaning' && !failedUnderlinesArr.includes(idx),
-				).length ?? 0,
+			value: result?.bias_claims.filter((x) => x.category === 'Right-leaning').length ?? 0,
 		},
 		{
 			name: 'Center',
-			value:
-				result?.bias_claims.filter(
-					(x, idx) => x.category === 'Centrist' && !failedUnderlinesArr.includes(idx),
-				).length ?? 0,
+			value: result?.bias_claims.filter((x) => x.category === 'Neutral/Balanced').length ?? 0,
 		},
 	];
 
@@ -66,12 +59,7 @@ export default function BiasTab({
 									isAnimationActive={true}
 									innerRadius={55}
 								>
-									<Label
-										value={`${
-											result?.bias_claims.filter((_, idx) => !failedUnderlinesArr.includes(idx)).length
-										} Checks`}
-										position={'center'}
-									/>
+									<Label value={`${result?.bias_claims.length} Checks`} position={'center'} />
 									{chartData.map((entry) => (
 										<Cell
 											fill={
@@ -121,9 +109,9 @@ export default function BiasTab({
 							<p className="font-semibold text-xl">Sentence-Level Bias</p>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-4 px-4">
-							{result?.bias_claims.map(
-								(claim, idx) =>
-									!failedUnderlinesArr.includes(idx) && (
+							{result?.bias_claims.map((claim, idx) => (
+								<Tooltip>
+									<TooltipTrigger asChild>
 										<Card
 											key={`bias-${idx}`}
 											className={`flex flex-col p-0! gap-0 items-center hover:cursor-pointer border border-gray-200 rounded-xl ${
@@ -161,13 +149,23 @@ export default function BiasTab({
 													</div>
 												)}
 												<h3 className="text-base">{claim.category}</h3>
+
+												{failedUnderlinesArr.includes(idx) && (
+													<SearchXIcon className="ml-auto" color="black" />
+												)}
 											</CardHeader>
 											<CardContent className="p-3! w-full">
 												<p className="text-sm line-clamp-6 text-gray-600">{claim.text}</p>
 											</CardContent>
 										</Card>
-									),
-							)}
+									</TooltipTrigger>
+									{failedUnderlinesArr.includes(idx) && (
+										<TooltipContent className="font-semibold text-center w-fit">
+											Unable to locate on page
+										</TooltipContent>
+									)}
+								</Tooltip>
+							))}
 						</CardContent>
 					</Card>
 				</>
