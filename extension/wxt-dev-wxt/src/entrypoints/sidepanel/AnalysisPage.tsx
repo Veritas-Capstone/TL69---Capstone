@@ -53,7 +53,8 @@ export default function AnalysisPage({
 				type: 'HIGHLIGHT_TEXT',
 				valid: currentTab === 'bias' ? result?.bias_claims[idx].valid : result?.fact_check_claims[idx].valid,
 				idx: idx,
-				category: result?.bias_claims[idx].category,
+				category: currentTab === 'bias' ? result?.bias_claims[idx].category : undefined,
+				label: currentTab !== 'bias' ? result?.fact_check_claims[idx].label : undefined,
 			});
 		} else {
 			await browser.tabs.sendMessage(tab.id, {

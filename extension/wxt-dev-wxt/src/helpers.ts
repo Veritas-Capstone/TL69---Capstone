@@ -1,6 +1,6 @@
 /* don't look at this, chatGPT wrote it all and I do not know what it does 🔥🔥🔥 */
 export function underlineSentences(
-	sentences: { text?: string; category?: string; claim?: string; valid: boolean }[],
+	sentences: { text?: string; category?: string; claim?: string; label?: string; valid: boolean }[],
 ) {
 	console.log(sentences);
 	const normalize = (str: string) =>
@@ -144,6 +144,13 @@ export function underlineSentences(
 						: sentences[idx].category === 'Right-leaning'
 							? '#ef4444'
 							: '#8b5cf6';
+			} else if (sentences[idx].label) {
+				span.style.textDecorationColor =
+					sentences[idx].label === 'SUPPORTED'
+						? '#3b82f6'
+						: sentences[idx].label === 'REFUTED'
+							? '#ef4444'
+							: '#6b7280';
 			} else {
 				span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
 			}

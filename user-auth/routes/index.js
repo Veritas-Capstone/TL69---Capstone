@@ -23,6 +23,9 @@ router.post('/create-user', function (req, res, next) {
 				leftBiasNum: 0,
 				rightBiasNum: 0,
 				centerBiasNum: 0,
+				supportedClaimNum: 0,
+				refutedClaimNum: 0,
+				noInfoClaimNum: 0,
 			});
 
 			newUser
@@ -65,7 +68,7 @@ router.post('/get-stats', async function (req, res, next) {
 
 router.post('/stats', async function (req, res, next) {
 	try {
-		const { username, leftBias, rightBias, centerBias } = req.body;
+		const { username, leftBias, rightBias, centerBias, supportedClaim, refutedClaim, noInfoClaim } = req.body;
 
 		const updatedStats = await statsSchema.findOneAndUpdate(
 			{ username },
@@ -74,6 +77,9 @@ router.post('/stats', async function (req, res, next) {
 					leftBiasNum: leftBias,
 					rightBiasNum: rightBias,
 					centerBiasNum: centerBias,
+					supportedClaimNum: supportedClaim,
+					refutedClaimNum: refutedClaim,
+					noInfoClaimNum: noInfoClaim,
 				},
 			},
 			{ new: true, upsert: true },

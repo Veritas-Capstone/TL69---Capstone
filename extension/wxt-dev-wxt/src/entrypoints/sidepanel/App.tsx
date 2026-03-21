@@ -69,9 +69,12 @@ function App() {
 				method: 'POST',
 				body: JSON.stringify({
 					username: localStorage.getItem('username'),
-					leftBias: data?.bias_claims.filter((x, idx) => x.category === 'Left-leaning').length ?? 0,
-					rightBias: data?.bias_claims.filter((x, idx) => x.category === 'Right-leaning').length ?? 0,
-					centerBias: data?.bias_claims.filter((x, idx) => x.category === 'Neutral/Balanced').length ?? 0,
+					leftBias: data?.bias_claims.filter((x) => x.category === 'Left-leaning').length ?? 0,
+					rightBias: data?.bias_claims.filter((x) => x.category === 'Right-leaning').length ?? 0,
+					centerBias: data?.bias_claims.filter((x) => x.category === 'Neutral/Balanced').length ?? 0,
+					supportedClaim: data?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
+					refutedClaim: data?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
+					noInfoClaim: data?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
 				}),
 			});
 		}

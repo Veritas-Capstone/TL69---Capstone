@@ -18,7 +18,7 @@ export default defineContentScript({
 
 			// highlight specific sentence
 			if (message.type === 'HIGHLIGHT_TEXT') {
-				const { idx, valid, category } = message;
+				const { idx, valid, category, label } = message;
 				const spans = document.querySelectorAll(`span.underline-${idx}`);
 
 				spans.forEach((span) => {
@@ -27,8 +27,15 @@ export default defineContentScript({
 							category === 'Left-leaning'
 								? 'rgba(59, 130, 246, 0.5)'
 								: category === 'Right-leaning'
-								? 'rgba(239, 68, 68, 0.5)'
-								: 'rgba(139, 92, 246, 0.5)';
+									? 'rgba(239, 68, 68, 0.5)'
+									: 'rgba(139, 92, 246, 0.5)';
+					} else if (label) {
+						(span as HTMLElement).style.backgroundColor =
+							label === 'SUPPORTED'
+								? 'rgba(59, 130, 246, 0.5)'
+								: label === 'REFUTED'
+									? 'rgba(239, 68, 68, 0.5)'
+									: 'rgba(100, 116, 139, 0.5)';
 					} else {
 						(span as HTMLElement).style.backgroundColor = valid
 							? 'rgba(74, 222, 128, 0.5)'
