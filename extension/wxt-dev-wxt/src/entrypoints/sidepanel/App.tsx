@@ -52,7 +52,7 @@ function App() {
 				sentences: data?.bias_claims,
 			});
 
-			await updateStats(data, failed);
+			await updateStats(data);
 			setFailedUnderlinesArr(failed);
 		} catch (err) {
 			setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
@@ -62,7 +62,7 @@ function App() {
 	}
 
 	// update user stats in profile
-	async function updateStats(data: AnalysisResult, failed: [number]) {
+	async function updateStats(data: AnalysisResult) {
 		if (localStorage.getItem('username')) {
 			await fetch(`http://localhost:8080/stats`, {
 				headers: { 'Content-Type': 'application/json' },
@@ -71,7 +71,7 @@ function App() {
 					username: localStorage.getItem('username'),
 					leftBias: data?.bias_claims.filter((x) => x.category === 'Left-leaning').length ?? 0,
 					rightBias: data?.bias_claims.filter((x) => x.category === 'Right-leaning').length ?? 0,
-					centerBias: data?.bias_claims.filter((x) => x.category === 'Neutral/Balanced').length ?? 0,
+					centerBias: data?.bias_claims.filter((x) => x.category === 'Centrist').length ?? 0,
 					supportedClaim: data?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
 					refutedClaim: data?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
 					noInfoClaim: data?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,

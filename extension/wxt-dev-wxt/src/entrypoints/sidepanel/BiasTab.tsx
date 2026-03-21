@@ -28,9 +28,10 @@ export default function BiasTab({
 		},
 		{
 			name: 'Center',
-			value: result?.bias_claims.filter((x) => x.category === 'Neutral/Balanced').length ?? 0,
+			value: result?.bias_claims.filter((x) => x.category === 'Centrist').length ?? 0,
 		},
 	];
+	console.log(result?.bias_claims);
 
 	if ((result?.bias_claims.length ?? 0) - failedUnderlinesArr.length < 1) {
 		return (

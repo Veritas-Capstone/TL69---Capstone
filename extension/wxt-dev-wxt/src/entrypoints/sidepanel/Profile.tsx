@@ -2,12 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import UserAuth from './UserAuth';
+import { Stats } from '@/types';
 
 export default function Profile() {
 	const [userData, setUserData] = useState<string | undefined>(localStorage.getItem('username') ?? undefined);
-	const [stats, setStats] = useState<
-		{ leftBiasNum: number; rightBiasNum: number; centerBiasNum: number } | undefined
-	>();
+	const [stats, setStats] = useState<Stats | undefined>();
 
 	useEffect(() => {
 		async function updateStats() {

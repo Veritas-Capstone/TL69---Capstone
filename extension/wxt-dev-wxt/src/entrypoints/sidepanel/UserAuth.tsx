@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Stats } from '@/types';
 
 export default function UserAuth({
 	setUserData,
 	setStats,
 }: {
 	setUserData: React.Dispatch<React.SetStateAction<string | undefined>>;
-	setStats: React.Dispatch<{ leftBiasNum: number; rightBiasNum: number; centerBiasNum: number } | undefined>;
+	setStats: React.Dispatch<Stats | undefined>;
 }) {
 	const [error, setError] = useState<string | undefined>();
 	const [username, setUserName] = useState<string>();
