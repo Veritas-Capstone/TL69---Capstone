@@ -11,12 +11,12 @@ import Profile from './Profile';
 import logo from '../../assets/logo.png';
 
 function App() {
-	const [text, setText] = useState<string>();
 	const [result, setResult] = useState<AnalysisResult | undefined>();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string>();
 	const [failedUnderlinesArr, setFailedUnderlinesArr] = useState<number[]>([]);
 	const [profile, setProfile] = useState(false);
+	const [currentTab, setCurrentTab] = useState<string>('bias');
 
 	// call model on selected text
 	async function callModel() {
@@ -25,7 +25,6 @@ function App() {
 			return;
 		}
 
-		setText(selectedText.selectedText);
 		setIsLoading(true);
 		setError(undefined);
 
@@ -71,7 +70,9 @@ function App() {
 					username: localStorage.getItem('username'),
 					leftBias: data?.bias_claims.filter((x) => x.category === 'Left-leaning').length ?? 0,
 					rightBias: data?.bias_claims.filter((x) => x.category === 'Right-leaning').length ?? 0,
-					centerBias: data?.bias_claims.filter((x) => x.category === 'Centrist').length ?? 0,
+					centerBias:
+						data?.bias_claims.filter((x) => x.category === 'Centrist' || x.category === 'Neutral/Balanced')
+							.length ?? 0,
 					supportedClaim: data?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
 					refutedClaim: data?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
 					noInfoClaim: data?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
@@ -95,7 +96,7 @@ function App() {
 
 	return (
 		<Card className="rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
-			<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
+			<CardHeader className="bg-black gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
 				<div className="flex items-center justify-between h-full">
 					<img src={logo} className="h-[25px] w-[90px]" />
 					{!profile ? (
@@ -123,15 +124,15 @@ function App() {
 						{profile ? (
 							<Profile />
 						) : !result ? (
-							<InputPage setText={setText} callModel={callModel} />
+							<InputPage callModel={callModel} />
 						) : (
 							<AnalysisPage
-								text={text}
-								setText={setText}
 								result={result}
 								setResult={setResult}
 								failedUnderlinesArr={failedUnderlinesArr}
 								setFailedUnderlinesArr={setFailedUnderlinesArr}
+								currentTab={currentTab}
+								setCurrentTab={setCurrentTab}
 							/>
 						)}
 					</>

@@ -2,30 +2,29 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
 import { TabsTrigger } from '@radix-ui/react-tabs';
-import { TextIcon } from 'lucide-react';
+import { ArrowLeft, ArrowLeftIcon, RefreshCwIcon, TextIcon } from 'lucide-react';
 import BiasTab from './BiasTab';
 import ClaimTab from './ClaimTab';
 import { AnalysisResult } from '@/types';
 
 type AnalysisProps = {
-	text: string | undefined;
-	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
 	result: AnalysisResult | undefined;
 	setResult: React.Dispatch<React.SetStateAction<AnalysisResult | undefined>>;
+	currentTab: string;
+	setCurrentTab: React.Dispatch<React.SetStateAction<string>>;
 	failedUnderlinesArr: number[];
 	setFailedUnderlinesArr: React.Dispatch<React.SetStateAction<number[]>>;
 };
 
 export default function AnalysisPage({
-	text,
-	setText,
+	currentTab,
+	setCurrentTab,
 	result,
 	setResult,
 	failedUnderlinesArr,
 	setFailedUnderlinesArr,
 }: AnalysisProps) {
 	const [currentHovered, setCurrentHovered] = useState<number>();
-	const [currentTab, setCurrentTab] = useState<string>('bias');
 
 	// highlights, scroll to claim on sidepanel
 	useEffect(() => {
@@ -65,7 +64,6 @@ export default function AnalysisPage({
 
 	// resets analysis
 	async function newAnalysis() {
-		setText(undefined);
 		setResult(undefined);
 		await browser.storage.local.remove('selectedText');
 
@@ -101,11 +99,14 @@ export default function AnalysisPage({
 
 	return (
 		<>
-			<Button variant="outline" className="w-full" onClick={newAnalysis}>
-				New Analysis
-			</Button>
+			<div>
+				<h1 className="text-2xl font-semibold">Scan Results</h1>
+				<p className="text-sm">
+					View the in-depth results of our AI model including sentence-level analysis.
+				</p>
+			</div>
 			<Tabs
-				defaultValue="bias"
+				defaultValue={currentTab}
 				className="w-full gap-4"
 				onValueChange={(e) => {
 					setCurrentTab(e);
@@ -145,6 +146,9 @@ export default function AnalysisPage({
 					/>
 				</TabsContent>
 			</Tabs>
+			<Button variant="destructive" className="w-full my-2" onClick={newAnalysis}>
+				<RefreshCwIcon /> New Analysis
+			</Button>
 		</>
 	);
 }

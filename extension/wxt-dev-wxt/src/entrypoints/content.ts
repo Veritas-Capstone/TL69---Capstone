@@ -25,17 +25,17 @@ export default defineContentScript({
 					if (category) {
 						(span as HTMLElement).style.backgroundColor =
 							category === 'Left-leaning'
-								? 'rgba(59, 130, 246, 0.5)'
+								? 'rgba(96, 165, 250, 0.5)'
 								: category === 'Right-leaning'
-									? 'rgba(239, 68, 68, 0.5)'
-									: 'rgba(139, 92, 246, 0.5)';
+									? 'rgba(248, 113, 113, 0.5)'
+									: 'rgba(192, 132, 252, 0.5)';
 					} else if (label) {
 						(span as HTMLElement).style.backgroundColor =
 							label === 'SUPPORTED'
-								? 'rgba(59, 130, 246, 0.5)'
+								? 'rgba(74, 222, 128, 0.5)'
 								: label === 'REFUTED'
-									? 'rgba(239, 68, 68, 0.5)'
-									: 'rgba(100, 116, 139, 0.5)';
+									? 'rgba(248, 113, 113, 0.5)'
+									: 'rgba(156, 163, 175, 0.5)';
 					} else {
 						(span as HTMLElement).style.backgroundColor = valid
 							? 'rgba(74, 222, 128, 0.5)'

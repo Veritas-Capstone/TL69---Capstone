@@ -9,7 +9,7 @@ export interface AnalysisResult {
 	};
 	bias_claims: {
 		text: string;
-		category: 'Left-leaning' | 'Right-leaning' | 'Centrist';
+		category: 'Left-leaning' | 'Right-leaning' | 'Centrist' | 'Neutral/Balanced';
 		description: string;
 		valid: boolean;
 	}[];

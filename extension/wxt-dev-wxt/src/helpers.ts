@@ -140,17 +140,17 @@ export function underlineSentences(
 			if (sentences[idx].category) {
 				span.style.textDecorationColor =
 					sentences[idx].category === 'Left-leaning'
-						? '#3b82f6'
+						? '#60a5fa'
 						: sentences[idx].category === 'Right-leaning'
-							? '#ef4444'
-							: '#8b5cf6';
+							? '#f87171'
+							: '#c084fc';
 			} else if (sentences[idx].label) {
 				span.style.textDecorationColor =
 					sentences[idx].label === 'SUPPORTED'
-						? '#3b82f6'
+						? '#4ade80'
 						: sentences[idx].label === 'REFUTED'
-							? '#ef4444'
-							: '#6b7280';
+							? '#f87171'
+							: '#9ca3af';
 			} else {
 				span.style.textDecorationColor = valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(244, 63, 94, 0.8)';
 			}
