@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import UserAuth from './UserAuth';
 import { Stats } from '@/types';
+import CountUp from '@/components/ui/count-up';
 
 export default function Profile() {
 	const [userData, setUserData] = useState<string | undefined>(localStorage.getItem('username') ?? undefined);
@@ -17,6 +18,7 @@ export default function Profile() {
 			});
 			const data = await response.json();
 			setStats(data);
+			console.log(data);
 		}
 
 		if (localStorage.getItem('username')) {
@@ -49,6 +51,21 @@ export default function Profile() {
 					</div>
 					<div className="flex flex-col h-full">
 						<div className="flex flex-col gap-4">
+							<Card className="gap-0 rounded-4xl">
+								<CardHeader>
+									<h2 className="text-center text-lg">Total Number of Analyses</h2>
+								</CardHeader>
+								<CardContent>
+									<CountUp
+										from={0}
+										to={stats?.scansNum ?? 0}
+										separator=","
+										direction="up"
+										duration={1}
+										className="count-up-text text-5xl flex justify-center"
+									/>
+								</CardContent>
+							</Card>
 							<Card className="gap-0 rounded-4xl">
 								<CardHeader>
 									<h2 className="text-center text-lg">Bias Detection Stats</h2>

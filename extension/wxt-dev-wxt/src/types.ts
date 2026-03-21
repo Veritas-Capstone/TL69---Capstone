@@ -22,6 +22,7 @@ export interface AnalysisResult {
 }
 
 export type Stats = {
+	scansNum: number;
 	leftBiasNum: number;
 	rightBiasNum: number;
 	centerBiasNum: number;

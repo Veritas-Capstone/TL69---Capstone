@@ -20,6 +20,7 @@ router.post('/create-user', function (req, res, next) {
 			});
 			const newStats = new statsSchema({
 				username: req.body.username,
+				scansNum: 0,
 				leftBiasNum: 0,
 				rightBiasNum: 0,
 				centerBiasNum: 0,
@@ -74,6 +75,7 @@ router.post('/stats', async function (req, res, next) {
 			{ username },
 			{
 				$inc: {
+					scansNum: 1,
 					leftBiasNum: leftBias,
 					rightBiasNum: rightBias,
 					centerBiasNum: centerBias,
