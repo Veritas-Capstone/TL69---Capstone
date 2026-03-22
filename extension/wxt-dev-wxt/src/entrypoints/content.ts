@@ -6,7 +6,42 @@ export default defineContentScript({
 		browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 			// selects text from entire webpage
 			if (message.type === 'GET_PAGE_TEXT') {
-				await browser.storage.local.set({ selectedText: document.body.innerText });
+				const segments: string[] = [];
+
+				const ignoredSelector =
+					'nav, header, footer, script, style, noscript, ad, aside, head, iframe, ul, ol';
+
+				const rootContainers = Array.from(document.body.children).filter((el) => {
+					const tag = el.tagName.toUpperCase();
+					return tag === 'DIV' || tag === 'MAIN';
+				});
+
+				rootContainers.forEach((container) => {
+					if (container.matches(ignoredSelector)) return;
+
+					const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+						acceptNode: (node) => {
+							const parent = node.parentElement;
+							if (parent && parent.closest(ignoredSelector)) {
+								return NodeFilter.FILTER_REJECT;
+							}
+							if (!node.textContent?.trim()) {
+								return NodeFilter.FILTER_SKIP;
+							}
+
+							return NodeFilter.FILTER_ACCEPT;
+						},
+					});
+
+					let currentNode: Node | null;
+					while ((currentNode = walker.nextNode())) {
+						segments.push(currentNode.textContent!.trim());
+					}
+				});
+
+				const cleanText = segments.join(' ');
+
+				await browser.storage.local.set({ selectedText: cleanText });
 			}
 
 			// underlines sentences on webpage
@@ -25,21 +60,21 @@ export default defineContentScript({
 					if (category) {
 						(span as HTMLElement).style.backgroundColor =
 							category === 'Left-leaning'
-								? 'rgba(96, 165, 250, 0.5)'
+								? 'rgba(96, 165, 250, 0.4)'
 								: category === 'Right-leaning'
-									? 'rgba(248, 113, 113, 0.5)'
-									: 'rgba(192, 132, 252, 0.5)';
+									? 'rgba(248, 113, 113, 0.4)'
+									: 'rgba(192, 132, 252, 0.4)';
 					} else if (label) {
 						(span as HTMLElement).style.backgroundColor =
 							label === 'SUPPORTED'
-								? 'rgba(74, 222, 128, 0.5)'
+								? 'rgba(74, 222, 128, 0.4)'
 								: label === 'REFUTED'
-									? 'rgba(248, 113, 113, 0.5)'
-									: 'rgba(156, 163, 175, 0.5)';
+									? 'rgba(248, 113, 113, 0.4)'
+									: 'rgba(156, 163, 175, 0.4)';
 					} else {
 						(span as HTMLElement).style.backgroundColor = valid
-							? 'rgba(74, 222, 128, 0.5)'
-							: 'rgba(244, 63, 94, 0.5)';
+							? 'rgba(74, 222, 128, 0.4)'
+							: 'rgba(244, 63, 94, 0.4)';
 					}
 				});
 

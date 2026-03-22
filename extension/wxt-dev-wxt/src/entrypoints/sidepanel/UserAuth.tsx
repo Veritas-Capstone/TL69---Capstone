@@ -55,7 +55,7 @@ export default function UserAuth({
 		});
 
 		const data = await response.json();
-		if (!data.success) {
+		if (!data.username) {
 			setError('User already exists');
 		} else {
 			localStorage.setItem('username', data.username);

@@ -95,7 +95,7 @@ function App() {
 	}, []);
 
 	return (
-		<Card className="rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
+		<Card className="font-nunito rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
 			<CardHeader className="bg-black gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
 				<div className="flex items-center justify-between h-full">
 					<img src={logo} className="h-[25px] w-[90px]" />

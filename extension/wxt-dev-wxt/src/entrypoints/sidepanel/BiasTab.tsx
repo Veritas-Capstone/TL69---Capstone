@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, Label } from 'recharts';
 import { AnalysisResult } from '@/types';
 import { SearchXIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 type BiasTabProps = {
 	result?: AnalysisResult;
@@ -61,32 +62,44 @@ export default function BiasTab({
 							</Pie>
 						</PieChart>
 						{result && (
-							<div className="text-sm ml-auto mr-auto text-gray-500">
-								<div className="flex justify-between gap-4">
-									<span>
-										Left:{' '}
-										{Math.round(
-											(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
-										%
-									</span>
-									<span>
-										Center:{' '}
-										{Math.round(
-											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
-										%
-									</span>
-									<span>
-										Right:{' '}
-										{Math.round(
-											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
-										%
-									</span>
+							<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
+								<div className="flex justify-between gap-2 flex-col w-full text-base">
+									<div className="flex justify-between w-full">
+										<p>Left</p>
+										<Separator className="flex-[0.85] mt-3" />
+										<p>
+											{Math.round(
+												(chartData[0].value /
+													(chartData[0].value + chartData[1].value + chartData[2].value)) *
+													100,
+											)}
+											%
+										</p>
+									</div>
+									<div className="flex justify-between w-full">
+										<p>Center</p>
+										<Separator className="flex-[0.85] mt-3" />
+										<p>
+											{Math.round(
+												(chartData[2].value /
+													(chartData[0].value + chartData[1].value + chartData[2].value)) *
+													100,
+											)}
+											%
+										</p>
+									</div>
+									<div className="flex justify-between w-full">
+										<p>Right</p>
+										<Separator className="flex-[0.85] mt-3" />
+										<p>
+											{Math.round(
+												(chartData[1].value /
+													(chartData[0].value + chartData[1].value + chartData[2].value)) *
+													100,
+											)}
+											%
+										</p>
+									</div>
 								</div>
 							</div>
 						)}

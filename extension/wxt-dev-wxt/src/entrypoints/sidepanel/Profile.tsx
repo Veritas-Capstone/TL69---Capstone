@@ -4,10 +4,12 @@ import { PieChart, Pie, Cell, Label } from 'recharts';
 import UserAuth from './UserAuth';
 import { Stats } from '@/types';
 import CountUp from '@/components/ui/count-up';
+import { Separator } from '@/components/ui/separator';
 
 export default function Profile() {
 	const [userData, setUserData] = useState<string | undefined>(localStorage.getItem('username') ?? undefined);
 	const [stats, setStats] = useState<Stats | undefined>();
+	console.log(stats);
 
 	useEffect(() => {
 		async function updateStats() {
@@ -76,15 +78,15 @@ export default function Profile() {
 											data={[
 												{
 													name: 'Left',
-													value: Math.max(stats?.leftBiasNum ?? 0, 1),
+													value: stats?.leftBiasNum ?? 0,
 												},
 												{
 													name: 'Right',
-													value: Math.max(stats?.rightBiasNum ?? 0, 1),
+													value: stats?.rightBiasNum ?? 0,
 												},
 												{
 													name: 'Center',
-													value: Math.max(stats?.centerBiasNum ?? 0, 1),
+													value: stats?.centerBiasNum ?? 0,
 												},
 											]}
 											dataKey="value"
@@ -116,18 +118,25 @@ export default function Profile() {
 											))}
 										</Pie>
 									</PieChart>
-									<div className="text-sm ml-auto mr-auto text-gray-500">
-										<div className="flex justify-between gap-4">
-											<span>
-												Left: {Math.round(((stats?.leftBiasNum ?? 0) / Math.max(getTotalBias(), 1)) * 100)}%
-											</span>
-											<span>
-												Center:{' '}
-												{Math.round(((stats?.centerBiasNum ?? 0) / Math.max(getTotalBias(), 1)) * 100)}%
-											</span>
-											<span>
-												Right: {Math.round(((stats?.rightBiasNum ?? 0) / Math.max(getTotalBias(), 1)) * 100)}%
-											</span>
+									<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
+										<div className="flex justify-between gap-2 flex-col w-full text-base">
+											<div className="flex justify-between w-full">
+												<p>Left</p>
+												<Separator className="flex-[0.85] mt-3" />
+												<p>{Math.round(((stats?.leftBiasNum ?? 0) / Math.max(getTotalBias(), 1)) * 100)}%</p>
+											</div>
+											<div className="flex justify-between w-full">
+												<p>Center</p>
+												<Separator className="flex-[0.85] mt-3" />
+												<p>
+													{Math.round(((stats?.centerBiasNum ?? 0) / Math.max(getTotalBias(), 1)) * 100)}%
+												</p>
+											</div>
+											<div className="flex justify-between w-full">
+												<p>Right</p>
+												<Separator className="flex-[0.85] mt-3" />
+												<p>{Math.round(((stats?.rightBiasNum ?? 0) / Math.max(getTotalBias(), 1)) * 100)}%</p>
+											</div>
 										</div>
 									</div>
 								</CardContent>
@@ -142,15 +151,15 @@ export default function Profile() {
 											data={[
 												{
 													name: 'Supported',
-													value: Math.max(stats?.supportedClaimNum ?? 0, 1),
+													value: stats?.supportedClaimNum ?? 0,
 												},
 												{
 													name: 'Refuted',
-													value: Math.max(stats?.refutedClaimNum ?? 0, 1),
+													value: stats?.refutedClaimNum ?? 0,
 												},
 												{
 													name: 'NoInfo',
-													value: Math.max(stats?.noInfoClaimNum ?? 0, 1),
+													value: stats?.noInfoClaimNum ?? 0,
 												},
 											]}
 											dataKey="value"
@@ -186,20 +195,32 @@ export default function Profile() {
 											))}
 										</Pie>
 									</PieChart>
-									<div className="text-sm ml-auto mr-auto text-gray-500">
-										<div className="flex justify-between gap-4">
-											<span>
-												Supported:{' '}
-												{Math.round(((stats?.supportedClaimNum ?? 0) / Math.max(getTotalClaims(), 1)) * 100)}%
-											</span>
-											<span>
-												Refuted:{' '}
-												{Math.round(((stats?.refutedClaimNum ?? 0) / Math.max(getTotalClaims(), 1)) * 100)}%
-											</span>
-											<span>
-												No Info:{' '}
-												{Math.round(((stats?.noInfoClaimNum ?? 0) / Math.max(getTotalClaims(), 1)) * 100)}%
-											</span>
+									<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
+										<div className="flex justify-between gap-2 flex-col w-full text-base">
+											<div className="flex justify-between w-full">
+												<p>Supported</p>
+												<Separator className="flex-[0.85] mt-3" />
+												<p>
+													{Math.round(
+														((stats?.supportedClaimNum ?? 0) / Math.max(getTotalClaims(), 1)) * 100,
+													)}
+													%
+												</p>
+											</div>
+											<div className="flex justify-between w-full">
+												<p>Refuted</p>
+												<Separator className="flex-[0.85] mt-3" />
+												<p>
+													{Math.round(((stats?.refutedClaimNum ?? 0) / Math.max(getTotalClaims(), 1)) * 100)}%
+												</p>
+											</div>
+											<div className="flex justify-between w-full">
+												<p>Not Enough Info</p>
+												<Separator className="flex-[0.85] mt-3" />
+												<p>
+													{Math.round(((stats?.noInfoClaimNum ?? 0) / Math.max(getTotalClaims(), 1)) * 100)}%
+												</p>
+											</div>
 										</div>
 									</div>
 								</CardContent>

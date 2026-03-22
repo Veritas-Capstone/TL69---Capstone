@@ -3,6 +3,7 @@ import { CheckCheckIcon, CheckIcon, CircleQuestionMarkIcon, SearchXIcon, XIcon }
 import { AnalysisResult } from '@/types';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 type ClaimTabProps = {
 	result?: AnalysisResult;
@@ -17,7 +18,6 @@ export default function ClaimTab({
 	handleHighlight,
 	failedUnderlinesArr,
 }: ClaimTabProps) {
-	console.log(result?.fact_check_claims);
 	const chartData = [
 		{
 			name: 'Supported',
@@ -60,32 +60,41 @@ export default function ClaimTab({
 						</Pie>
 					</PieChart>
 					{result && (
-						<div className="text-sm ml-auto mr-auto text-gray-500">
-							<div className="flex justify-between gap-4">
-								<span>
-									Supported:{' '}
-									{Math.round(
-										(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-											100,
-									)}
-									%
-								</span>
-								<span>
-									Refuted:{' '}
-									{Math.round(
-										(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-											100,
-									)}
-									%
-								</span>
-								<span>
-									Not enough info:{' '}
-									{Math.round(
-										(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-											100,
-									)}
-									%
-								</span>
+						<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
+							<div className="flex justify-between gap-2 flex-col w-full text-base">
+								<div className="flex justify-between w-full">
+									<p>Supported</p>
+									<Separator className="flex-[0.85] mt-3" />
+									<p>
+										{Math.round(
+											(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+												100,
+										)}
+										%
+									</p>
+								</div>
+								<div className="flex justify-between w-full">
+									<p>Refuted</p>
+									<Separator className="flex-[0.85] mt-3" />
+									<p>
+										{Math.round(
+											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+												100,
+										)}
+										%
+									</p>
+								</div>
+								<div className="flex justify-between w-full">
+									<p>Not Enough Info</p>
+									<Separator className="flex-[0.85] mt-3" />
+									<p>
+										{Math.round(
+											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+												100,
+										)}
+										%
+									</p>
+								</div>
 							</div>
 						</div>
 					)}
