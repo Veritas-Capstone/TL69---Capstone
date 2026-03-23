@@ -63,7 +63,7 @@ function App() {
 	// update user stats in profile
 	async function updateStats(data: AnalysisResult) {
 		if (localStorage.getItem('username')) {
-			await fetch(`http://localhost:8080/stats`, {
+			await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({

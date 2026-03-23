@@ -1,8 +1,5 @@
 import { AnalysisResult } from '@/types';
 
-// sample fetch
-const API_URL = 'http://localhost:8000';
-
 export interface SentenceBias {
 	text: string;
 	category: string;
@@ -117,12 +114,12 @@ function generateMockFactChecks(text: string): Array<{
 
 export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	try {
-		const response = await fetch(`${API_URL}/bias/analyze`, {
+		const response = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/bias/analyze`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
 		});
-		const response2 = await fetch(`${API_URL}/claim/verify-claims-from-passage`, {
+		const response2 = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/claim/verify-claims-from-passage`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
@@ -162,8 +159,6 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 		throw error;
 	}
 }
-
-
 
 function normalizeSpaces(str: string) {
 	return str.replace(/\u00A0/g, ' ');

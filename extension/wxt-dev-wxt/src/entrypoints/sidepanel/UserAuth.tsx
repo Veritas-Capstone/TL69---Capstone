@@ -23,7 +23,7 @@ export default function UserAuth({
 
 	async function login() {
 		setError(undefined);
-		const response = await fetch(`http://localhost:8080/user`, {
+		const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/user`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ username: username, password: password }),
@@ -36,7 +36,7 @@ export default function UserAuth({
 			localStorage.setItem('username', data.username);
 			setUserData(data.username);
 
-			const response = await fetch(`http://localhost:8080/get-stats`, {
+			const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ username: username }),
@@ -48,7 +48,7 @@ export default function UserAuth({
 
 	async function register() {
 		setError(undefined);
-		const response = await fetch(`http://localhost:8080/create-user`, {
+		const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/create-user`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ username: username, password: password }),
@@ -61,7 +61,7 @@ export default function UserAuth({
 			localStorage.setItem('username', data.username);
 			setUserData(data.username);
 
-			const response = await fetch(`http://localhost:8080/get-stats`, {
+			const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ username: username }),

@@ -9,11 +9,10 @@ import { Separator } from '@/components/ui/separator';
 export default function Profile() {
 	const [userData, setUserData] = useState<string | undefined>(localStorage.getItem('username') ?? undefined);
 	const [stats, setStats] = useState<Stats | undefined>();
-	console.log(stats);
 
 	useEffect(() => {
 		async function updateStats() {
-			const response = await fetch(`http://localhost:8080/get-stats`, {
+			const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ username: localStorage.getItem('username') }),
