@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "@wxt-dev/auto-icons": "^1.1.0"
+  },
+  "dependencies": {
+    "recharts": "^3.6.0"
   }
 }

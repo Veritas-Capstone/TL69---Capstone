@@ -1,59 +1,164 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { ShieldIcon, CheckCircleIcon, TriangleAlertIcon } from 'lucide-react';
+import { CheckCheckIcon, CheckIcon, CircleQuestionMarkIcon, SearchXIcon, XIcon } from 'lucide-react';
+import { AnalysisResult } from '@/types';
+import { PieChart, Pie, Cell, Label } from 'recharts';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
-interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
-	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
-}
+type ClaimTabProps = {
+	result?: AnalysisResult;
+	currentHovered?: number;
+	handleHighlight: (index: number | undefined) => void;
+	failedUnderlinesArr: number[];
+};
 
 export default function ClaimTab({
 	result,
 	currentHovered,
 	handleHighlight,
-}: {
-	result: AnalysisResult | undefined;
-	currentHovered: string | undefined;
-	handleHighlight: Function;
-}) {
-	console.log(result);
+	failedUnderlinesArr,
+}: ClaimTabProps) {
+	const chartData = [
+		{
+			name: 'Supported',
+			value: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
+		},
+		{
+			name: 'Refuted',
+			value: result?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
+		},
+		{
+			name: 'Not enough info',
+			value: result?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
+		},
+	];
+
 	return (
 		<>
-			<Card>
-				<CardHeader className="flex gap-2 items-center">
-					<ShieldIcon size={20} />
-					<p className="font-semibold text-base">Claim Verification</p>
+			<Card className="gap-0 rounded-4xl shadow-none py-5">
+				<CardHeader className="flex gap-2 items-center justify-center">
+					<p className="text-xl">Summary</p>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-2">
-					{result?.fact_check_claims.map((claim, idx) => (
-						<div
-							key={`fact-${idx}`}
-							className={`bg-gray-50 flex rounded-b-sm gap-4 items-center py-2 pl-4 hover:cursor-pointer border-2 border-white ${
-								currentHovered && claim.claim.includes(currentHovered) && 'border-yellow-200'
-							}`}
-							claim-text={claim.claim}
-							onMouseEnter={() => handleHighlight(claim.claim)}
-							onMouseLeave={() => handleHighlight('')}
+					<PieChart className="w-[70%] max-w-[172px] min-h-[172px] m-auto -my-2" responsive>
+						<Pie
+							data={chartData}
+							dataKey="value"
+							nameKey="name"
+							fill="#8884d8"
+							isAnimationActive={true}
+							innerRadius={55}
 						>
-							{claim.valid ? (
-								<CheckCircleIcon className="min-w-6 h-6 text-green-400" />
-							) : (
-								<TriangleAlertIcon className="min-w-6 h-6 text-red-400" />
-							)}
-							<div className="flex flex-col">
-								<h3 className="text-sm">{claim.label}</h3>
-								{claim.evidence.map((ev) => (
-									<p className="text-xs text-gray-400">- {ev}</p>
-								))}
+							<Label value={`${result?.fact_check_claims.length} Checks`} position={'center'} />
+							{chartData.map((entry) => (
+								<Cell
+									fill={
+										entry.name === 'Supported' ? '#4ade80' : entry.name === 'Refuted' ? '#f87171' : '#9ca3af'
+									}
+								/>
+							))}
+						</Pie>
+					</PieChart>
+					{result && (
+						<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
+							<div className="flex justify-between gap-2 flex-col w-full text-base">
+								<div className="flex justify-between w-full">
+									<p>Supported</p>
+									<Separator className="flex-[0.85] mt-3" />
+									<p>
+										{Math.round(
+											(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+												100,
+										)}
+										%
+									</p>
+								</div>
+								<div className="flex justify-between w-full">
+									<p>Refuted</p>
+									<Separator className="flex-[0.85] mt-3" />
+									<p>
+										{Math.round(
+											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+												100,
+										)}
+										%
+									</p>
+								</div>
+								<div className="flex justify-between w-full">
+									<p>Not Enough Info</p>
+									<Separator className="flex-[0.85] mt-3" />
+									<p>
+										{Math.round(
+											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+												100,
+										)}
+										%
+									</p>
+								</div>
 							</div>
 						</div>
+					)}
+				</CardContent>
+			</Card>
+			<Card className="rounded-4xl shadow-none gap-4 py-5">
+				<CardHeader className="flex gap-2 items-center justify-center">
+					<p className="text-xl text-center">Sentence-Level Claims</p>
+				</CardHeader>
+				<CardContent className="flex flex-col gap-4 pl-4 pr-2 max-h-[300px] overflow-auto">
+					{result?.fact_check_claims.map((claim, idx) => (
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Card
+									key={`fact-${idx}`}
+									className={`flex flex-col p-0! gap-0 items-center hover:cursor-pointer border border-gray-200 rounded-xl ${
+										claim.label === 'SUPPORTED'
+											? 'hover:border-green-400!'
+											: claim.label === 'REFUTED'
+												? 'hover:border-red-400!'
+												: 'hover:border-gray-400!'
+									}
+											${
+												currentHovered !== undefined &&
+												idx === currentHovered &&
+												(claim.label === 'SUPPORTED'
+													? 'border-green-400!'
+													: claim.label === 'REFUTED'
+														? 'border-red-400!'
+														: 'border-gray-400!')
+											}`}
+									claim-idx={idx}
+									onMouseEnter={() => handleHighlight(idx)}
+									onMouseLeave={() => handleHighlight(undefined)}
+								>
+									<CardHeader className="flex items-center w-full gap-2 border-b p-3!">
+										{claim.label === 'SUPPORTED' ? (
+											<div className="bg-green-400 text-white font-bold min-w-6 h-6 flex justify-center items-center text-lg mb-auto rounded-sm">
+												<CheckIcon />
+											</div>
+										) : claim.label === 'REFUTED' ? (
+											<div className="bg-red-400 text-white font-bold min-w-6 h-6 flex justify-center items-center text-lg mb-auto rounded-sm">
+												<XIcon />
+											</div>
+										) : (
+											<div className="bg-gray-400 text-white font-bold min-w-6 h-6 flex justify-center items-center text-lg mb-auto rounded-sm">
+												?
+											</div>
+										)}
+										<h3 className="text-base">{claim.label}</h3>
+
+										{failedUnderlinesArr.includes(idx) && <SearchXIcon className="ml-auto" color="black" />}
+									</CardHeader>
+									<CardContent className="p-3! w-full">
+										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
+									</CardContent>
+								</Card>
+							</TooltipTrigger>
+							{failedUnderlinesArr.includes(idx) && (
+								<TooltipContent className="font-semibold text-center w-fit">
+									Unable to locate on page
+								</TooltipContent>
+							)}
+						</Tooltip>
 					))}
 				</CardContent>
 			</Card>
