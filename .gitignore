@@ -52,6 +52,7 @@ Bias-Detection/datasets/
 
 
 # specfic data file
+/Bias-Detection/models
 /api/claim_verification/data/unprocessed/
 /api/claim_verification/data/raw/
 /api/claim_verification/data/processed/averitec.csv
