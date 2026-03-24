@@ -14,7 +14,7 @@ type BiasTabProps = {
 
 function TokenChip({ token, score, category }: { token: string; score: number; category: string }) {
 	// Intensity based on attribution score (0-1)
-	const opacity = 0.15 + score * 0.65;
+	const opacity = 0.05 + score * 0.6;
 	const bgColor =
 		category === 'Left-leaning'
 			? `rgba(96, 165, 250, ${opacity})`
@@ -38,18 +38,12 @@ function TokenChip({ token, score, category }: { token: string; score: number; c
 			}}
 		>
 			{token}
-			<span className="text-gray-400 text-[10px]">{Math.round(score * 100)}%</span>
+			<span className="text-gray-500 text-[10px]">{Math.round(score * 100)}%</span>
 		</span>
 	);
 }
 
-function ExplainabilitySection({
-	tokens,
-	category,
-}: {
-	tokens: TokenAttribution[];
-	category: string;
-}) {
+function ExplainabilitySection({ tokens, category }: { tokens: TokenAttribution[]; category: string }) {
 	if (!tokens || tokens.length === 0) return null;
 
 	return (
@@ -132,8 +126,7 @@ export default function BiasTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[0].value /
-												(chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%
@@ -144,8 +137,7 @@ export default function BiasTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[2].value /
-												(chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%
@@ -156,8 +148,7 @@ export default function BiasTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[1].value /
-												(chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%
@@ -177,7 +168,7 @@ export default function BiasTab({
 						<Tooltip key={`bias-${idx}`}>
 							<TooltipTrigger asChild>
 								<Card
-									className={`flex flex-col p-0! gap-0 items-center hover:cursor-pointer border border-gray-200 rounded-xl ${
+									className={`flex flex-col p-0! gap-0 items-center border border-gray-200 rounded-xl ${
 										claim.category === 'Left-leaning'
 											? 'hover:border-blue-400!'
 											: claim.category === 'Right-leaning'
@@ -213,19 +204,17 @@ export default function BiasTab({
 										)}
 										<h3 className="text-base">{claim.category}</h3>
 
-										{failedUnderlinesArr.includes(idx) && (
-											<SearchXIcon className="ml-auto" color="black" />
-										)}
+										{failedUnderlinesArr.includes(idx) && <SearchXIcon className="ml-auto" color="black" />}
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.text}</p>
 
 										{/* Explainability toggle */}
 										{claim.top_tokens && claim.top_tokens.length > 0 && (
-											<div className="mt-2">
+											<div>
 												<button
 													onClick={(e) => toggleExpand(idx, e)}
-													className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+													className="flex items-center gap-1 text-xs mt-1 mb-0.5 text-gray-400 hover:text-gray-600 transition-colors"
 												>
 													<SparklesIcon className="w-3 h-3" />
 													<span>Words that influenced this score</span>
@@ -236,10 +225,7 @@ export default function BiasTab({
 													)}
 												</button>
 												{expandedCards.has(idx) && (
-													<ExplainabilitySection
-														tokens={claim.top_tokens}
-														category={claim.category}
-													/>
+													<ExplainabilitySection tokens={claim.top_tokens} category={claim.category} />
 												)}
 											</div>
 										)}
