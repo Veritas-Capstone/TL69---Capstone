@@ -30,6 +30,7 @@ venv/
 ENV/
 env/
 gpu_venv/
+.gpu_venv/
 api/claim_verification/gpu_venv/
 Bias-Detection/biasenv/
 

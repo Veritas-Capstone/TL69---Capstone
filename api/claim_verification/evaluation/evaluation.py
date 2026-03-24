@@ -39,7 +39,7 @@ EVAL_PLAN = [
         "dataset": "fever",
         "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv", 
         "mode": "eval",
-        "init_from": "hf",         
+        "init_from": "fever_averitec_mix",         # <- use ../models/fever_train_claims_80/latest.pt         
     },
     # {
     #     "dataset": "fever",
@@ -48,12 +48,12 @@ EVAL_PLAN = [
     #     "init_from": "hf",         
     # },
     # Example 2 (optional): evaluate AveriTeC model trained on AveriTeC
-    # {
-    #     "dataset": "averitec",
-    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_sample.csv",
-    #     "mode": "eval",
-    #     "init_from": "fever_train_claims",   # <- use ../models/averitec/latest.pt
-    # },
+    {
+        "dataset": "averitec",
+        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",
+        "mode": "eval",
+        "init_from": "fever_averitec_mix",   # <- use ../models/fever_train_claims_80/latest.pt
+    },
 ]
 
 
@@ -81,33 +81,29 @@ def main():
             dataset = step["dataset"]
             mode = step.get("mode", "eval")  # default: 'eval'
             dataset_ckpt = get_ckpt_path(dataset)
-
             init_weights = resolve_init_weights(step)
+            data_path = step.get("dataset_path") or (DATA_DIR / "processed" / f"{dataset}.csv")
 
             print(f"\n=== EVAL Dataset: {dataset} ===")
             print(f"  mode:       {mode}")
             print(f"  init_from:  {step.get('init_from', 'hf')} -> {init_weights}")
             print(f"  dataset ckpt path (for this dataset): {dataset_ckpt}")
+            print(f"  data path:  {data_path}")
 
             if mode != "eval":
                 raise ValueError(f"Unknown mode={mode!r} for dataset={dataset!r}; expected 'eval'.")
 
-            if dataset == "averitec" or "fever_train_claims" in dataset:
-                eval_averitec(
-                    init_weights=init_weights,
-                    data_set=dataset,
-                    data_path=step["dataset_path"],
-                    output_root=EVAL_OUT_DIR
-                )
-            elif dataset == "fever":
-                eval_averitec(
-                    init_weights=init_weights,
-                    data_set=dataset,
-                    data_path=step["dataset_path"],
-                    output_root=EVAL_OUT_DIR
-                )
-            else:
+            # Both AveriTeC and FEVER-family splits use the same evaluator today
+            if dataset != "averitec" and "fever_train_claims" not in dataset and dataset != "fever":
                 raise ValueError(f"Unknown dataset {dataset!r} for evaluation")
+
+            eval_averitec(
+                init_weights=init_weights,
+                data_set=dataset,
+                data_path=data_path,
+                output_root=EVAL_OUT_DIR,
+                num_heads=step.get("num_heads", 4),
+            )
 
 
 if __name__ == "__main__":
