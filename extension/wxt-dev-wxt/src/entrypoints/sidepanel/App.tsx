@@ -32,7 +32,11 @@ function App() {
 			const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 
 			// clear selected text on webpage
-			await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+			try {
+				await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+			} catch {
+				// Content script not available on this page, that's fine
+			}
 
 			// call model API
 			const storedResult = await browser.storage.local.get('storedResult');
@@ -46,10 +50,15 @@ function App() {
 			setResult(data);
 
 			// underline claims on webpage
-			const failed = await browser.tabs.sendMessage(tab.id ?? 0, {
-				type: 'UNDERLINE_SELECTION',
-				sentences: data?.bias_claims,
-			});
+			let failed: number[] = [];
+			try {
+				failed = await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					sentences: data?.bias_claims,
+				});
+			} catch {
+				// Content script unavailable
+			}
 
 			await updateStats(data);
 			setFailedUnderlinesArr(failed);

@@ -1,169 +1,394 @@
 """
-FastAPI server for bias detection model
+FastAPI server for Veritas Bias Detection
+
+Integrates the two-pass BiasDetector pipeline:
+    Pass 1: Politicalness filter (Political DEBATE NLI)
+    Pass 2: Sentence-level sliding window bias prediction
+        + Gradient×Input explainability
+
+Sliding Window Approach:
+Instead of feeding isolated sentences to the model (too short,
+model trained on full articles), we feed a window of surrounding
+sentences for each target sentence. E.g. for sentence 3:
+    Window = [sent1, sent2, SENT3, sent4, sent5]
+The model gets ~100-150 tokens of context, and the prediction
+is attributed to the center sentence.
+
 Run with: uvicorn server:app --reload --port 8000
 
-This script uses Model 4 as the baseline and takes in as input an article, 
-splits it into sentences, feeds each sentence to the model, and aggregates 
-the predicted bias for each sentence.
-
-Todo-> 
-1) Replace Naive Sentence splitting with a better algorithm, perhaps one from 
-   a real sentence segmentation library to prevent sentences real context being 
-   cut off midway 
-2) Merge small sentences (connected to part 1) 
-3) Introduce a weighted aggregate system instead of majority voting (essentially 
-   give less weight to low confidence results), maybe even ignore them completely outright 
-4) ADVANCED : Weight quotes and counterpoints less as the model might think they 
-   are part of the problem when actually they aren't 
-5) Smoothing across consecutive sentences (CHAT RECOMMENDATION) 
-6) 
+Models loaded locally from:
+- models/bias_detector          (DeBERTa political leaning)
+- models/politicalness_filter   (Political DEBATE NLI)
 """
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from typing import List, Dict, Optional
 import torch
-import spacy
-from typing import List, Dict
+import numpy as np
+import re
+import time
+import warnings
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+# Constants
+LABELS = ["Left", "Center", "Right"]
+
+STOP_WORDS = frozenset({
+    "the", "a", "an", "and", "or", "but", "in", "on", "at", "to",
+    "for", "of", "with", "by", "is", "was", "are", "were", "be",
+    "been", "being", "have", "has", "had", "do", "does", "did",
+    "will", "would", "could", "should", "may", "might", "shall",
+    "can", "that", "this", "these", "those", "it", "its", "not",
+    "no", "so", "if", "then", "than", "too", "very", "just",
+    "about", "up", "out", "also", "as", "from", "into", "he",
+    "she", "they", "we", "you", "his", "her", "their", "our",
+    "my", "me", "him", "them", "us", "who", "which", "what",
+    "when", "where", "how", "all", "each", "every", "both",
+    "more", "most", "other", "some", "such", "only", "own",
+    "same", "any", "there", "here", "said", "says", "new",
+})
+
+PUNCTUATION = frozenset({
+    ".", ",", "!", "?", ";", ":", '"', "'", "(", ")", "[", "]",
+    "-", "\u2013", "\u2014", "\u2581.", "\u2581,", "\u2581!", "\u2581?", "\u2581;", "\u2581:", "\u2581-",
+})
+
+POLITICALNESS_HYPOTHESES = [
+    "This text is about politics or government policy.",
+    "This text discusses a politically controversial or partisan topic.",
+    "This text is about legislation, regulation, or political debate.",
+    "This text discusses government officials or political parties.",
+]
+
+# Sliding window: how many sentences before/after the target
+WINDOW_RADIUS = 2
 
 
-# -----------------------
-# Sentence Splitting
-# -----------------------
-def SplitIntoSentences(text):
-    doc = nlp(text)
-    return [sent.text.strip() for sent in doc.sents]
+# Bias detection
+class BiasDetector:
+    def __init__(self, bias_path="models/bias_detector",
+        pol_path="models/politicalness_filter",
+        device=None, use_fp16=True,
+        pol_threshold=0.5, window_radius=WINDOW_RADIUS):
 
-
-# -----------------------
-# Merge Short Sentences 
-# -----------------------
-def merge_short_sentences(sentences, min_tokens=18):
-    merged = []
-    buffer = ""
-
-    for sent in sentences:
-        num_tokens = len(sent.split())
-
-        if num_tokens < min_tokens:
-            # small sentence → merge into buffer
-            buffer += " " + sent
+        if device is not None:
+            self.device = torch.device(device)
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
         else:
-            # long sentence → flush buffer first
-            if buffer.strip():
-                merged.append(buffer.strip())
-                buffer = ""
-            merged.append(sent)
+            self.device = torch.device("cpu")
 
-    # leftover buffer
-    if buffer.strip():
-        merged.append(buffer.strip())
+        self.pol_threshold = pol_threshold
+        self.window_radius = window_radius
+        self.use_fp16 = use_fp16 and self.device.type == "cuda"
+        dtype_str = "FP16" if self.use_fp16 else "FP32"
+        print(f"Device: {self.device}  |  Precision: {dtype_str}")
 
-    return merged
+        # Load bias model locally
+        print(f"Loading bias model from {bias_path} ...")
+        self.bias_model = AutoModelForSequenceClassification.from_pretrained(bias_path)
+        self.bias_tokenizer = AutoTokenizer.from_pretrained(bias_path)
+        self.bias_model.eval().to(self.device)
+        if self.use_fp16:
+            self.bias_model.half()
 
+        # Load politicalness model locally
+        print(f"Loading politicalness model from {pol_path} ...")
+        self.pol_model = AutoModelForSequenceClassification.from_pretrained(pol_path)
+        self.pol_tokenizer = AutoTokenizer.from_pretrained(pol_path)
+        self.pol_model.eval().to(self.device)
+        if self.use_fp16:
+            self.pol_model.half()
 
-# -----------------------
-# Load Model Once
-# -----------------------
-def load_model():
-    model = AutoModelForSequenceClassification.from_pretrained(
-        "matous-volf/political-leaning-deberta-large"
-    )
-    tokenizer = AutoTokenizer.from_pretrained(
-        "microsoft/deberta-v3-large",
-        use_fast=False
-    )
-    model.eval()
-    return model, tokenizer
+        label2id = self.pol_model.config.label2id
+        self.entail_idx = label2id.get("ENTAILMENT", label2id.get("entailment", 0))
 
+        self._embedding_layer = self._find_embedding_layer(self.bias_model)
+        if self._embedding_layer is None:
+            print("Warning: Could not locate embedding layer - explainability disabled")
 
-# -----------------------
-# Sentence-Level Prediction
-# -----------------------
-def baseline_bias_detection(model, tokenizer, sentence):
-    inputs = tokenizer(sentence, return_tensors="pt", truncation=True, padding=True)
+        print("Models loaded successfully\n")
 
-    with torch.no_grad():
-        logits = model(**inputs).logits
-        probs = torch.nn.functional.softmax(logits, dim=1)
-        predicted = torch.argmax(probs, dim=1).item()
+    @staticmethod
+    def _find_embedding_layer(model):
+        for attr in ("deberta", "bert", "roberta", "distilbert"):
+            backbone = getattr(model, attr, None)
+            if backbone is not None:
+                return backbone.embeddings.word_embeddings
+        for name, module in model.named_modules():
+            if "word_embedding" in name.lower() and hasattr(module, "weight"):
+                return module
+        return None
 
-    label_map = {0: "Left", 1: "Center", 2: "Right"}
+    # Politicalness Filter
 
-    print(f"Sentence: {sentence}")
-    print("Predicted Bias:", label_map[predicted])
-    print("Probabilities:", probs[0].tolist(), "\n")
+    def check_politicalness(self, text):
+        pairs = [(text[:1024], h) for h in POLITICALNESS_HYPOTHESES]
+        inputs = self.pol_tokenizer(
+            pairs, return_tensors="pt", truncation=True,
+            max_length=512, padding=True,
+        ).to(self.device)
 
-    return label_map[predicted], probs[0]
+        with torch.no_grad(), torch.autocast(self.device.type, enabled=self.use_fp16):
+            logits = self.pol_model(**inputs).logits
 
+        probs = torch.softmax(logits.float(), dim=-1)
+        best_conf = float(probs[:, self.entail_idx].max())
+        return best_conf > self.pol_threshold, best_conf
 
-# -----------------------
-# Apply Downweighting Rules
-# -----------------------
-def compute_weight(sentence, probs, low_conf_threshold=0.45):
-    peak = torch.max(probs).item()
+    # Sentence-Level Sliding Window Prediction
 
-    weight = 1.0
+    def analyze_sentences(self, sentences, explain=True):
+        """
+        For each target sentence i, build a context window:
+            window = sentences[max(0, i-R) : min(n, i+R+1)]
+        Feed the window to the model, attribute prediction to sentence i.
 
-    # 1. Downweight low-confidence sentences
-    if peak < low_conf_threshold:
-        weight *= 0.3   # reduce weight by 70%
+        Example with R=2:
+            Sent 0: [0][1][2]           -> prediction for 0
+            Sent 1: [0][1][2][3]        -> prediction for 1
+            Sent 2: [0][1][2][3][4]     -> prediction for 2
+            Sent 3: [1][2][3][4][5]     -> prediction for 3
+            Sent 4: [2][3][4][5][6]     -> prediction for 4
+        """
+        if not sentences:
+            return []
 
-    # 2. Downweight quotes / counterpoints
-    if sentence.startswith('"') or sentence.startswith("“"):
-        weight *= 0.5
+        n = len(sentences)
+        results = []
 
-    return weight
+        for i in range(n):
+            win_start = max(0, i - self.window_radius)
+            win_end = min(n, i + self.window_radius + 1)
+            window_text = " ".join(sentences[win_start:win_end])
 
+            inputs = self.bias_tokenizer(
+                window_text, return_tensors="pt",
+                truncation=True, max_length=512, padding=True,
+            ).to(self.device)
 
-# -----------------------
-# Weighted Aggregate
-# -----------------------
-def AggregateBiasScores(probabilities_list, weights):
-    """
-    probabilities_list = [tensor([0.8, 0.1, 0.1]), tensor([0.2,0.3,0.5]), ...]
-    We sum all probability vectors and choose the highest total.
-    """
-    weighted_probs = []
+            with torch.no_grad(), torch.autocast(self.device.type, enabled=self.use_fp16):
+                logits = self.bias_model(**inputs).logits
 
-    for probs, w in zip(probabilities_list, weights):
-        weighted_probs.append(probs * w)
+            probs = torch.softmax(logits.float(), dim=-1)[0]
+            pred_idx = torch.argmax(probs).item()
+            confidence = float(probs[pred_idx])
+            label = LABELS[pred_idx]
 
-    total = torch.stack(weighted_probs).sum(dim=0)
-    idx = torch.argmax(total).item()
+            # explainability on the TARGET sentence only
+            top_tokens = []
+            if explain and self._embedding_layer is not None:
+                is_pol, _ = self.check_politicalness(sentences[i])
+                if is_pol and confidence > 0.4:
+                    top_tokens = self.gradient_x_input(sentences[i])[:5]
 
-    label_map = {0: "Left", 1: "Center", 2: "Right"}
-    return label_map[idx], total
+            results.append({
+                "text": sentences[i],
+                "bias": label,
+                "confidence": confidence,
+                "probabilities": {l: float(probs[j]) for j, l in enumerate(LABELS)},
+                "window": f"[{win_start}:{win_end-1}] -> sent {i}",
+                "window_size": win_end - win_start,
+                "top_tokens": top_tokens,
+            })
 
+        return results
 
-# ======================
-# FastAPI Application
-# ======================
+    # Gradient x Input explainability
 
-app = FastAPI()
+    def gradient_x_input(self, text, target_class=None):
+        if self._embedding_layer is None:
+            return []
 
-# Enable CORS for local development
+        was_fp16 = next(self.bias_model.parameters()).dtype == torch.float16
+        if was_fp16:
+            self.bias_model.float()
+
+        inputs = self.bias_tokenizer(
+            text, return_tensors="pt",
+            truncation=True, max_length=256, padding=True,
+        ).to(self.device)
+
+        input_ids = inputs["input_ids"]
+        attention_mask = inputs["attention_mask"]
+        tokens = self.bias_tokenizer.convert_ids_to_tokens(input_ids[0])
+
+        embeddings = self._embedding_layer(input_ids)
+        embeddings = embeddings.detach().requires_grad_(True)
+
+        outputs = self.bias_model(
+            inputs_embeds=embeddings,
+            attention_mask=attention_mask,
+        )
+        logits = outputs.logits
+
+        if target_class is None:
+            target_class = torch.argmax(logits, dim=-1).item()
+
+        logits[0, target_class].backward()
+
+        attr = (embeddings.grad * embeddings).sum(dim=-1).abs().squeeze(0)
+        if attr.max() > 0:
+            attr = attr / attr.max()
+        scores = attr.detach().cpu().numpy()
+
+        if was_fp16:
+            self.bias_model.half()
+
+        return self._build_token_list(tokens, scores)
+
+    @staticmethod
+    def _build_token_list(tokens, scores):
+        result = []
+        for i, (token, score) in enumerate(zip(tokens, scores)):
+            if token in ("[CLS]", "[SEP]", "[PAD]", "<s>", "</s>"):
+                continue
+            clean = token.replace("##", "").replace("\u2581", "").strip()
+            if not clean or clean in PUNCTUATION:
+                continue
+            if all(c in '.,!?;:\'"()[]<>-\u2013\u2014/' for c in clean):
+                continue
+            if clean.lower() in STOP_WORDS:
+                continue
+            result.append({
+                "token": clean,
+                "score": round(float(score), 3),
+            })
+        result.sort(key=lambda x: x["score"], reverse=True)
+        return result
+
+    # weighted aggregation
+
+    def aggregate_bias(self, sentence_results):
+        if not sentence_results:
+            return {
+                "predicted_label": "Center",
+                "all_probs": {"Left": 0.0, "Center": 1.0, "Right": 0.0},
+            }
+
+        weighted_probs = []
+        total_weight = 0.0
+
+        for s in sentence_results:
+            weight = 1.0
+            if s["confidence"] < 0.45:
+                weight *= 0.3
+            text = s["text"].strip()
+            if text.startswith('"') or text.startswith("\u201c"):
+                weight *= 0.5
+
+            probs_tensor = torch.tensor([
+                s["probabilities"]["Left"],
+                s["probabilities"]["Center"],
+                s["probabilities"]["Right"],
+            ])
+            weighted_probs.append(probs_tensor * weight)
+            total_weight += weight
+
+        if total_weight == 0:
+            return {
+                "predicted_label": "Center",
+                "all_probs": {"Left": 0.0, "Center": 1.0, "Right": 0.0},
+            }
+
+        avg_probs = torch.stack(weighted_probs).sum(dim=0) / total_weight
+        pred_idx = torch.argmax(avg_probs).item()
+
+        return {
+            "predicted_label": LABELS[pred_idx],
+            "all_probs": {l: float(avg_probs[i]) for i, l in enumerate(LABELS)},
+        }
+
+    def analyze(self, text, explain=True):
+        start = time.time()
+
+        is_political, pol_conf = self.check_politicalness(text)
+
+        if not is_political:
+            return {
+                "is_political": False,
+                "political_confidence": pol_conf,
+                "prediction": None,
+                "confidence": None,
+                "probs": None,
+                "sentences": [],
+                "elapsed": time.time() - start,
+            }
+
+        sentences = self._split_sentences(text)
+
+        if not sentences:
+            return {
+                "is_political": True,
+                "political_confidence": pol_conf,
+                "prediction": "Center",
+                "confidence": 0.0,
+                "probs": {"Left": 0.0, "Center": 1.0, "Right": 0.0},
+                "sentences": [],
+                "elapsed": time.time() - start,
+            }
+
+        sentence_results = self.analyze_sentences(sentences, explain=explain)
+        overall = self.aggregate_bias(sentence_results)
+
+        return {
+            "is_political": True,
+            "political_confidence": pol_conf,
+            "prediction": overall["predicted_label"],
+            "probs": overall["all_probs"],
+            "sentences": sentence_results,
+            "elapsed": time.time() - start,
+        }
+
+    # sentence splitter 
+    @staticmethod
+    def _split_sentences(text):
+        raw = re.split(r'(?<=[.!?])\s+(?=[A-Z"\'])', text)
+        expanded = []
+        for chunk in raw:
+            parts = chunk.split("\n\n")
+            expanded.extend(p.strip() for p in parts if p.strip())
+
+        merged = []
+        for s in expanded:
+            if merged and len(s.split()) < 8:
+                merged[-1] += " " + s
+            else:
+                merged.append(s)
+
+        return [s for s in merged if len(s.split()) >= 5]
+
+# FastAPI
+
+app = FastAPI(title="Veritas Bias Detection API")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your extension's origin
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load models once at startup
 print("Loading models...")
-model, tokenizer = load_model()
-print("Models loaded successfully!")
+detector = BiasDetector(
+    bias_path="../models/bias_detector",
+    pol_path="../models/politicalness_filter",
+)
+print("Server ready!")
 
 
+# Request/Response Models
 class AnalysisRequest(BaseModel):
     text: str
 
+class TokenAttribution(BaseModel):
+    token: str
+    score: float
 
 class SentenceBias(BaseModel):
     text: str
@@ -172,7 +397,7 @@ class SentenceBias(BaseModel):
     bias: str
     confidence: float
     probabilities: Dict[str, float]
-
+    top_tokens: List[TokenAttribution]
 
 class AnalysisResponse(BaseModel):
     overall_bias: str
@@ -183,130 +408,84 @@ class AnalysisResponse(BaseModel):
 
 
 def categorize_bias(bias: str, confidence: float) -> tuple:
-    """Helper function to create UI-friendly labels"""
     if confidence < 0.5:
-        category = "Neutral/Balanced"
-        description = "No strong political bias detected in this statement."
+        return "Neutral/Balanced", "No strong political bias detected in this statement."
     elif bias == "Left":
-        category = "Left-leaning"
-        description = "This statement shows left-wing political perspective or framing."
+        return "Left-leaning", "This statement shows left-wing political perspective or framing."
     elif bias == "Right":
-        category = "Right-leaning"
-        description = "This statement shows right-wing political perspective or framing."
+        return "Right-leaning", "This statement shows right-wing political perspective or framing."
     else:
-        category = "Centrist"
-        description = "This statement presents a balanced or centrist perspective."
-    
-    return category, description
+        return "Centrist", "This statement presents a balanced or centrist perspective."
 
 
-@app.post("/analyze", response_model=AnalysisResponse)
+@app.post("/bias/analyze", response_model=AnalysisResponse)
 async def analyze_text(request: AnalysisRequest):
-    """Analyze text for political bias"""
     try:
         text = request.text.strip()
         if not text:
             raise HTTPException(status_code=400, detail="Text cannot be empty")
-        
-        # Use your existing functions
-        sentences = SplitIntoSentences(text)
-        sentences = merge_short_sentences(sentences)
-        
-        if not sentences:
-            raise HTTPException(status_code=400, detail="Could not split text into sentences")
-        
-        # Analyze each sentence
-        probability_vectors = []
-        sentence_results = []
-        weights = []
-        
-        for sentence in sentences:
-            predicted_bias, probs = baseline_bias_detection(model, tokenizer, sentence)
-            probability_vectors.append(probs)
-            
-            confidence = float(probs.max())
-            category, description = categorize_bias(predicted_bias, confidence)
 
-            # compute per-sentence weight
-            w = compute_weight(sentence, probs)
-            weights.append(w)
-            
+        result = detector.analyze(text, explain=True)
+
+        if not result["is_political"]:
+            return AnalysisResponse(
+                overall_bias="Center",
+                overall_probabilities={"Left": 0.0, "Center": 1.0, "Right": 0.0},
+                sentences=[],
+                checks=0,
+                issues=0,
+            )
+
+        sentence_results = []
+        for s in result["sentences"]:
+            category, description = categorize_bias(s["bias"], s["confidence"])
             sentence_results.append(SentenceBias(
-                text=sentence,
+                text=s["text"],
                 category=category,
                 description=description,
-                bias=predicted_bias,
-                confidence=confidence,
-                probabilities={
-                    "Left": float(probs[0]),
-                    "Center": float(probs[1]),
-                    "Right": float(probs[2])
-                }
+                bias=s["bias"],
+                confidence=s["confidence"],
+                probabilities=s["probabilities"],
+                top_tokens=[
+                    TokenAttribution(token=t["token"], score=t["score"])
+                    for t in s.get("top_tokens", [])
+                ],
             ))
-        
-        # Aggregate with weights
-        overall_bias, totals = AggregateBiasScores(probability_vectors, weights)
-        
-        # Normalize to get average probabilities
-        avg_probs = totals / len(probability_vectors)
-        
-        # Count checks and issues
-        checks = len(sentences)
-        issues = sum(1 for s in sentence_results if s.confidence > 0.6 and s.bias != "Center")
-        
+
+        checks = len(sentence_results)
+        issues = sum(
+            1 for s in sentence_results
+            if s.confidence > 0.6 and s.bias != "Center"
+        )
+
         return AnalysisResponse(
-            overall_bias=overall_bias,
-            overall_probabilities={
-                "Left": float(avg_probs[0]),
-                "Center": float(avg_probs[1]),
-                "Right": float(avg_probs[2])
-            },
+            overall_bias=result["prediction"],
+            overall_probabilities=result["probs"],
             sentences=sentence_results,
             checks=checks,
-            issues=issues
+            issues=issues,
         )
-    
+
     except Exception as e:
         print(f"Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/analyze", response_model=AnalysisResponse)
+async def analyze_text_legacy(request: AnalysisRequest):
+    return await analyze_text(request)
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "model_loaded": model is not None}
-
-
-# -----------------------
-# Main Driver (for standalone testing)
-# -----------------------
-def main():
-    """Original test function - can still be used for testing"""
-    text = (
-        "The Department of Health and Human Services's Office for Civil Rights has released "
-        "guidelines reinforcing the Obamacare law that warns more than 60,000 U.S. pharmacies "
-        "against refusing to dispense abortion-inducing medication, stipulating that doing so "
-        "is pregnancy discrimination. That includes discrimination based on current pregnancy, "
-        "past pregnancy, potential or intended pregnancy, and medical conditions related to "
-        "pregnancy or childbirth. HHS is committed to ensuring that everyone can access "
-        "healthcare, free of discrimination."
-    )
-
-    model_test, tokenizer_test = load_model()
-
-    sentences = SplitIntoSentences(text)
-
-    probability_vectors = []
-
-    for sentence in sentences:
-        _, probs = baseline_bias_detection(model_test, tokenizer_test, sentence)
-        probability_vectors.append(probs)
-
-    overall_bias, totals = AggregateBiasScores(probability_vectors)
-
-    print("======== FINAL RESULT ========")
-    print("Overall Predicted Bias:", overall_bias)
-    print("Aggregated Probabilities:", totals.tolist())
+    return {
+        "status": "healthy",
+        "model_loaded": detector is not None,
+        "device": str(detector.device),
+        "window_radius": detector.window_radius,
+    }
 
 
 if __name__ == "__main__":

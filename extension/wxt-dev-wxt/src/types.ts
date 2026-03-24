@@ -12,6 +12,7 @@ export interface AnalysisResult {
 		category: 'Left-leaning' | 'Right-leaning' | 'Centrist' | 'Neutral/Balanced';
 		description: string;
 		valid: boolean;
+		top_tokens: TokenAttribution[];
 	}[];
 	fact_check_claims: {
 		claim: string;
@@ -19,6 +20,11 @@ export interface AnalysisResult {
 		label: 'SUPPORTED' | 'REFUTED' | 'NOT ENOUGH INFO';
 		valid: boolean;
 	}[];
+}
+
+export interface TokenAttribution {
+	token: string;
+	score: number;
 }
 
 export type Stats = {

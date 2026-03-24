@@ -364,7 +364,7 @@ def scrape_article(fetcher: Fetcher, article: ArticleSide) -> None:
 def run(
     max_roundups: int = 14,
     scrape_articles: bool = True,
-    output_file: str = "allsides_data_2_20.json",
+    output_file: str = "allsides_data_2_21.json",
 ):
     fetcher = Fetcher()
 
