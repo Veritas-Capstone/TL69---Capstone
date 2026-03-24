@@ -1,33 +1,33 @@
 {
-  "timestamp": "2026-02-25T02:13:50.559502",
-  "model": "models/bias_detector",
+  "timestamp": "2026-03-19T15:29:29.692146",
+  "model": "models/bias_detector_merged",
   "demo": {
-    "correct": 4,
+    "correct": 2,
     "total": 4
   },
   "basil_source": {
-    "accuracy": 0.4766666666666667,
-    "macro_f1": 0.4044829616976618,
+    "accuracy": 0.97,
+    "macro_f1": 0.9698791185829059,
     "per_class": {
       "Left": {
-        "precision": 0.4192139737991266,
-        "recall": 0.96,
-        "f1": 0.5835866261398175
+        "precision": 0.9607843137254902,
+        "recall": 0.98,
+        "f1": 0.9702970297029702
       },
       "Center": {
-        "precision": 0.047619047619047616,
-        "recall": 0.01,
-        "f1": 0.01652892561983471
+        "precision": 0.9523809523809523,
+        "recall": 1.0,
+        "f1": 0.975609756097561
       },
       "Right": {
-        "precision": 0.92,
-        "recall": 0.46,
-        "f1": 0.6133333333333333
+        "precision": 1.0,
+        "recall": 0.93,
+        "f1": 0.9637305699481865
       }
     }
   },
   "basil_annotation": {
-    "accuracy": 0.3433333333333333,
-    "macro_f1": 0.3066458129683936
+    "accuracy": 0.4766666666666667,
+    "macro_f1": 0.48152014772595453
   }
 }

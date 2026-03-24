@@ -91,7 +91,8 @@ class BiasDetector:
 
     def __init__(self, bias_path="models/bias_detector",
                  pol_path="models/politicalness_filter",
-                 device=None, use_fp16=True):
+                 device=None, use_fp16=True,
+                 pol_threshold=0.5, center_bias=0.0):
 
         # ── Device selection ──
         if device is not None:
@@ -100,6 +101,9 @@ class BiasDetector:
             self.device = torch.device("cuda")
         else:
             self.device = torch.device("cpu")
+
+        self.pol_threshold = pol_threshold   # ← store them
+        self.center_bias = center_bias
 
         self.use_fp16 = use_fp16 and self.device.type == "cuda"
         dtype_str = "FP16" if self.use_fp16 else "FP32"
@@ -192,6 +196,9 @@ class BiasDetector:
 
         with torch.no_grad(), torch.autocast(self.device.type, enabled=self.use_fp16):
             logits = self.bias_model(**inputs).logits
+        
+        if self.center_bias != 0.0:
+            logits[0, 1] += self.center_bias  # index 1 = Center
 
         probs = torch.softmax(logits.float(), dim=-1)[0]
         pred_idx = torch.argmax(probs).item()
@@ -343,7 +350,7 @@ class BiasDetector:
             full_text = headline + ". " + body
 
         # ── Pass 1A: Politicalness check ──
-        is_political, pol_conf = self.check_politicalness(full_text)
+        is_political, pol_conf = self.check_politicalness(full_text , threshold=self.pol_threshold)
 
         if not is_political:
             return {
@@ -707,6 +714,14 @@ def main():
         help="Force CPU even if GPU is available",
     )
     parser.add_argument(
+    "--pol-threshold", type=float, default=0.5,
+    help="Politicalness filter threshold (0.0 = disabled, 0.3 = relaxed)",
+    )
+    parser.add_argument(
+        "--center-bias", type=float, default=0.0,
+        help="Logit offset for Center class (negative = less Center, e.g. -1.0)",
+    )
+    parser.add_argument(
         "--demo", action="store_true",
         help="Run quick demo on hand-picked examples",
     )
@@ -716,9 +731,11 @@ def main():
 
     # Load models
     detector = BiasDetector(
-        bias_path=args.bias_model,
-        pol_path=args.pol_model,
-        device=device,
+    bias_path=args.bias_model,
+    pol_path=args.pol_model,
+    device=device,
+    pol_threshold=args.pol_threshold,
+    center_bias=args.center_bias,
     )
 
     # Demo mode
