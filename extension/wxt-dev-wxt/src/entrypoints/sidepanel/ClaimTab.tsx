@@ -1,5 +1,14 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { CheckCheckIcon, CheckIcon, CircleQuestionMarkIcon, SearchXIcon, XIcon } from 'lucide-react';
+import {
+	CheckCheckIcon,
+	CheckIcon,
+	ChevronDown,
+	ChevronUp,
+	CircleQuestionMarkIcon,
+	SearchXIcon,
+	SparklesIcon,
+	XIcon,
+} from 'lucide-react';
 import { AnalysisResult } from '@/types';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,12 +21,47 @@ type ClaimTabProps = {
 	failedUnderlinesArr: number[];
 };
 
+function TokenChip({ evidence }: { evidence: string }) {
+	return (
+		<Card className="p-1">
+			<CardContent>{evidence}</CardContent>
+		</Card>
+	);
+}
+
+function ExplainabilitySection({ evidence }: { evidence: string[] }) {
+	if (!evidence || evidence.length === 0) return null;
+
+	return (
+		<div className="flex flex-wrap gap-1.5 pt-1">
+			{evidence.map((e, i) => (
+				<TokenChip key={`${e}-${i}`} evidence={e} />
+			))}
+		</div>
+	);
+}
+
 export default function ClaimTab({
 	result,
 	currentHovered,
 	handleHighlight,
 	failedUnderlinesArr,
 }: ClaimTabProps) {
+	const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+
+	const toggleExpand = (idx: number, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setExpandedCards((prev) => {
+			const next = new Set(prev);
+			if (next.has(idx)) {
+				next.delete(idx);
+			} else {
+				next.add(idx);
+			}
+			return next;
+		});
+	};
+
 	const chartData = [
 		{
 			name: 'Supported',
@@ -32,6 +76,20 @@ export default function ClaimTab({
 			value: result?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
 		},
 	];
+
+	if (result?.fact_check_claims.length === 0) {
+		return (
+			<Card className="gap-0 rounded-4xl shadow-none py-5">
+				<CardHeader className="flex gap-2 items-center justify-center">
+					<p className="text-xl">No Claims Detected</p>
+				</CardHeader>
+				<CardContent className="flex flex-col gap-2 text-sm">
+					This could be because the selected text is not making any fact-checkable claims and cannot be
+					analyzed by our AI model.
+				</CardContent>
+			</Card>
+		);
+	}
 
 	return (
 		<>
@@ -110,7 +168,7 @@ export default function ClaimTab({
 							<TooltipTrigger asChild>
 								<Card
 									key={`fact-${idx}`}
-									className={`flex flex-col p-0! gap-0 items-center hover:cursor-pointer border border-gray-200 rounded-xl ${
+									className={`flex flex-col p-0! gap-0 items-center border border-gray-200 rounded-xl ${
 										claim.label === 'SUPPORTED'
 											? 'hover:border-green-400!'
 											: claim.label === 'REFUTED'
@@ -150,6 +208,37 @@ export default function ClaimTab({
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
+
+										{/* Explainability toggle */}
+										{true && (
+											<div>
+												<button
+													onClick={(e) => toggleExpand(idx, e)}
+													className="flex w-full items-center justify-between gap-1 text-xs mt-1 mb-0.5 text-gray-400 hover:text-gray-600 transition-colors"
+												>
+													<span className="flex items-center gap-1">
+														<SparklesIcon className="w-3 h-3" />
+														<p>Evidence</p>
+													</span>
+													{expandedCards.has(idx) ? (
+														<ChevronUp className="w-3 h-3" />
+													) : (
+														<ChevronDown className="w-3 h-3" />
+													)}
+												</button>
+
+												{/* replace with actual evidence */}
+												{expandedCards.has(idx) && (
+													<ExplainabilitySection
+														evidence={[
+															'This is true',
+															'Gork fact checked it, chatgpt fact checked it, gemini fact checked it.',
+															'I saw it in a dream',
+														]}
+													/>
+												)}
+											</div>
+										)}
 									</CardContent>
 								</Card>
 							</TooltipTrigger>

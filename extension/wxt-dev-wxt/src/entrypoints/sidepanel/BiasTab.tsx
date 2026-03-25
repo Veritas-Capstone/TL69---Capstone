@@ -91,7 +91,19 @@ export default function BiasTab({
 					.length ?? 0,
 		},
 	];
-	console.log(result?.bias_claims);
+
+	if (result?.bias_claims.length === 0) {
+		return (
+			<Card className="gap-0 rounded-4xl shadow-none py-5">
+				<CardHeader className="flex gap-2 items-center justify-center">
+					<p className="text-xl">No Bias Detected</p>
+				</CardHeader>
+				<CardContent className="flex flex-col gap-2 text-sm">
+					This could be because the selected text is not biased and cannot be analyzed by our AI model.
+				</CardContent>
+			</Card>
+		);
+	}
 
 	return (
 		<>
