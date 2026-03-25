@@ -23,8 +23,8 @@ type ClaimTabProps = {
 
 function TokenChip({ evidence }: { evidence: string }) {
 	return (
-		<Card className="p-1">
-			<CardContent>{evidence}</CardContent>
+		<Card className="p-2">
+			<CardContent className="text-xs px-2 font-light">{evidence}</CardContent>
 		</Card>
 	);
 }
@@ -90,6 +90,8 @@ export default function ClaimTab({
 			</Card>
 		);
 	}
+
+	console.log(result?.fact_check_claims);
 
 	return (
 		<>
@@ -210,7 +212,7 @@ export default function ClaimTab({
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
 
 										{/* Explainability toggle */}
-										{true && (
+										{claim.evidence && claim.evidence.length > 0 && (
 											<div>
 												<button
 													onClick={(e) => toggleExpand(idx, e)}
@@ -228,15 +230,7 @@ export default function ClaimTab({
 												</button>
 
 												{/* replace with actual evidence */}
-												{expandedCards.has(idx) && (
-													<ExplainabilitySection
-														evidence={[
-															'This is true',
-															'Gork fact checked it, chatgpt fact checked it, gemini fact checked it.',
-															'I saw it in a dream',
-														]}
-													/>
-												)}
+												{expandedCards.has(idx) && <ExplainabilitySection evidence={claim.evidence} />}
 											</div>
 										)}
 									</CardContent>
