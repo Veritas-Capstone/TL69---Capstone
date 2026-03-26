@@ -29,31 +29,37 @@ MODELS_DIR = PKG_ROOT / "models"
 
 EVAL_PLAN = [
     # Example 1: HF baseline on AveriTeC
-    # {
-    #     "dataset": "fever_train_claims_20",
-    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv",   # this needs to be baked invariant to cwd
-    #     "mode": "eval",
-    #     "init_from": "hf",          # <- baseline
-    # },
     {
-        "dataset": "fever",
-        "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv", 
+        "dataset": "averitec",
+        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",   # this needs to be baked invariant to cwd
+        "mode": "eval",
+        "init_from": "hf",          # <- baseline
+    },
+    {
+        "dataset": "averitec",
+        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv", 
         "mode": "eval",
         "init_from": "fever_averitec_mix",         # <- use ../models/fever_train_claims_80/latest.pt         
     },
-    # {
-    #     "dataset": "fever",
-    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_sample.csv",  
-    #     "mode": "eval",
-    #     "init_from": "hf",         
-    # },
+    {
+        "dataset": "averitec",
+        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",  
+        "mode": "eval",
+        "init_from": "averitec_80",         
+    },
     # Example 2 (optional): evaluate AveriTeC model trained on AveriTeC
     {
         "dataset": "averitec",
         "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",
         "mode": "eval",
-        "init_from": "fever_averitec_mix",   # <- use ../models/fever_train_claims_80/latest.pt
+        "init_from": "fever_train_claims_80",   # <- use ../models/fever_train_claims_80/latest.pt
     },
+    # {
+    #     "dataset": "fever",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv",
+    #     "mode": "eval",
+    #     "init_from": "fever_averitec_mix",   # <- use ../models/fever_train_claims_80/latest.pt
+    # },
 ]
 
 

@@ -36,7 +36,10 @@ from api.claim_verification.training.training_joint_helpers import (
     JointEvidenceDataset,
     collate_joint_batch,
 )
-from api.claim_verification.models.claim_evidence_attention import ClaimEvidenceAttentionModel
+from api.claim_verification.models.claim_evidence_attention import (
+    ClaimEvidenceAttentionModel,
+    upgrade_attention_state_dict,
+)
 
 # Base HF model (same as training)
 MODEL = "FacebookAI/roberta-large-mnli"
@@ -168,7 +171,15 @@ def eval_averitec(
 
     if ckpt_path:
         print(f"[EVAL] Loading checkpoint weights from: {ckpt_path}")
-        model.load_state_dict(ckpt_state)
+        if use_attention_model:
+            ckpt_state = upgrade_attention_state_dict(ckpt_state, num_heads=num_heads)
+            missing, unexpected = model.load_state_dict(ckpt_state, strict=False)
+            if missing:
+                print(f"[EVAL] Missing keys (ignored): {len(missing)}")
+            if unexpected:
+                print(f"[EVAL] Unexpected keys (ignored): {len(unexpected)}")
+        else:
+            model.load_state_dict(ckpt_state)
 
     model.eval()
 

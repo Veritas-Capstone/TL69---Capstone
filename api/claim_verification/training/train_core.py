@@ -48,9 +48,21 @@ def _build_loader(
     use_attention_model,
     max_evidence,
     shuffle,
+    nei_fill=False,
+    nei_fill_k=2,
+    nei_fill_seed=10,
+    nei_fill_prob=1.0,
 ):
     if use_attention_model:
-        dataset = JointEvidenceDataset(df, label_map, max_evidence=max_evidence)
+        dataset = JointEvidenceDataset(
+            df,
+            label_map,
+            max_evidence=max_evidence,
+            nei_fill=nei_fill,
+            nei_fill_prob=nei_fill_prob,
+            nei_fill_k=nei_fill_k,
+            nei_fill_seed=nei_fill_seed,
+        )
         loader = DataLoader(
             dataset,
             batch_size=batch_size,
@@ -62,7 +74,14 @@ def _build_loader(
             ),
         )
     else:
-        dataset = PairwiseExpansionDataset(df, label_map)
+        dataset = PairwiseExpansionDataset(
+            df,
+            label_map,
+            nei_fill=nei_fill,
+            nei_fill_prob=nei_fill_prob,
+            nei_fill_k=nei_fill_k,
+            nei_fill_seed=nei_fill_seed,
+        )
         loader = DataLoader(
             dataset,
             batch_size=batch_size,
@@ -93,7 +112,7 @@ def train_claim_model(
     batch_size=2,
     max_length=256,
     threshold=0.05,
-    num_epochs=4,
+    num_epochs=6,
     patience=2,
     lr=2e-5,
     use_attention_model=True,
@@ -101,6 +120,10 @@ def train_claim_model(
     accum_steps=8,
     num_heads=4,
     mix_config=None,
+    nei_fill=False,
+    nei_fill_k=2,
+    nei_fill_seed=10,
+    nei_fill_prob=1.0,
 ):
     metrics_dir = Path(metrics_dir)
     models_dir = Path(models_dir)
@@ -145,6 +168,13 @@ def train_claim_model(
             balance_labels=mix_config.get("balance_labels", True),
             balance_labels_main=mix_config.get("balance_labels_main"),
             balance_labels_aux=mix_config.get("balance_labels_aux"),
+            nei_fill_main=mix_config.get("nei_fill_main", False),
+            nei_fill_aux=mix_config.get("nei_fill_aux", False),
+            nei_fill_k=mix_config.get("nei_fill_k", nei_fill_k),
+            nei_fill_seed=mix_config.get("nei_fill_seed", nei_fill_seed),
+            nei_fill_prob=mix_config.get("nei_fill_prob", nei_fill_prob),
+            label_weights_main=mix_config.get("label_weights_main"),
+            label_weights_aux=mix_config.get("label_weights_aux"),
         )
         val_loader = _build_loader(
             df_main_val,
@@ -155,6 +185,10 @@ def train_claim_model(
             use_attention_model=use_attention_model,
             max_evidence=max_evidence,
             shuffle=False,
+            nei_fill=nei_fill,
+            nei_fill_k=nei_fill_k,
+            nei_fill_seed=nei_fill_seed,
+            nei_fill_prob=nei_fill_prob,
         )
     elif (not use_attention_model) and mix_config:
         from api.claim_verification.training.mixed_sampling import build_mixed_pairwise_loader
@@ -171,6 +205,13 @@ def train_claim_model(
             balance_labels=mix_config.get("balance_labels", True),
             balance_labels_main=mix_config.get("balance_labels_main"),
             balance_labels_aux=mix_config.get("balance_labels_aux"),
+            nei_fill_main=mix_config.get("nei_fill_main", False),
+            nei_fill_aux=mix_config.get("nei_fill_aux", False),
+            nei_fill_k=mix_config.get("nei_fill_k", nei_fill_k),
+            nei_fill_seed=mix_config.get("nei_fill_seed", nei_fill_seed),
+            nei_fill_prob=mix_config.get("nei_fill_prob", nei_fill_prob),
+            label_weights_main=mix_config.get("label_weights_main"),
+            label_weights_aux=mix_config.get("label_weights_aux"),
         )
         val_loader = _build_loader(
             df_main_val,
@@ -181,6 +222,10 @@ def train_claim_model(
             use_attention_model=use_attention_model,
             max_evidence=max_evidence,
             shuffle=False,
+            nei_fill=nei_fill,
+            nei_fill_k=nei_fill_k,
+            nei_fill_seed=nei_fill_seed,
+            nei_fill_prob=nei_fill_prob,
         )
     else:
         train_loader = _build_loader(
@@ -192,6 +237,10 @@ def train_claim_model(
             use_attention_model=use_attention_model,
             max_evidence=max_evidence,
             shuffle=True,
+            nei_fill=nei_fill,
+            nei_fill_k=nei_fill_k,
+            nei_fill_seed=nei_fill_seed,
+            nei_fill_prob=nei_fill_prob,
         )
         val_loader = _build_loader(
             df_val,
@@ -202,6 +251,10 @@ def train_claim_model(
             use_attention_model=use_attention_model,
             max_evidence=max_evidence,
             shuffle=False,
+            nei_fill=nei_fill,
+            nei_fill_k=nei_fill_k,
+            nei_fill_seed=nei_fill_seed,
+            nei_fill_prob=nei_fill_prob,
         )
 
     num_labels = len(label_map)
@@ -274,6 +327,10 @@ def train_claim_model(
         "ACCUM_STEPS": ACCUM_STEPS,
         "NUM_HEADS": num_heads,
         "MIX_CONFIG": mix_config,
+        "NEI_FILL": nei_fill,
+        "NEI_FILL_K": nei_fill_k,
+        "NEI_FILL_SEED": nei_fill_seed,
+        "NEI_FILL_PROB": nei_fill_prob,
     }
     import json as _json
     with open(run_dir / "hyperparameters.json", "w") as f:

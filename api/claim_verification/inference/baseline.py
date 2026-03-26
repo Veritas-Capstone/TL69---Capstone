@@ -18,6 +18,7 @@ import os
 os.environ["TRANSFORMERS_NO_TORCHVISION"] = "1"
 
 import ast
+import argparse
 import timeit
 from pathlib import Path
 from typing import List, Tuple, Union, Dict, Any
@@ -32,6 +33,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Auto
 
 from api.claim_verification.models.claim_evidence_attention import (
     ClaimEvidenceAttentionModel,
+    upgrade_attention_state_dict,
 )
 
 MODEL = "FacebookAI/roberta-large-mnli"
@@ -129,7 +131,33 @@ def load_claim_verifier(
         if not ckpt_path.exists():
             raise FileNotFoundError(f"Checkpoint not found at {ckpt_path}")
         state_dict = torch.load(ckpt_path, map_location=map_location)
-        model.load_state_dict(state_dict)
+        has_attention_keys = any(
+            k.startswith("W_c")
+            or k.startswith("W_e")
+            or k.startswith("v.")
+            or k.startswith("head_gate")
+            or k.startswith("encoder.")
+            for k in state_dict.keys()
+        )
+        if has_attention_keys:
+            print(
+                "[ClaimVerifier] Attention-style checkpoint detected. "
+                "Skipping state_dict load for baseline classifier."
+            )
+        else:
+            try:
+                missing, unexpected = model.load_state_dict(state_dict, strict=False)
+                if missing or unexpected:
+                    print(
+                        "[ClaimVerifier] Checkpoint loaded with "
+                        f"{len(missing)} missing and {len(unexpected)} unexpected keys; "
+                        "using base weights for missing params."
+                    )
+            except RuntimeError:
+                print(
+                    "[ClaimVerifier] Incompatible checkpoint; "
+                    "falling back to base HF weights."
+                )
 
     model.eval()
     return tokenizer, model
@@ -177,6 +205,7 @@ def load_attention_verifier(
             for k in state_dict.keys()
         )
         if has_attention:
+            state_dict = upgrade_attention_state_dict(state_dict, num_heads=model.num_heads)
             missing, unexpected = model.load_state_dict(state_dict, strict=False)
             if missing:
                 print(f"[AttentionLoad] Missing keys: {len(missing)} (often harmless)")
@@ -323,6 +352,8 @@ def run_inference(
     use_attention: bool = False,
     attention_state: Union[str, Path, None] = None,
     max_evidence: int = 5,
+    show_plots: bool = True,
+    verbose: bool = True,
 ):
     timer_start = timeit.default_timer()
 
@@ -342,17 +373,15 @@ def run_inference(
             continue
 
         if use_attention:
-            pred_label, _probs, weights = verify_claim_attention(
+            pred_label, probs_dict, _weights = verify_claim_attention(
                 claim,
                 evid_list,
                 tokenizer=tokenizer,
                 model=model_attn,
                 max_evidence=max_evidence,
             )
-            table = render_attention_table(claim, weights)
-            print(table)
         else:
-            pred_label, _ = verify_claim(
+            pred_label, probs_dict = verify_claim(
                 claim,
                 evid_list,
                 tokenizer=tokenizer,
@@ -360,35 +389,87 @@ def run_inference(
             )
         predictions.append(pred_label)
         true_labels.append(LABELS[true_label])
-        print(f"Claim: {claim}\n")
-        for j in evid_list:
-            print(f" - Evidence: {j}\n")
-        print(f"True: {LABELS[true_label]}\nPredicted: {pred_label}\n"
-        )
+        # Minimal per-claim output: confidence per label (no attention table / evidence listing)
+        probs_str = ", ".join(f"{k}={probs_dict.get(k, 0.0):.3f}" for k in LABELS)
+        if verbose:
+            print(f"Claim: {claim}")
+            print(f"Probs: {probs_str}")
+            print(f"True: {LABELS[true_label]} | Predicted: {pred_label}\n")
+        else:
+            print(f"Claim: {claim}")
+            print(f"Probs: {probs_str}\n")
         if i % 50 == 0:
             print(f"Iteration: {i}/{len(ds)}")
             print(f"Time Elapsed: {timeit.default_timer() - timer_start}")
 
     print(classification_report(true_labels, predictions, labels=LABELS, zero_division=0))
     ConfusionMatrixDisplay.from_predictions(true_labels, predictions, labels=LABELS)
-    plt.show()
+    if show_plots:
+        plt.show()
 
     end = timeit.default_timer()
     print(f"Time Elapsed: {end - timer_start}")
 
 
+def _resolve_attention_checkpoint(name_or_path: Union[str, Path, None]) -> Union[Path, None]:
+    if name_or_path is None:
+        return None
+    p = Path(name_or_path)
+    if p.exists():
+        return p
+    return resolve_latest_checkpoint(str(name_or_path))
+
+
+def _cli():
+    parser = argparse.ArgumentParser(description="Run claim verification baseline on a CSV.")
+    parser.add_argument("--csv", type=str, default=None, help="Path to CSV with claim/evidence/label.")
+    parser.add_argument("--attention", action="store_true", help="Use attention model (requires checkpoint).")
+    parser.add_argument("--checkpoint", type=str, default=None, help="Checkpoint path or dataset name.")
+    parser.add_argument("--max-evidence", type=int, default=5)
+    parser.add_argument("--show-plots", action="store_true", help="Show confusion matrix plot.")
+    parser.add_argument("--verbose", action="store_true", help="Print per-example details.")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = _cli()
     print(f"[Baseline] Package root: {PKG_ROOT}")
-    try:
-        ckpt = resolve_latest_checkpoint("averitec_80")
-        print(f"[Main] Using attention model with checkpoint: {ckpt}")
-        run_inference(
-            DATA_PATH_AVERITEC,
-            use_attention=True,
-            attention_state=ckpt,
-            max_evidence=5,
-        )
-    except Exception as exc:
-        print(f"[Main] Falling back to base classifier due to: {exc}")
-        tok, model = load_claim_verifier()
-        run_inference(DATA_PATH_AVERITEC, tokenizer=tok, model_nli=model)
+
+    if args.csv:
+        if args.attention:
+            ckpt = _resolve_attention_checkpoint(args.checkpoint)
+            if ckpt is None:
+                raise ValueError("Attention mode requires --checkpoint (path or dataset name).")
+            print(f"[Main] Using attention model with checkpoint: {ckpt}")
+            run_inference(
+                args.csv,
+                use_attention=True,
+                attention_state=ckpt,
+                max_evidence=args.max_evidence,
+                show_plots=args.show_plots,
+                verbose=args.verbose,
+            )
+        else:
+            tok, model = load_claim_verifier()
+            run_inference(
+                args.csv,
+                tokenizer=tok,
+                model_nli=model,
+                max_evidence=args.max_evidence,
+                show_plots=args.show_plots,
+                verbose=args.verbose,
+            )
+    else:
+        try:
+            ckpt = resolve_latest_checkpoint("averitec_80")
+            print(f"[Main] Using attention model with checkpoint: {ckpt}")
+            run_inference(
+                DATA_PATH_AVERITEC,
+                use_attention=True,
+                attention_state=ckpt,
+                max_evidence=5,
+            )
+        except Exception as exc:
+            print(f"[Main] Falling back to base classifier due to: {exc}")
+            tok, model = load_claim_verifier()
+            run_inference(DATA_PATH_AVERITEC, tokenizer=tok, model_nli=model)

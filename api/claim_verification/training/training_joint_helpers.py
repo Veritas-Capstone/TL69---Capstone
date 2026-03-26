@@ -1,4 +1,5 @@
 import json
+import random
 import torch
 from torch.utils.data import Dataset
 
@@ -8,10 +9,31 @@ class JointEvidenceDataset(Dataset):
         (claim, list of evidence sentences, label_id)
     Used for multi-evidence attention models.
     """
-    def __init__(self, df, LABEL_MAP, max_evidence=10):
+    def __init__(
+        self,
+        df,
+        LABEL_MAP,
+        max_evidence=10,
+        nei_fill=False,
+        nei_fill_prob=1.0,
+        nei_fill_k=2,
+        nei_fill_seed=10,
+    ):
         self.LABEL_MAP = LABEL_MAP
         self.max_evidence = max_evidence
         self.samples = []
+        rng = random.Random(nei_fill_seed)
+
+        evidence_pool = []
+        if nei_fill:
+            for _, row in df.iterrows():
+                try:
+                    evid_list = json.loads(row["evidence"])
+                except Exception:
+                    evid_list = []
+                evidence_pool.extend(
+                    [ev.strip() for ev in evid_list if isinstance(ev, str) and ev.strip()]
+                )
 
         for _, row in df.iterrows():
             claim = str(row["claim"]).strip()
@@ -22,7 +44,20 @@ class JointEvidenceDataset(Dataset):
             evid_list = [ev.strip() for ev in evid_list if isinstance(ev, str) and ev.strip()]
 
             if not evid_list:
-                evid_list = [" "]  # handle NEI with no evidence
+                if (
+                    nei_fill
+                    and label_id == LABEL_MAP.get("NOT ENOUGH INFO")
+                    and rng.random() < nei_fill_prob
+                ):
+                    if evidence_pool:
+                        if len(evidence_pool) >= nei_fill_k:
+                            evid_list = rng.sample(evidence_pool, k=nei_fill_k)
+                        else:
+                            evid_list = [rng.choice(evidence_pool) for _ in range(nei_fill_k)]
+                    else:
+                        evid_list = [" "]
+                else:
+                    evid_list = [" "]  # handle NEI with no evidence
 
             # Truncate to max_evidence length
             evid_list = evid_list[:self.max_evidence]

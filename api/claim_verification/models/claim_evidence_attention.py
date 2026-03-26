@@ -2,6 +2,48 @@ import torch
 import torch.nn as nn
 
 
+def upgrade_attention_state_dict(state_dict, num_heads):
+    """
+    Upgrade legacy single-head attention checkpoints to the new multi-head format.
+    Legacy keys: W_c.weight, W_c.bias, W_e.weight, W_e.bias, v.weight, v.bias
+    New keys: W_c [H,D,D], W_e [H,D,D], v [H,D]
+    """
+    if not isinstance(state_dict, dict):
+        return state_dict
+
+    has_legacy = (
+        "W_c.weight" in state_dict
+        or "W_e.weight" in state_dict
+        or "v.weight" in state_dict
+    )
+    if not has_legacy:
+        return state_dict
+
+    wc = state_dict.get("W_c.weight")
+    we = state_dict.get("W_e.weight")
+    vw = state_dict.get("v.weight")
+    if wc is None or we is None or vw is None:
+        return state_dict
+
+    # Build new tensors by repeating old weights across heads
+    wc_new = wc.unsqueeze(0).repeat(num_heads, 1, 1)
+    we_new = we.unsqueeze(0).repeat(num_heads, 1, 1)
+    v_vec = vw.squeeze(0)
+    v_new = v_vec.unsqueeze(0).repeat(num_heads, 1)
+
+    new_state = dict(state_dict)
+    new_state["W_c"] = wc_new
+    new_state["W_e"] = we_new
+    new_state["v"] = v_new
+
+    # Drop legacy keys
+    for k in ["W_c.weight", "W_c.bias", "W_e.weight", "W_e.bias", "v.weight", "v.bias"]:
+        if k in new_state:
+            del new_state[k]
+
+    return new_state
+
+
 class ClaimEvidenceAttentionModel(nn.Module):
     def __init__(self, encoder, hidden_dim=1024, num_labels=3, num_heads=4):
         super().__init__()

@@ -20,6 +20,19 @@ def _label_counts(dataset, num_labels):
     return counts
 
 
+def _resolve_label_weight(label_weights, label_id, label_map):
+    if not label_weights:
+        return 1.0
+    # Support label names or numeric ids
+    if isinstance(label_weights, dict):
+        for key, val in label_weights.items():
+            if isinstance(key, str) and key in label_map and label_map[key] == label_id:
+                return float(val)
+            if isinstance(key, int) and key == label_id:
+                return float(val)
+    return 1.0
+
+
 def _default_epoch_size(len_main, len_aux, ratio_main, ratio_aux):
     # Ensure the smaller dataset (relative to its ratio) is fully seen in expectation.
     if len_main / max(ratio_main, 1e-6) <= len_aux / max(ratio_aux, 1e-6):
@@ -52,9 +65,32 @@ def build_mixed_joint_loader(
     balance_labels=True,
     balance_labels_main=None,
     balance_labels_aux=None,
+    nei_fill_main=False,
+    nei_fill_aux=False,
+    nei_fill_k=2,
+    nei_fill_seed=10,
+    nei_fill_prob=1.0,
+    label_weights_main=None,
+    label_weights_aux=None,
 ):
-    ds_main = JointEvidenceDataset(df_main, label_map, max_evidence=max_evidence)
-    ds_aux = JointEvidenceDataset(df_aux, label_map, max_evidence=max_evidence)
+    ds_main = JointEvidenceDataset(
+        df_main,
+        label_map,
+        max_evidence=max_evidence,
+        nei_fill=nei_fill_main,
+        nei_fill_prob=nei_fill_prob,
+        nei_fill_k=nei_fill_k,
+        nei_fill_seed=nei_fill_seed,
+    )
+    ds_aux = JointEvidenceDataset(
+        df_aux,
+        label_map,
+        max_evidence=max_evidence,
+        nei_fill=nei_fill_aux,
+        nei_fill_prob=nei_fill_prob,
+        nei_fill_k=nei_fill_k,
+        nei_fill_seed=nei_fill_seed,
+    )
 
     concat = ConcatDataset([ds_main, ds_aux])
 
@@ -66,15 +102,29 @@ def build_mixed_joint_loader(
     )
     if bal_main:
         main_counts = _label_counts(ds_main, num_labels=len(label_map))
-        main_weights = [w_main / main_counts[int(y)] for *_, y in ds_main]
+        main_weights = [
+            (w_main / main_counts[int(y)])
+            * _resolve_label_weight(label_weights_main, int(y), label_map)
+            for *_, y in ds_main
+        ]
     else:
-        main_weights = [w_main] * len(ds_main)
+        main_weights = [
+            w_main * _resolve_label_weight(label_weights_main, int(y), label_map)
+            for *_, y in ds_main
+        ]
 
     if bal_aux:
         aux_counts = _label_counts(ds_aux, num_labels=len(label_map))
-        aux_weights = [w_aux / aux_counts[int(y)] for *_, y in ds_aux]
+        aux_weights = [
+            (w_aux / aux_counts[int(y)])
+            * _resolve_label_weight(label_weights_aux, int(y), label_map)
+            for *_, y in ds_aux
+        ]
     else:
-        aux_weights = [w_aux] * len(ds_aux)
+        aux_weights = [
+            w_aux * _resolve_label_weight(label_weights_aux, int(y), label_map)
+            for *_, y in ds_aux
+        ]
 
     weights = main_weights + aux_weights
 
@@ -104,9 +154,30 @@ def build_mixed_pairwise_loader(
     balance_labels=True,
     balance_labels_main=None,
     balance_labels_aux=None,
+    nei_fill_main=False,
+    nei_fill_aux=False,
+    nei_fill_k=2,
+    nei_fill_seed=10,
+    nei_fill_prob=1.0,
+    label_weights_main=None,
+    label_weights_aux=None,
 ):
-    ds_main = PairwiseExpansionDataset(df_main, label_map)
-    ds_aux = PairwiseExpansionDataset(df_aux, label_map)
+    ds_main = PairwiseExpansionDataset(
+        df_main,
+        label_map,
+        nei_fill=nei_fill_main,
+        nei_fill_prob=nei_fill_prob,
+        nei_fill_k=nei_fill_k,
+        nei_fill_seed=nei_fill_seed,
+    )
+    ds_aux = PairwiseExpansionDataset(
+        df_aux,
+        label_map,
+        nei_fill=nei_fill_aux,
+        nei_fill_prob=nei_fill_prob,
+        nei_fill_k=nei_fill_k,
+        nei_fill_seed=nei_fill_seed,
+    )
 
     concat = ConcatDataset([ds_main, ds_aux])
 
@@ -118,15 +189,29 @@ def build_mixed_pairwise_loader(
     )
     if bal_main:
         main_counts = _label_counts(ds_main, num_labels=len(label_map))
-        main_weights = [w_main / main_counts[int(y)] for *_, y in ds_main]
+        main_weights = [
+            (w_main / main_counts[int(y)])
+            * _resolve_label_weight(label_weights_main, int(y), label_map)
+            for *_, y in ds_main
+        ]
     else:
-        main_weights = [w_main] * len(ds_main)
+        main_weights = [
+            w_main * _resolve_label_weight(label_weights_main, int(y), label_map)
+            for *_, y in ds_main
+        ]
 
     if bal_aux:
         aux_counts = _label_counts(ds_aux, num_labels=len(label_map))
-        aux_weights = [w_aux / aux_counts[int(y)] for *_, y in ds_aux]
+        aux_weights = [
+            (w_aux / aux_counts[int(y)])
+            * _resolve_label_weight(label_weights_aux, int(y), label_map)
+            for *_, y in ds_aux
+        ]
     else:
-        aux_weights = [w_aux] * len(ds_aux)
+        aux_weights = [
+            w_aux * _resolve_label_weight(label_weights_aux, int(y), label_map)
+            for *_, y in ds_aux
+        ]
 
     weights = main_weights + aux_weights
 
