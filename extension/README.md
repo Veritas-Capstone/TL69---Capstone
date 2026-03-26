@@ -2,9 +2,13 @@
 
 ### Installation
 
-1. Go to chrome://extensions/ on your browser, enable "Developer mode" and click "Load unpacked"
-2. Select the `VeritasExtension/` folder located in `/extension/`
+1. Go to `chrome://extensions/` on your browser, enable "Developer mode" and click "Load unpacked"
+2. Select the `VeritasExtension/` folder located in `TL69---Capstone/extension/`
 3. Reload the page/restart the browser
+
+Note: Both models (bias detection, claim verification) should be located at `http://localhost:8000`.  
+User auth should be located at `http://localhost:8080`.  
+See respective folders for starting up servers.
 
 ### Running Locally (development)
 
