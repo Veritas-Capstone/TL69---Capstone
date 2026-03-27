@@ -206,7 +206,7 @@ def get_claims_and_evidence_for_demo(passage: str) -> List[ClaimEvidence]:
     ),
 
     ClaimEvidence(
-        claim="satellite communications can be affected by inclement weather events and signal latency.",
+        claim="The Lethal Autonomous Weapons Systems (LAWS) will need 5G networks to maintain geo-position and navigate their environment to the target because these weapons cannot rely simply on satellite communications, which can be affected by inclement weather events and signal latency.",
         evidence=[
             "Satellite communication signals can be disrupted by weather conditions and may experience latency due to long transmission distances."
         ],
