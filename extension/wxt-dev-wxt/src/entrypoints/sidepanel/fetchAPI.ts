@@ -1,5 +1,4 @@
-// sample fetch
-const API_URL = 'http://localhost:8000';
+import { AnalysisResult } from '@/types';
 
 export interface SentenceBias {
 	text: string;
@@ -12,30 +11,7 @@ export interface SentenceBias {
 		Center: number;
 		Right: number;
 	};
-}
-
-export interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: Array<{
-		text: string;
-		category: string;
-		description: string;
-		valid: boolean;
-	}>;
-	// Mock fact-check claims
-	fact_check_claims: Array<{
-		text: string;
-		category: string;
-		description: string;
-		valid: boolean;
-	}>;
+	top_tokens: { token: string; score: number }[];
 }
 
 // export default async function fetchAPI(text: string) {
@@ -139,37 +115,42 @@ function generateMockFactChecks(text: string): Array<{
 
 export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	try {
-		const response = await fetch(`${API_URL}/bias/analyze`, {
+		const response = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/bias/analyze`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
 		});
-		const response2 = await fetch(`${API_URL}/claim/verify-claims-from-passage`, {
-			headers: { 'Content-Type': 'application/json' },
-			method: 'POST',
-			body: JSON.stringify({ text }),
-		});
+		let fact_checks_response = []; // TODO: probably remove the try catch around this since this is only currently done because this API is not ready
+		try {
+			const response2 = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/claim/verify-claims-from-passage`, {
+				headers: { 'Content-Type': 'application/json' },
+				method: 'POST',
+				body: JSON.stringify({ text }),
+			});
+			if (response2.ok) {
+				fact_checks_response = await response2.json();
+			}
+		} catch (e) {
+			console.warn('Claim verification unavailable:', e);
+		}
 
 		if (!response.ok) {
 			throw new Error(`API request failed: ${response.status}`);
 		}
 
 		const data = await response.json();
-		const fact_checks_response = await response2.json();
-		console.log(fact_checks_response);
 
-		// Transform the response to match the expected format
-		// Map sentence bias results to "claims" format for the UI
+		// Map sentence bias results with explainability tokens
 		const bias_claims = data.sentences.map((sentence: SentenceBias) => ({
 			text: normalizeSpaces(sentence.text),
 			category: sentence.category,
 			description: sentence.description,
-			// Mark as "valid" (green) if Center or low confidence, "invalid" (red) if biased
 			valid: sentence.bias === 'Center' || sentence.confidence < 0.5,
+			top_tokens: (sentence.top_tokens || []).map((t: { token: string; score: number }) => ({
+				token: t.token,
+				score: t.score,
+			})),
 		}));
-
-		// Replace this with the real API when ready
-		const fact_check_claims = generateMockFactChecks(text);
 
 		return {
 			checks: data.checks,

@@ -47,8 +47,26 @@ Thumbs.db
 
 # Archive/backups
 archive/
+.vscode
+Bias-Detection/biasenv/
+Bias-Detection/datasets/
+.Bias-Detection/biasenv
+.Bias-Detection/datasets
 
-# Notebooks
+
+
+# specfic data file
+/Bias-Detection/models
+/api/claim_verification/data/unprocessed/
+/api/claim_verification/data/raw/
+/api/claim_verification/data/processed/averitec.csv
+/api/claim_verification/data/processed/averitec_80.csv
+/api/claim_verification/data/processed/averitec_20.csv
+/api/claim_verification/data/processed/fever_train_claims.csv
+/api/claim_verification/data/processed/fever_train_claims_80.csv
+/api/claim_verification/data/processed/fever_train_claims_20.csv
+
+# ignore any python notebook file
 *.ipynb
 
 # Models (VERY IMPORTANT — don't push these)

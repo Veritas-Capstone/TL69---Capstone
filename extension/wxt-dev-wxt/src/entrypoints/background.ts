@@ -11,13 +11,23 @@ export default defineBackground(() => {
 	browser.contextMenus.onClicked.addListener(async (info, tab) => {
 		if (info.menuItemId === 'analyzeHighlightedText') {
 			if (!tab?.id) return;
-			// open sidepanel, store selected text, call model on text
 			await browser.sidePanel.open({ tabId: tab.id });
-			await browser.storage.local.remove('storedResult');
+			await browser.storage.local.clear();
 			await browser.storage.local.set({ selectedText: info.selectionText });
-			await browser.runtime.sendMessage({
-				type: 'CALL_MODEL',
-			});
+			try {
+				await browser.runtime.sendMessage({ type: 'CALL_MODEL' });
+			} catch {
+				// Panel will pick up selectedText from storage on mount
+			}
+		}
+	});
+	browser.runtime.onMessage.addListener(async (msg, sender) => {
+		if (msg.type === 'OPEN_SIDEBAR') {
+			if (browser.sidePanel) {
+				await browser.sidePanel.open({
+					tabId: sender.tab?.id ?? 0,
+				});
+			}
 		}
 	});
 });

@@ -5,174 +5,185 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Tester - Veritas</title>
     <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        textarea {
-            width: 100%;
-            min-height: 150px;
-            padding: 10px;
-            font-family: inherit;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-        }
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            background: #1d4ed8;
-        }
-        button:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-        }
-        .success {
-            background: #d1fae5;
-            border: 2px solid #059669;
-        }
-        .error {
-            background: #fee2e2;
-            border: 2px solid #dc2626;
-        }
-        .loading {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
-        }
-        .status {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: 600;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #1a1a1a; background: #fafafa; }
+        h1 { font-size: 1.8em; margin-bottom: 4px; }
+        h2 { font-size: 1.2em; margin: 20px 0 8px; color: #374151; }
+        .subtitle { color: #6b7280; margin-bottom: 20px; }
+        textarea { width: 100%; min-height: 150px; padding: 12px; font-family: inherit; font-size: 14px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; }
+        textarea:focus { border-color: #3b82f6; outline: none; }
+        .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+        button { padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status { margin: 12px 0; padding: 10px 14px; border-radius: 8px; font-weight: 600; font-size: 14px; }
         .status.ok { background: #d1fae5; color: #065f46; }
         .status.error { background: #fee2e2; color: #991b1b; }
+        .status.loading { background: #fef3c7; color: #92400e; }
+        .results { margin-top: 20px; }
+        .overall-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .overall-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .bias-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
+        .bias-badge.left { background: #dbeafe; color: #1e40af; }
+        .bias-badge.right { background: #fee2e2; color: #991b1b; }
+        .bias-badge.center { background: #f3e8ff; color: #6b21a8; }
+        .prob-bar { display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+        .prob-bar div { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; min-width: 30px; }
+        .prob-left { background: #60a5fa; }
+        .prob-center { background: #c084fc; }
+        .prob-right { background: #f87171; }
+        .meta-row { display: flex; gap: 16px; margin-top: 12px; font-size: 13px; color: #6b7280; }
+        .meta-row span { font-weight: 600; color: #374151; }
+        .sentence-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+        .sentence-card:hover { border-color: #93c5fd; }
+        .sentence-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .sentence-label { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: white; flex-shrink: 0; }
+        .sentence-label.L { background: #60a5fa; }
+        .sentence-label.R { background: #f87171; }
+        .sentence-label.C { background: #c084fc; }
+        .sentence-label.N { background: #9ca3af; }
+        .sentence-text { font-size: 14px; color: #374151; line-height: 1.5; }
+        .sentence-meta { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+        .tokens-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3f4f6; }
+        .tokens-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .token-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+        .token-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .token-chip .score { font-size: 10px; opacity: 0.6; font-weight: 400; }
+        .token-chip.left { background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.3); color: #1e40af; }
+        .token-chip.right { background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.3); color: #991b1b; }
+        .token-chip.center { background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.3); color: #6b21a8; }
+        .raw-toggle { font-size: 13px; color: #6b7280; cursor: pointer; user-select: none; margin-top: 16px; }
+        .raw-toggle:hover { color: #374151; }
+        .raw-json { margin-top: 8px; padding: 12px; background: #1e293b; color: #e2e8f0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; max-height: 400px; overflow: auto; }
+        .error-box { background: #fee2e2; border: 2px solid #fca5a5; border-radius: 8px; padding: 16px; margin-top: 16px; }
     </style>
 </head>
 <body>
-    <h1>🧪 Veritas API Tester</h1>
-    <p>Use this page to test if your backend API is working correctly.</p>
-    
-    <div class="status" id="healthStatus">Checking server status...</div>
-    
-    <h2>Test Analysis</h2>
-    <textarea id="testText" placeholder="Enter text to analyze...">The Department of Health and Human Services's Office for Civil Rights has released guidelines reinforcing the Obamacare law that warns more than 60,000 U.S. pharmacies against refusing to dispense abortion-inducing medication.</textarea>
-    
-    <button id="testBtn" onclick="testAPI()">Test API</button>
-    <button onclick="checkHealth()">Check Health</button>
-    
-    <div id="result"></div>
-
+    <h1>Veritas API Tester</h1>
+    <p class="subtitle">Test the bias detection backend with sliding window + explainability</p>
+    <div class="status loading" id="healthStatus">Checking server status...</div>
+    <h2>Input Text</h2>
+    <textarea id="testText">The White House announced a new executive order on climate policy. The order directs agencies to reduce emissions by 50% by 2030. Environmental groups praised the move as long overdue, calling it the most significant climate action in a generation. Republicans called it government overreach that would destroy jobs and raise energy costs for working families. The Chamber of Commerce expressed concern about the economic impact on small businesses. State attorneys general signaled they would challenge the order in court. The Brookings Institution estimated the policy would create 500,000 clean energy jobs over the next decade. Senator McConnell sharply criticized the administration, calling it an abuse of executive power. The order takes effect in 90 days pending any legal challenges.</textarea>
+    <div class="btn-row">
+        <button class="btn-primary" id="testBtn" onclick="testAPI()">Analyze Text</button>
+        <button class="btn-secondary" onclick="checkHealth()">Check Health</button>
+    </div>
+    <div class="results" id="results"></div>
     <script>
         const API_URL = 'http://localhost:8000';
-
-        // Check health on load
         window.addEventListener('load', checkHealth);
 
         async function checkHealth() {
             const status = document.getElementById('healthStatus');
             status.textContent = 'Checking server...';
-            status.className = 'status';
-            
+            status.className = 'status loading';
             try {
-                const response = await fetch(`${API_URL}/health`);
+                const response = await fetch(API_URL + '/health');
                 const data = await response.json();
-                
                 if (response.ok) {
-                    status.textContent = `✅ Server is healthy! Model loaded: ${data.model_loaded}`;
+                    status.textContent = 'Server healthy | Device: ' + data.device + ' | Window: +/-' + data.window_size + ' sentences';
                     status.className = 'status ok';
                     document.getElementById('testBtn').disabled = false;
                 } else {
-                    status.textContent = '❌ Server returned error';
+                    status.textContent = 'Server returned error';
                     status.className = 'status error';
-                    document.getElementById('testBtn').disabled = true;
                 }
             } catch (error) {
-                status.textContent = `❌ Cannot connect to server at ${API_URL}. Make sure it's running!`;
+                status.textContent = 'Cannot connect to ' + API_URL + ' - make sure server is running';
                 status.className = 'status error';
                 document.getElementById('testBtn').disabled = true;
-                console.error('Health check failed:', error);
             }
         }
 
         async function testAPI() {
-            const resultDiv = document.getElementById('result');
+            const resultsDiv = document.getElementById('results');
             const text = document.getElementById('testText').value;
             const btn = document.getElementById('testBtn');
-            
-            if (!text.trim()) {
-                alert('Please enter some text to analyze');
-                return;
-            }
-            
+            if (!text.trim()) { alert('Enter some text first'); return; }
+
             btn.disabled = true;
-            resultDiv.innerHTML = '<div class="result loading">⏳ Analyzing text...</div>';
-            
+            resultsDiv.innerHTML = '<div class="status loading">Analyzing text... (this may take a few seconds)</div>';
+            const startTime = performance.now();
+
             try {
-                console.log('Sending request to:', `${API_URL}/analyze`);
-                console.log('Text:', text);
-                
-                const response = await fetch(`${API_URL}/analyze`, {
+                const response = await fetch(API_URL + '/bias/analyze', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ text }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text }),
                 });
-                
-                console.log('Response status:', response.status);
-                console.log('Response ok:', response.ok);
-                
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`API returned ${response.status}: ${errorText}`);
+                    throw new Error('API returned ' + response.status + ': ' + errorText);
                 }
-                
                 const data = await response.json();
-                console.log('Success! Data:', data);
-                
-                resultDiv.innerHTML = `
-                    <div class="result success">
-                        <strong>✅ Success!</strong><br><br>
-                        <strong>Overall Bias:</strong> ${data.overall_bias}<br>
-                        <strong>Checks:</strong> ${data.checks}<br>
-                        <strong>Issues:</strong> ${data.issues}<br>
-                        <strong>Sentences Analyzed:</strong> ${data.sentences.length}<br><br>
-                        <strong>Full Response:</strong><br>
-                        ${JSON.stringify(data, null, 2)}
-                    </div>
-                `;
-                
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+                resultsDiv.innerHTML = renderResults(data, elapsed);
             } catch (error) {
-                console.error('API test failed:', error);
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        <strong>❌ Error</strong><br><br>
-                        ${error.message}<br><br>
-                        Check the browser console (F12) for more details.
-                    </div>
-                `;
+                resultsDiv.innerHTML = '<div class="error-box"><strong>Error:</strong> ' + error.message + '<br><br>Check browser console (F12) and server logs.</div>';
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        function renderResults(data, elapsed) {
+            var biasClass = data.overall_bias === 'Left' ? 'left' : data.overall_bias === 'Right' ? 'right' : 'center';
+            var probs = data.overall_probabilities;
+            var html = '<div class="overall-card">' +
+                '<div class="overall-header">' +
+                '<h2 style="margin:0">Overall Bias</h2>' +
+                '<span class="bias-badge ' + biasClass + '">' + data.overall_bias + '</span>' +
+                '</div>' +
+                '<div class="prob-bar">' +
+                '<div class="prob-left" style="width:' + (probs.Left * 100).toFixed(0) + '%">L ' + (probs.Left * 100).toFixed(1) + '%</div>' +
+                '<div class="prob-center" style="width:' + (probs.Center * 100).toFixed(0) + '%">C ' + (probs.Center * 100).toFixed(1) + '%</div>' +
+                '<div class="prob-right" style="width:' + (probs.Right * 100).toFixed(0) + '%">R ' + (probs.Right * 100).toFixed(1) + '%</div>' +
+                '</div>' +
+                '<div class="meta-row">' +
+                '<div>Sentences: <span>' + data.checks + '</span></div>' +
+                '<div>Biased: <span>' + data.issues + '</span></div>' +
+                '<div>Time: <span>' + elapsed + 's</span></div>' +
+                '</div></div>' +
+                '<h2>Sentence Analysis (Sliding Window)</h2>';
+
+            for (var idx = 0; idx < data.sentences.length; idx++) {
+                var s = data.sentences[idx];
+                var labelChar = s.bias === 'Left' ? 'L' : s.bias === 'Right' ? 'R' : 'C';
+                var labelClass = s.confidence < 0.5 ? 'N' : labelChar;
+                var chipClass = s.bias === 'Left' ? 'left' : s.bias === 'Right' ? 'right' : 'center';
+
+                html += '<div class="sentence-card">' +
+                    '<div class="sentence-header">' +
+                    '<div class="sentence-label ' + labelClass + '">' + labelChar + '</div>' +
+                    '<strong>' + s.category + '</strong>' +
+                    '</div>' +
+                    '<div class="sentence-text">' + s.text + '</div>' +
+                    '<div class="sentence-meta">' +
+                    'Confidence: ' + (s.confidence * 100).toFixed(1) + '% | ' +
+                    'L: ' + (s.probabilities.Left * 100).toFixed(1) + '% ' +
+                    'C: ' + (s.probabilities.Center * 100).toFixed(1) + '% ' +
+                    'R: ' + (s.probabilities.Right * 100).toFixed(1) + '%' +
+                    '</div>';
+
+                if (s.top_tokens && s.top_tokens.length > 0) {
+                    html += '<div class="tokens-section">' +
+                        '<div class="tokens-label">Influential Words</div>' +
+                        '<div class="token-chips">';
+                    for (var ti = 0; ti < s.top_tokens.length; ti++) {
+                        var t = s.top_tokens[ti];
+                        html += '<span class="token-chip ' + chipClass + '">' + t.token + ' <span class="score">' + Math.round(t.score * 100) + '%</span></span>';
+                    }
+                    html += '</div></div>';
+                }
+                html += '</div>';
+            }
+
+            html += '<div class="raw-toggle" onclick="var el=this.nextElementSibling; el.style.display = el.style.display===\'none\' ? \'block\' : \'none\'">Show/hide raw JSON response</div>' +
+                '<div class="raw-json" style="display:none">' + JSON.stringify(data, null, 2) + '</div>';
+
+            return html;
         }
     </script>
 </body>
