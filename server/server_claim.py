@@ -152,71 +152,80 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
 def get_claims_and_evidence_for_demo(passage: str) -> List[ClaimEvidence]:
 
     demo_items = [
-        # 1
-        ClaimEvidence(
-    claim="Barack Obama served as the 44th President of the United States.",
-    evidence=[
-        "Barack Obama was the 44th President of the United States from 2009 to 2017."
-    ],
-    gold_label="SUPPORTED",
-),
 
-ClaimEvidence(
-    claim="The Eiffel Tower is located in Paris.",
-    evidence=[
-        "The Eiffel Tower is a landmark in Paris, France."
-    ],
-    gold_label="SUPPORTED",
-    ),    
-ClaimEvidence(
-    claim="The Eiffel Tower is located in Berlin.",
-    evidence=[
-        "The Eiffel Tower is a landmark in Paris, France."
-    ],
-    gold_label="REFUTED",
-),
+    # --- REFUTED (real-world contradiction) ---
 
-ClaimEvidence(
-    claim="Water boils at 50 degrees Celsius under standard conditions.",
-    evidence=[
-        "Water boils at 100 degrees Celsius at standard atmospheric pressure."
-    ],
-    gold_label="REFUTED",
-),
-ClaimEvidence(
-    claim="Barack Obama wrote a book about artificial intelligence.",
-    evidence=[
-        "Barack Obama is an American politician who served as President from 2009 to 2017."
-    ],
-    gold_label="NOT ENOUGH INFO",
-),
+    ClaimEvidence(
+        claim="5G is a compartmentalized weapons deployment system that masquerades as a benign technological advancement for enhanced communications and faster downloads.",
+        evidence=[
+            "5G is the fifth generation of wireless communication technology designed to provide faster data speeds and improved connectivity."
+        ],
+        gold_label="REFUTED",
+    ),
 
-ClaimEvidence(
-    claim="The Eiffel Tower was designed by Leonardo da Vinci.",
-    evidence=[
-        "The Eiffel Tower was completed in 1889 and named after engineer Gustave Eiffel."
-    ],
-    gold_label="REFUTED",
-),
-ClaimEvidence(
-    claim="The Eiffel Tower is the tallest structure in Europe today.",
-    evidence=[
-        "The Eiffel Tower is 330 meters tall."
-    ],
-    gold_label="NOT ENOUGH INFO",
-),
+    ClaimEvidence(
+        claim="5G has the capability to target, acquire and attack vaccinated individuals through the nano-metamaterial antenna in Wuhan coronavirus (COVID-19) vaccines.",
+        evidence=[
+            "5G is a wireless communication standard used for transmitting data and does not have the capability to target or attack individuals."
+        ],
+        gold_label="REFUTED",
+    ),
 
-ClaimEvidence(
-    claim="Water boils at 100 degrees Celsius.",
-    evidence=["Water boils at 100 degrees Celsius at standard pressure."],
-    gold_label="SUPPORTED",
-),
+    ClaimEvidence(
+        claim="COVID-19 vaccines contain nano-metamaterial antennas.",
+        evidence=[
+            "COVID-19 vaccines do not contain microchips, antennas, or tracking devices and are designed to stimulate an immune response."
+        ],
+        gold_label="REFUTED",
+    ),
 
-ClaimEvidence(
-    claim="Water boils at 90 degrees Celsius.",
-    evidence=["Water boils at 100 degrees Celsius at standard pressure."],
-    gold_label="REFUTED",
-),  
+    ClaimEvidence(
+        claim="5G is a weapon system and a crime against humanity.",
+        evidence=[
+            "5G is a telecommunications technology used for wireless communication and internet connectivity."
+        ],
+        gold_label="REFUTED",
+    ),
+
+    ClaimEvidence(
+        claim="the world is blindly following the plans of the technocratic elite and the military-industrial-pharma complex to terminate large numbers within populations across the world.",
+        evidence=[
+            "There is no credible evidence that global institutions are coordinating a plan to terminate large populations."
+        ],
+        gold_label="REFUTED",
+    ),
+
+    # --- SUPPORTED (direct factual statements from passage that are actually true) ---
+
+    ClaimEvidence(
+        claim="A weapon can be a device, tool or action fashioned to cause physical or psychological harm.",
+        evidence=[
+            "A weapon is commonly defined as an object or tool used to inflict physical or psychological harm."
+        ],
+        gold_label="SUPPORTED",
+    ),
+
+    ClaimEvidence(
+        claim="satellite communications can be affected by inclement weather events and signal latency.",
+        evidence=[
+            "Satellite communication signals can be disrupted by weather conditions and may experience latency due to long transmission distances."
+        ],
+        gold_label="SUPPORTED",
+    ),
+
+    # --- NOT ENOUGH INFO  ---
+
+    ClaimEvidence(
+        claim="The Lethal Autonomous Weapons Systems (LAWS) will need 5G networks to maintain geo-position and navigate their environment to the target.",
+        evidence=[],
+        gold_label="NOT ENOUGH INFO",
+    ),
+
+    ClaimEvidence(
+        claim="The prima facie evidence of this globalist depopulation agenda is unequivocal.",
+        evidence=[],
+        gold_label="NOT ENOUGH INFO",
+    ),
 ]
 
     return demo_items
@@ -235,7 +244,7 @@ DEFAULT_MOCK_EVIDENCE = [
     "Another mock evidence sentence that is not sourced.",
 ]
 
-MAX_CLAIMS = 5
+MAX_CLAIMS = len(MOCK_CLAIMS)
 MAX_EVIDENCE = 4
 
 
@@ -263,7 +272,7 @@ async def health():
 async def verify_claims_from_passage(
     request: PassageRequest,
     mock_claims: bool = True,
-    mock_retrieve: bool = False,
+    mock_retrieve: bool = True,
 ):
     """
     Entry point for the Chrome extension for claim verification.

@@ -40,15 +40,15 @@ TRAIN_PLAN = [
         "num_heads": 4,
         "mix_config": {
             "aux_data_path": PKG_ROOT / "data" / "processed" / "averitec_80.csv",
-            "ratio_main": 0.6,
-            "ratio_aux": 0.4,
+            "ratio_main": 0.7,
+            "ratio_aux": 0.3,
             "balance_labels_main": False,
             "balance_labels_aux": False,
             "nei_fill_main": False,
             "nei_fill_aux": True,
             "nei_fill_k": 2,
             "nei_fill_seed": 10,
-            "nei_fill_prob": 0.5,
+            "nei_fill_prob": 0.3,
             "label_weights_aux": {
                 "NOT ENOUGH INFO": 2.0,
                 "SUPPORTED": 1.5,
