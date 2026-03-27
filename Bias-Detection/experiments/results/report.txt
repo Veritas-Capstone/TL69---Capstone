@@ -1,0 +1,117 @@
+======================================================================
+  BIAS DETECTION PIPELINE — EVALUATION REPORT
+  Generated: 2026-03-19 15:29
+======================================================================
+
+  Loading models...
+
+======================================================================
+  TEST 1: DEMO EXAMPLES
+======================================================================
+
+  [Left] FAIL
+    Text: Progressive Democrats championed Medicare for All and free college tuition, argu...
+    Politicalness: political (conf=1.00)
+    Prediction: Center  |  L=0.233  C=0.689  R=0.078
+    Key tokens: Medicare(1.00), nation(0.80), universal(0.60), richest(0.60), arguing(0.59)
+
+  [Center] PASS
+    Text: The Congressional Budget Office released its annual economic outlook on Wednesda...
+    Politicalness: political (conf=1.00)
+    Prediction: Center  |  L=0.087  C=0.861  R=0.053
+    Key tokens: Budget(1.00), Congressional(0.96), modestly(0.71), %(0.51), Wednesday(0.46)
+
+  [Right] FAIL
+    Text: Conservative lawmakers defended free market principles and called for reduced go...
+    Politicalness: political (conf=1.00)
+    Prediction: Left  |  L=0.540  C=0.145  R=0.316
+    Key tokens: lawmakers(1.00), government(0.82), principles(0.68), prosperity(0.64), American(0.52)
+
+  [Non-political] PASS
+    Text: The weather forecast predicts rain this weekend with temperatures dropping into ...
+    Politicalness: non-political (conf=0.00)
+
+  Demo: 2/4 correct
+
+======================================================================
+  BASIL EVALUATION (labels=source, n=300)
+======================================================================
+
+  Accuracy:      97.0% (291/300)
+  Macro F1:      0.970
+  Non-political: 4/300
+  Avg time:      0.06s/article
+
+  Label          Prec   Recall       F1  Support
+  ------------------------------------------
+  Left          0.961    0.980    0.970      100
+  Center        0.952    1.000    0.976      100
+  Right         1.000    0.930    0.964      100
+
+  Confusion Matrix (rows=true, cols=predicted):
+                   Left   Center    Right
+          Left       98        2        0
+        Center        0      100        0
+         Right        4        3       93
+
+  Top confusions:
+       Right -> Left      (4x)
+       Right -> Center    (3x)
+        Left -> Center    (2x)
+
+======================================================================
+  BASIL EVALUATION (labels=annotation, n=300)
+======================================================================
+
+  Accuracy:      47.7% (143/300)
+  Macro F1:      0.482
+  Non-political: 4/300
+  Avg time:      0.06s/article
+
+  Label          Prec   Recall       F1  Support
+  ------------------------------------------
+  Left          0.373    0.469    0.415       81
+  Center        0.543    0.396    0.458      144
+  Right         0.516    0.640    0.571       75
+
+  Confusion Matrix (rows=true, cols=predicted):
+                   Left   Center    Right
+          Left       38       32       11
+        Center       53       57       34
+         Right       11       16       48
+
+  Top confusions:
+      Center -> Left      (53x)
+      Center -> Right     (34x)
+        Left -> Center    (32x)
+       Right -> Center    (16x)
+        Left -> Right     (11x)
+
+======================================================================
+  WITHIN-EVENT ANALYSIS
+======================================================================
+  Triplets (same story, 3 outlets): 100
+  All 3 correct:       92 (92.0%)
+  Partially correct:    8 (8.0%)
+  All 3 wrong:          0 (0.0%)
+  Model sees difference (>1 unique pred): 99/100 (99.0%)
+
+======================================================================
+  CALIBRATION RESULTS
+======================================================================
+  No calibration results found.
+  Run: python threshold.py --basil-dir BASIL
+
+======================================================================
+  SUMMARY
+======================================================================
+
+  Benchmark                        Accuracy   Macro F1
+  --------------------------------------------------
+  BASIL (source labels)               97.0%      0.970
+  BASIL (annotation labels)           47.7%      0.482
+
+  Note: BASIL is an out-of-distribution benchmark.
+  The model paper reports OOD accuracy of 38-67%.
+  Fine-tuning with LoRA (finetune_basil.py) is the
+  recommended next step to improve these numbers.

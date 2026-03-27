@@ -1,118 +1,93 @@
 import { useState, useEffect } from 'react';
 import fetchAPI from './fetchAPI';
 import '@/assets/tailwind.css';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import InputPage from './InputPage';
 import AnalysisPage from './AnalysisPage';
 import { Spinner } from '@/components/ui/spinner';
-
-export interface AnalysisResult {
-	checks: number;
-	issues: number;
-	overall_bias: string;
-	overall_probabilities: {
-		Left: number;
-		Center: number;
-		Right: number;
-	};
-	bias_claims: { text: string; category: string; description: string; valid: boolean }[];
-	fact_check_claims: { text: string; category: string; description: string; valid: boolean }[];
-}
+import { AnalysisResult } from '@/types';
+import { Button } from '@/components/ui/button';
+import Profile from './Profile';
+import logo from '../../assets/logo.png';
 
 function App() {
-	const [text, setText] = useState<string>();
+	const modelBackend = import.meta.env.WXT_MODEL_BACKEND || 'http://localhost:8000';
 	const [result, setResult] = useState<AnalysisResult | undefined>();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string>();
+	const [failedUnderlinesArr, setFailedUnderlinesArr] = useState<number[]>([]);
+	const [profile, setProfile] = useState(false);
+	const [currentTab, setCurrentTab] = useState<string>('bias');
 
 	// call model on selected text
 	async function callModel() {
-		const storedResult = await browser.storage.local.get('storedResult');
 		const selectedText = await browser.storage.local.get('selectedText');
-		setText(selectedText.selectedText);
-
-		// call API if result isn't stored
-		if (Object.keys(storedResult).length === 0 && selectedText.selectedText) {
-			setIsLoading(true);
-			setError(undefined);
-
-			try {
-				// clear selected text on webpage
-				const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-				await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
-
-				// call model API
-				const data = await fetchAPI(selectedText.selectedText);
-				setResult(data);
-				console.log('HERE');
-				console.log(data);
-				await browser.storage.local.set({ storedResult: data });
-
-				// underline claims on webpage
-				/* 
-				idk calling this 10 times makes the multiline underlining more consistent
-				*/
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: false,
-					targets: data?.bias_claims.filter((x) => !x.valid).map((x) => x.text),
-				});
-				await browser.tabs.sendMessage(tab.id ?? 0, {
-					type: 'UNDERLINE_SELECTION',
-					valid: true,
-					targets: data?.bias_claims.filter((x) => x.valid).map((x) => x.text),
-				});
-			} catch (err) {
-				console.error('Error calling API:', err);
-				setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
-			} finally {
-				setIsLoading(false);
-			}
+		if (!selectedText.selectedText) {
+			return;
 		}
-		// use stored result
-		else {
-			setResult(storedResult.storedResult);
+
+		setIsLoading(true);
+		setError(undefined);
+
+		try {
+			const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+			// clear selected text on webpage
+			try {
+				await browser.tabs.sendMessage(tab.id ?? 0, { type: 'CLEAR_SELECTION' });
+			} catch {
+				// Content script not available on this page, that's fine
+			}
+
+			// call model API
+			const storedResult = await browser.storage.local.get('storedResult');
+			let data: AnalysisResult;
+			if (!storedResult.storedResult) {
+				data = await fetchAPI(selectedText.selectedText);
+				await browser.storage.local.set({ storedResult: data });
+			} else {
+				data = storedResult.storedResult;
+			}
+			setResult(data);
+
+			// underline claims on webpage
+			let failed: number[] = [];
+			try {
+				failed = await browser.tabs.sendMessage(tab.id ?? 0, {
+					type: 'UNDERLINE_SELECTION',
+					sentences: data?.bias_claims,
+				});
+			} catch {
+				// Content script unavailable
+			}
+
+			await updateStats(data);
+			setFailedUnderlinesArr(failed);
+		} catch (err) {
+			setError(`Failed to analyze text. Make sure the backend server is running on ${modelBackend}`);
+		} finally {
+			setIsLoading(false);
+		}
+	}
+
+	// update user stats in profile
+	async function updateStats(data: AnalysisResult) {
+		if (localStorage.getItem('username')) {
+			await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/stats`, {
+				headers: { 'Content-Type': 'application/json' },
+				method: 'POST',
+				body: JSON.stringify({
+					username: localStorage.getItem('username'),
+					leftBias: data?.bias_claims.filter((x) => x.category === 'Left-leaning').length ?? 0,
+					rightBias: data?.bias_claims.filter((x) => x.category === 'Right-leaning').length ?? 0,
+					centerBias:
+						data?.bias_claims.filter((x) => x.category === 'Centrist' || x.category === 'Neutral/Balanced')
+							.length ?? 0,
+					supportedClaim: data?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
+					refutedClaim: data?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
+					noInfoClaim: data?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
+				}),
+			});
 		}
 	}
 
@@ -130,32 +105,51 @@ function App() {
 	}, []);
 
 	return (
-		<>
-			<Card className="rounded-none min-w-[300px] flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
-				<CardHeader className="from-gray-900 to-gray-800 gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
-					<h1 className="font-semibold text-xl text-white">Veritas</h1>
-				</CardHeader>
-				{error && (
-					<CardContent className="w-full">
-						<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">{error}</div>
-					</CardContent>
-				)}
+		<Card className="font-nunito rounded-none w-full h-full flex-1 overflow-y-auto p-0 flex flex-col items-center gap-4 shadow-none border-b-0">
+			<CardHeader className="bg-black gap-0 py-2 w-full bg-linear-to-r rounded-tl-xl">
+				<div className="flex items-center justify-between h-full">
+					<img src={logo} className="h-[25px] w-[90px]" />
+					{!profile ? (
+						<Button className="text-white" variant={'link'} onClick={() => setProfile(true)}>
+							Profile
+						</Button>
+					) : (
+						<Button className="text-white" variant={'link'} onClick={() => setProfile(false)}>
+							Back
+						</Button>
+					)}
+				</div>
+			</CardHeader>
+			<CardContent className="w-full flex-1 flex flex-col gap-4">
 				{isLoading ? (
-					<CardContent className="w-full h-full flex justify-center items-center gap-2">
+					<div className="w-full flex-1 flex justify-center items-center gap-2">
 						<Spinner className="w-5 h-5" />
 						<p className="text-base">Analyzing Text...</p>
-					</CardContent>
-				) : !result ? (
-					<InputPage setText={setText} callModel={callModel} />
+					</div>
 				) : (
-					<AnalysisPage text={text} setText={setText} result={result} setResult={setResult} />
+					<>
+						{error && (
+							<div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">{error}</div>
+						)}
+						{profile ? (
+							<Profile />
+						) : !result ? (
+							<InputPage callModel={callModel} />
+						) : (
+							<AnalysisPage
+								result={result}
+								setResult={setResult}
+								failedUnderlinesArr={failedUnderlinesArr}
+								setFailedUnderlinesArr={setFailedUnderlinesArr}
+								currentTab={currentTab}
+								setCurrentTab={setCurrentTab}
+							/>
+						)}
+					</>
 				)}
-			</Card>
-			<div className="flex flex-col justify-center gap-2 mt-8">
-				<Separator className="mt-2" />
-				<CardDescription className="mx-auto mb-3 text-xs">Powered by Veritas AI</CardDescription>
-			</div>
-		</>
+			</CardContent>
+			<CardFooter className="flex flex-col w-full gap-2"></CardFooter>
+		</Card>
 	);
 }
 

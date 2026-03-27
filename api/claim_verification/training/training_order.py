@@ -14,17 +14,49 @@
 # training_order.py
 
 from pathlib import Path
-from training_fever import train_fever
-from training_averitec import train_averitec
 
-MODELS_DIR = Path("../models")
+# Use absolute package imports so this works as:
+#   python -m api.claim_verification.training.training_order
+# from repo root. Avoid sys.path hacks.
+from api.claim_verification.training.training_fever import train_fever
+from api.claim_verification.training.training_averitec import train_averitec
+
+PKG_ROOT = Path(__file__).resolve().parents[1]
+MODELS_DIR = PKG_ROOT / "models"
 
 TRAIN_PLAN = [
+    # {
+    #     "dataset": "averitec_80",
+    #     "mode": "retrain",       
+    #     "init_from": "hf",  
+    # },
     {
-        "dataset": "fever_train_claims_80",
-        "mode": "retrain",       
-        "init_from": "hf",  
-    },
+        "dataset": "fever_averitec_mix",
+        "trainer": "fever",
+        "data_path": PKG_ROOT / "data" / "processed" / "fever_train_claims_80.csv",
+        "mode": "retrain",
+        "init_from": "hf",
+        "use_attention_model": True,
+        "num_heads": 4,
+        "mix_config": {
+            "aux_data_path": PKG_ROOT / "data" / "processed" / "averitec_80.csv",
+            "ratio_main": 0.7,
+            "ratio_aux": 0.3,
+            "balance_labels_main": False,
+            "balance_labels_aux": False,
+            "nei_fill_main": False,
+            "nei_fill_aux": True,
+            "nei_fill_k": 2,
+            "nei_fill_seed": 10,
+            "nei_fill_prob": 0.3,
+            "label_weights_aux": {
+                "NOT ENOUGH INFO": 2.0,
+                "SUPPORTED": 1.5,
+            },
+            "epoch_size": 12000,
+            "val_size": 0.2,
+        },
+    }
 ]
 
 
@@ -81,12 +113,42 @@ def main():
         else:
             raise ValueError(f"Unknown mode={mode!r} for dataset={dataset!r}")
 
-        if "fever_train_claims" in dataset:
-            train_fever(init_weights=init_weights, data_set=dataset)
-        elif dataset == "averitec":
-            train_averitec(init_weights=init_weights, data_set=dataset)
+        train_kwargs = {
+            "data_set": dataset,
+            "init_weights": init_weights,
+        }
+        for key in [
+            "data_path",
+            "batch_size",
+            "max_length",
+            "threshold",
+            "num_epochs",
+            "patience",
+            "lr",
+            "use_attention_model",
+            "max_evidence",
+            "accum_steps",
+            "num_heads",
+            "mix_config",
+        ]:
+            if key in step:
+                train_kwargs[key] = step[key]
+
+        trainer = step.get("trainer")
+        if trainer is None:
+            if "fever" in dataset:
+                trainer = "fever"
+            elif "averitec" in dataset:
+                trainer = "averitec"
+            else:
+                raise ValueError(f"Unknown dataset {dataset!r}; add 'trainer' to TRAIN_PLAN.")
+
+        if trainer == "fever":
+            train_fever(**train_kwargs)
+        elif trainer == "averitec":
+            train_averitec(**train_kwargs)
         else:
-            raise ValueError(f"Unknown dataset {dataset!r}")
+            raise ValueError(f"Unknown trainer {trainer!r}")
 
 
 if __name__ == "__main__":

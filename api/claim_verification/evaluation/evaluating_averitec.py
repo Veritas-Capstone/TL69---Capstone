@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModel
 from tqdm.auto import tqdm
 
 from sklearn.metrics import (
@@ -32,6 +32,14 @@ from sklearn.metrics import (
 )
 
 from .eval_helpers import collate_multi_evidence, PairwiseExpansionDataset, collate_pairwise
+from api.claim_verification.training.training_joint_helpers import (
+    JointEvidenceDataset,
+    collate_joint_batch,
+)
+from api.claim_verification.models.claim_evidence_attention import (
+    ClaimEvidenceAttentionModel,
+    upgrade_attention_state_dict,
+)
 
 # Base HF model (same as training)
 MODEL = "FacebookAI/roberta-large-mnli"
@@ -39,6 +47,17 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
 DATA_SET = "averitec"
 LABEL_MAP = {"REFUTED": 0, "NOT ENOUGH INFO": 1, "SUPPORTED": 2}
+PKG_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = PKG_ROOT / "data" / "processed"
+EVAL_OUT_DIR = PKG_ROOT / "eval_metrics"
+MODELS_DIR = PKG_ROOT / "models"
+
+
+def _looks_like_attention_checkpoint(state_dict):
+    """
+    Heuristic: attention checkpoints save encoder.* keys; HF classifiers use roberta.*.
+    """
+    return any(k.startswith("encoder.") or k.startswith("W_c") for k in state_dict.keys())
 
 
 def eval_averitec(
@@ -47,7 +66,10 @@ def eval_averitec(
     data_path=None,
     batch_size=8,
     max_length=256,
-    output_root="claim_verification/eval_metrics",
+    max_evidence=5,
+    use_attention_model=None,
+    output_root=None,
+    num_heads=4,
 ):
     """
     Evaluate RoBERTa on the *entire* AveriTeC dataset.
@@ -60,45 +82,66 @@ def eval_averitec(
     data_set : str
         Dataset name (just used to name output dirs).
     data_path : str or None
-        Path to the CSV for AveriTeC. If None, uses ../data/processed/{data_set}.csv
+        Path to the CSV for AveriTeC. If None, uses <pkg>/data/processed/{data_set}.csv
+    use_attention_model : bool | None
+        If True, evaluate the attention model (JointEvidenceDataset + ClaimEvidenceAttentionModel).
+        If None, auto-detect based on checkpoint keys.
     """
 
-    # Figure out package root: .../api/claim_verification
-    pkg_root = Path(__file__).resolve().parents[1]
-    default_data_dir = pkg_root / "data" / "processed"
-
     if data_path is None:
-        # If you want full dataset: f"{data_set}.csv"
-        # If you specifically want the 20% split: f"{data_set}_20.csv"
-        data_path = default_data_dir / f"{data_set}_20.csv"
+        data_path = DATA_DIR / f"{data_set}.csv"
+    data_path = Path(data_path)
+
+    if output_root is None:
+        output_root = EVAL_OUT_DIR
+    output_root = Path(output_root)
+    output_root.mkdir(parents=True, exist_ok=True)
 
     print(f"[EVAL] Loading dataset from: {data_path}")
     df = pd.read_csv(data_path)
 
-    # Same dataset object as training, but we use ALL examples (no split)
-    pair_ds = PairwiseExpansionDataset(df, LABEL_MAP)
-    # print(f"[EVAL] Total pairwise examples: {len(pair_ds)}")
-    print(f"[EVAL] Total examples: {len(df)}")
+    # ---- Resolve init weights ----
+    if init_weights != "hf":
+        ckpt_path = Path(init_weights)
+        if not ckpt_path.is_absolute():
+            ckpt_path = (MODELS_DIR / ckpt_path).resolve()
+        if not ckpt_path.exists():
+            raise FileNotFoundError(f"Checkpoint not found at {ckpt_path}")
+        ckpt_state = torch.load(ckpt_path, map_location="cpu")
+    else:
+        ckpt_path = None
+        ckpt_state = None
 
-    # Multiple Evidence input
-    eval_loader = DataLoader(
-        df.to_dict("records"),  # or df.to_dict("records") if you prefer dicts over Series
-        batch_size=batch_size,
-        shuffle=False,
-        collate_fn=lambda batch: collate_multi_evidence(
-            batch,
-            tokenizer,
-            max_length=max_length,
-            label_map=LABEL_MAP,   # <-- important
-        ),
-    )
-    # Pairwise
-    # eval_loader = DataLoader(
-    #     pair_ds,
-    #     batch_size=batch_size,
-    #     shuffle=False,
-    #     collate_fn=lambda batch: collate_pairwise(batch, tokenizer, max_length=max_length),
-    # )
+    # Auto-detect architecture if not specified
+    if use_attention_model is None:
+        use_attention_model = ckpt_state is not None and _looks_like_attention_checkpoint(ckpt_state)
+
+    # Dataset + loader based on architecture
+    print(f"[EVAL] Total examples: {len(df)}")
+    if use_attention_model:
+        eval_ds = JointEvidenceDataset(df, LABEL_MAP, max_evidence=max_evidence)
+        eval_loader = DataLoader(
+            eval_ds,
+            batch_size=batch_size,
+            shuffle=False,
+            collate_fn=lambda batch: collate_joint_batch(
+                batch,
+                tokenizer,
+                max_length=max_length,
+            ),
+        )
+    else:
+        eval_loader = DataLoader(
+            df.to_dict("records"),
+            batch_size=batch_size,
+            shuffle=False,
+            collate_fn=lambda batch: collate_multi_evidence(
+                batch,
+                tokenizer,
+                max_length=max_length,
+                label_map=LABEL_MAP,
+            ),
+        )
 
     num_labels = len(LABEL_MAP)
 
@@ -106,36 +149,59 @@ def eval_averitec(
     print("[EVAL] Loading model:")
     print(f"       MODEL = {MODEL}")
     print(f"       init_weights = {init_weights!r}")
+    print(f"       architecture = {'attention' if use_attention_model else 'pairwise'}")
 
-    model = AutoModelForSequenceClassification.from_pretrained(
-        MODEL,
-        num_labels=num_labels,
-    )
+    if use_attention_model:
+        encoder = AutoModel.from_pretrained(MODEL)
+        model = ClaimEvidenceAttentionModel(
+            encoder,
+            hidden_dim=encoder.config.hidden_size,
+            num_labels=num_labels,
+            num_heads=num_heads,
+        )
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL,
+            num_labels=num_labels,
+        )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     print("Device Used for Evaluation:", device)
 
-    # If init_weights is not "hf", treat it as a checkpoint path
-    if init_weights != "hf":
-        ckpt_path = init_weights
+    if ckpt_path:
         print(f"[EVAL] Loading checkpoint weights from: {ckpt_path}")
-        state_dict = torch.load(ckpt_path, map_location=device)
-        model.load_state_dict(state_dict)
+        if use_attention_model:
+            ckpt_state = upgrade_attention_state_dict(ckpt_state, num_heads=num_heads)
+            missing, unexpected = model.load_state_dict(ckpt_state, strict=False)
+            if missing:
+                print(f"[EVAL] Missing keys (ignored): {len(missing)}")
+            if unexpected:
+                print(f"[EVAL] Unexpected keys (ignored): {len(unexpected)}")
+        else:
+            model.load_state_dict(ckpt_state)
 
     model.eval()
 
     all_preds = []
     all_labels = []
 
-    print(f"Number of labels to evaluate on: {len(labels in eval_loader)}")
     with torch.no_grad():
-        for enc, labels in tqdm(eval_loader, desc="Evaluating AveriTeC", unit="batch"):
-            enc = {k: v.to(device) for k, v in enc.items()}
-            labels = labels.to(device)
-
-            outputs = model(**enc)
-            logits = outputs.logits
+        for batch in tqdm(eval_loader, desc=f"Evaluating {data_set}"):
+            if use_attention_model:
+                claim_enc, ev_enc, evid_mask, labels = batch
+                claim_enc = {k: v.to(device) for k, v in claim_enc.items()}
+                ev_enc = {k: v.to(device) for k, v in ev_enc.items()}
+                evid_mask = evid_mask.to(device)
+                labels = labels.to(device)
+                outputs = model(claim_enc, ev_enc, evid_mask)
+                logits = outputs["logits"]
+            else:
+                enc, labels = batch
+                enc = {k: v.to(device) for k, v in enc.items()}
+                labels = labels.to(device)
+                outputs = model(**enc)
+                logits = outputs.logits
             preds = torch.argmax(logits, dim=-1)
 
             all_preds.extend(preds.cpu().numpy().tolist())
@@ -157,14 +223,21 @@ def eval_averitec(
     )
 
     print("\n[EVAL] Classification report (per class):")
-    print(
-        classification_report(
-            all_labels,
-            all_preds,
-            target_names=list(LABEL_MAP.keys()),
-            zero_division=0,
-            labels=[0, 1, 2],
-        )
+    report_text = classification_report(
+        all_labels,
+        all_preds,
+        target_names=list(LABEL_MAP.keys()),
+        zero_division=0,
+        labels=[0, 1, 2],
+    )
+    print(report_text)
+    report_dict = classification_report(
+        all_labels,
+        all_preds,
+        target_names=list(LABEL_MAP.keys()),
+        zero_division=0,
+        labels=[0, 1, 2],
+        output_dict=True,
     )
 
     cm = confusion_matrix(all_labels, all_preds, labels=[0, 1, 2])
@@ -177,16 +250,16 @@ def eval_averitec(
     if init_weights == "hf":
         model_tag = "hf_baseline"
     else:
-        # e.g. ../models/averitec/latest.pt -> latest
-        base_name = os.path.basename(init_weights)
+        base_name = os.path.basename(str(ckpt_path))
         model_tag = os.path.splitext(base_name)[0]
 
-    out_dir = os.path.join(output_root, f"{data_set}_{model_tag}_{run_id}")
-    os.makedirs(out_dir, exist_ok=True)
+    out_dir = output_root / f"{data_set}_{model_tag}_{run_id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     metrics = {
         "model_name": MODEL,
-        "init_weights": init_weights,
+        "init_weights": str(init_weights),
+        "use_attention_model": use_attention_model,
         "accuracy": float(acc),
         "precision_macro": float(precision_macro),
         "recall_macro": float(recall_macro),
@@ -196,12 +269,18 @@ def eval_averitec(
         "f1_weighted": float(f1_weighted),
         "num_examples": int(len(all_labels)),
         "label_map": LABEL_MAP,
+        "classification_report": report_dict,
     }
 
-    metrics_path = os.path.join(out_dir, "metrics.json")
+    metrics_path = out_dir / "metrics.json"
     with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=4)
     print(f"[EVAL] Metrics saved to: {metrics_path}")
+
+    report_path = out_dir / "classification_report.txt"
+    with open(report_path, "w") as f:
+        f.write(report_text)
+    print(f"[EVAL] Classification report saved to: {report_path}")
 
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm,
@@ -211,7 +290,7 @@ def eval_averitec(
     disp.plot(cmap="Blues")
     plt.title(f"AveriTeC Confusion Matrix ({model_tag})")
     plt.tight_layout()
-    cm_path = os.path.join(out_dir, "confusion_matrix.png")
+    cm_path = out_dir / "confusion_matrix.png"
     plt.savefig(cm_path)
     plt.close()
     print(f"[EVAL] Confusion matrix saved to: {cm_path}")
@@ -226,4 +305,3 @@ def eval_averitec(
 if __name__ == "__main__":
     # Default: evaluate HF baseline on full AveriTeC
     eval_averitec()
-

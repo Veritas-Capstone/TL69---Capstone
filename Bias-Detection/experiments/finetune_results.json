@@ -1,0 +1,45 @@
+{
+  "n_folds": 5,
+  "n_articles": 300,
+  "n_augmentation": 0,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "learning_rate": 0.0002,
+  "label_smoothing": 0.1,
+  "mean_accuracy": 0.8200000000000001,
+  "std_accuracy": 0.19533447098644816,
+  "mean_macro_f1": 0.8001080554739091,
+  "std_macro_f1": 0.2344652737505512,
+  "per_fold": [
+    {
+      "fold": 0,
+      "accuracy": 0.9333333333333333,
+      "macro_f1": 0.934065934065934,
+      "best_epoch": 14
+    },
+    {
+      "fold": 1,
+      "accuracy": 0.8666666666666667,
+      "macro_f1": 0.8653198653198654,
+      "best_epoch": 11
+    },
+    {
+      "fold": 2,
+      "accuracy": 0.9166666666666666,
+      "macro_f1": 0.9169719169719169,
+      "best_epoch": 10
+    },
+    {
+      "fold": 3,
+      "accuracy": 0.95,
+      "macro_f1": 0.9495622263914947,
+      "best_epoch": 12
+    },
+    {
+      "fold": 4,
+      "accuracy": 0.43333333333333335,
+      "macro_f1": 0.33462033462033464,
+      "best_epoch": 2
+    }
+  ]
+}

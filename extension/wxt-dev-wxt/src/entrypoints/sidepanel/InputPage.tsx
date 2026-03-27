@@ -5,13 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { GlobeIcon, ScanIcon, SearchIcon } from 'lucide-react';
 
-export default function InputPage({
-	setText,
-	callModel,
-}: {
-	setText: React.Dispatch<React.SetStateAction<string | undefined>>;
-	callModel: Function;
-}) {
+export default function InputPage({ callModel }: { callModel: Function }) {
 	const [tempText, setTempText] = useState<string>();
 
 	// call model on text from entire webpage
@@ -25,7 +19,6 @@ export default function InputPage({
 
 	// call model on text from the input
 	async function analyzeText() {
-		setText(tempText);
 		await browser.storage.local.set({ selectedText: tempText });
 		await callModel();
 	}
@@ -35,7 +28,7 @@ export default function InputPage({
 			<CardDescription className="text-xs text-gray-500">
 				Detect bias, verify facts, find perspectives
 			</CardDescription>
-			<CardContent className="w-full flex flex-col gap-4">
+			<div className="w-full flex flex-col gap-4 h-full">
 				<Card className="bg-gray-100">
 					<CardContent className="flex flex-col gap-4">
 						<div className="flex gap-2">
@@ -59,15 +52,17 @@ export default function InputPage({
 					<span className="text-muted-foreground">or paste text</span>
 					<Separator className="flex-1" />
 				</div>
-				<Textarea
-					onChange={(e) => setTempText(e.target.value)}
-					placeholder="Paste text content here..."
-					className="max-h-[50px] bg-gray-100 text-sm"
-				/>
-				<Button variant={'outline'} disabled={!tempText} onClick={analyzeText}>
+				<div className="h-full">
+					<Textarea
+						onChange={(e) => setTempText(e.target.value)}
+						placeholder="Paste text content here..."
+						className="resize-none min-h-full bg-gray-100 text-sm"
+					/>
+				</div>
+				<Button variant={'outline'} disabled={!tempText} onClick={analyzeText} className="mt-auto">
 					<SearchIcon /> Analyze Text
 				</Button>
-			</CardContent>
+			</div>
 		</>
 	);
 }
