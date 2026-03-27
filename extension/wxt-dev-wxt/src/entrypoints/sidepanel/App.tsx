@@ -11,6 +11,7 @@ import Profile from './Profile';
 import logo from '../../assets/logo.png';
 
 function App() {
+	const modelBackend = import.meta.env.WXT_MODEL_BACKEND || 'http://localhost:8000';
 	const [result, setResult] = useState<AnalysisResult | undefined>();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string>();
@@ -63,7 +64,7 @@ function App() {
 			await updateStats(data);
 			setFailedUnderlinesArr(failed);
 		} catch (err) {
-			setError('Failed to analyze text. Make sure the backend server is running on http://localhost:8000');
+			setError(`Failed to analyze text. Make sure the backend server is running on ${modelBackend}`);
 		} finally {
 			setIsLoading(false);
 		}
