@@ -76,7 +76,7 @@ Passage:
 print(prompt)
 # List of models: [mistral, mixtral, gemma:7b, llama3, phi3]
 response = ollama.chat(
-    model='mixtral',
+    model='mistral',
     messages=[
         {
             'role': 'user', 
@@ -89,7 +89,8 @@ response = ollama.chat(
     format='json'
 )
 
-print(response['message']['content'])
+print("Filler")
+print(f"Reponse: {response['message']['content']}")
 
 
 
