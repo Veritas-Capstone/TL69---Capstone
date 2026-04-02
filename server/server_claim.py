@@ -10,12 +10,13 @@ and only handles claim verification.
 
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from api.claim_extraction.claim_extraction import extract_claims
 from api.claim_verification.inference import baseline
 
 # -----------------------------------------------------------------------------
@@ -51,6 +52,12 @@ class ClaimVerificationResult(BaseModel):
     evidence: List[str]
     label: str
     probabilities: Dict[str, float]
+
+
+class ClaimExtractionResult(BaseModel):
+    claims: List[str]
+    model: str
+    count: int
 
 
 # Optional: direct endpoint where extension (or you) pass claims+evidence directly
@@ -143,6 +150,16 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
             model=claim_model,
         )
     return label, probs
+
+
+# -----------------------------------------------------------------------------
+# Claim extraction config (env vars)
+# -----------------------------------------------------------------------------
+
+# CLAIM_EXTRACTION_MODEL -> Ollama model to use (default: mistral)
+# CLAIM_EXTRACTION_MAX   -> max claims to return per passage (default: 10)
+EXTRACTION_MODEL = os.getenv("CLAIM_EXTRACTION_MODEL", "mistral")
+EXTRACTION_MAX_CLAIMS = int(os.getenv("CLAIM_EXTRACTION_MAX", "10"))
 
 
 # -----------------------------------------------------------------------------
@@ -257,8 +274,6 @@ def get_mock_evidence(claim: str, max_evidence: int = MAX_EVIDENCE) -> List[str]
     return evidence[:max_evidence]
 
 
-
-
 # -----------------------------------------------------------------------------
 # Endpoints
 # -----------------------------------------------------------------------------
@@ -266,6 +281,49 @@ def get_mock_evidence(claim: str, max_evidence: int = MAX_EVIDENCE) -> List[str]
 @app.get("/health")
 async def health():
     return {"status": "ok", "component": "claim_verification"}
+
+
+@app.post("/extract-claims", response_model=ClaimExtractionResult)
+async def extract_claims_endpoint(
+    request: PassageRequest,
+    model: Optional[str] = None,
+    max_claims: Optional[int] = None,
+):
+    """
+    Extract atomic, verifiable claims from a passage using a local Ollama LLM.
+
+    Query params:
+      - model:      Ollama model to use (default: env CLAIM_EXTRACTION_MODEL or "mistral").
+                    Options: mistral, llama3, gemma:7b, phi3, mixtral
+      - max_claims: Max number of claims to return (default: env CLAIM_EXTRACTION_MAX or 10).
+
+    Body:
+      { "text": "Your passage here..." }
+
+    Returns:
+      { "claims": [...], "model": "mistral", "count": 5 }
+    """
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text cannot be empty.")
+
+    resolved_model = model or EXTRACTION_MODEL
+    resolved_max = max_claims if max_claims is not None else EXTRACTION_MAX_CLAIMS
+
+    try:
+        claims = extract_claims(
+            passage=text,
+            model=resolved_model,
+            max_claims=resolved_max,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+
+    return ClaimExtractionResult(
+        claims=claims,
+        model=resolved_model,
+        count=len(claims),
+    )
 
 
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
@@ -278,9 +336,13 @@ async def verify_claims_from_passage(
     Entry point for the Chrome extension for claim verification.
 
     Pipeline:
-      - Claim extraction (currently mock only)
+      - Claim extraction (mock or real via ?mock_claims=false)
       - Evidence retrieval (mock via ?mock_retrieve=true, or empty if false)
       - Claim verification (always real model)
+
+    Query params:
+      - mock_claims:   If false, uses Ollama via claim_extraction.py to extract claims.
+      - mock_retrieve: If false, evidence list will be empty (until retrieval is implemented).
     """
     text = request.text.strip()
     if not text:
@@ -289,7 +351,14 @@ async def verify_claims_from_passage(
     if mock_claims:
         claims = get_mock_claims()
     else:
-        claims = []  # TODO: implement claim extraction and call here
+        try:
+            claims = extract_claims(
+                passage=text,
+                model=EXTRACTION_MODEL,
+                max_claims=EXTRACTION_MAX_CLAIMS,
+            )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
 
     if not claims:
         raise HTTPException(status_code=400, detail="No claims extracted from passage.")
