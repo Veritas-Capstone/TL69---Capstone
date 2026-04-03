@@ -1,0 +1,186 @@
+  Config: v3_deberta_l0.7_sd0.05_rd0.3_ls0.1_vrex1.0_ep6
+  Base model: microsoft/deberta-v3-large
+  lambda=0.7, spectral=0.05
+  rdrop=0.3
+  label_smoothing=0.1
+  vrex=1.0
+  max_length=256, epochs=6
+  Effective BS: 40
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+  Trainable params: 434,279,691
+    Ep 1, step 1211/6058, loss=3.2230, rdrop_kl=0.0121
+    Ep 1, step 2422/6058, loss=3.2887, rdrop_kl=0.0121
+    Ep 1, step 3633/6058, loss=3.1939, rdrop_kl=0.0117
+    Ep 1, step 4844/6058, loss=3.1059, rdrop_kl=0.0113
+    Ep 1, step 6055/6058, loss=3.0180, rdrop_kl=0.0110
+
+  Epoch 1/6: loss=3.0178, val_acc=0.828, val_f1=0.805
+    Saved (val F1=0.805)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_sd0.05_rd0.3_ls0.1_vrex1.0_ep6_ep1] OOD Results
+  Accuracy: 54.7%
+  Macro F1: 0.545
+
+              precision    recall  f1-score   support
+
+        left       0.58      0.59      0.59        37
+      center       0.53      0.48      0.51        33
+       right       0.53      0.56      0.54        36
+
+    accuracy                           0.55       106
+   macro avg       0.55      0.54      0.55       106
+weighted avg       0.55      0.55      0.55       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       22        5       10
+      center        9       16        8
+       right        7        9       20
+
+  Confidence abstention:
+    t=0.45: 86/106 (81%), acc=58.1%, F1=0.578
+    t=0.50: 76/106 (72%), acc=59.2%, F1=0.584
+    t=0.55: 65/106 (61%), acc=61.5%, F1=0.610
+    t=0.60: 56/106 (53%), acc=58.9%, F1=0.576
+    t=0.65: 43/106 (41%), acc=60.5%, F1=0.542
+    t=0.70: 39/106 (37%), acc=61.5%, F1=0.558
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 64.3% (18/28)
+    Center      : 48.5% (16/33)
+    Lean Right  : 57.9% (11/19)
+    Right       : 52.9% (9/17)
+    Best OOD (F1=0.545)
+    Ep 2, step 1211/6058, loss=2.5164, rdrop_kl=0.0094
+    Ep 2, step 2422/6058, loss=2.4533, rdrop_kl=0.0094
+    Ep 2, step 3633/6058, loss=2.4128, rdrop_kl=0.0092
+    Ep 2, step 4844/6058, loss=2.3688, rdrop_kl=0.0092
+    Ep 2, step 6055/6058, loss=2.3334, rdrop_kl=0.0091
+
+  Epoch 2/6: loss=2.3333, val_acc=0.844, val_f1=0.826
+    Saved (val F1=0.826)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_sd0.05_rd0.3_ls0.1_vrex1.0_ep6_ep2] OOD Results
+  Accuracy: 50.0%
+  Macro F1: 0.503
+
+              precision    recall  f1-score   support
+
+        left       0.44      0.38      0.41        37
+      center       0.42      0.58      0.49        33
+       right       0.69      0.56      0.62        36
+
+    accuracy                           0.50       106
+   macro avg       0.52      0.50      0.50       106
+weighted avg       0.52      0.50      0.50       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       14       18        5
+      center       10       19        4
+       right        8        8       20
+
+  Confidence abstention:
+    t=0.45: 100/106 (94%), acc=52.0%, F1=0.522
+    t=0.50: 94/106 (89%), acc=53.2%, F1=0.532
+    t=0.55: 84/106 (79%), acc=54.8%, F1=0.549
+    t=0.60: 73/106 (69%), acc=50.7%, F1=0.506
+    t=0.65: 65/106 (61%), acc=50.8%, F1=0.506
+    t=0.70: 53/106 (50%), acc=56.6%, F1=0.560
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 35.7% (10/28)
+    Center      : 57.6% (19/33)
+    Lean Right  : 47.4% (9/19)
+    Right       : 64.7% (11/17)
+    Ep 3, step 1211/6058, loss=2.0451, rdrop_kl=0.0085
+    Ep 3, step 2422/6058, loss=2.0377, rdrop_kl=0.0089
+    Ep 3, step 3633/6058, loss=2.0290, rdrop_kl=0.0088
+    Ep 3, step 4844/6058, loss=2.0173, rdrop_kl=0.0088
+    Ep 3, step 6055/6058, loss=2.0094, rdrop_kl=0.0087
+
+  V-REx epoch 3: domain loss variance = 0.019956
+  Per-domain avg losses: article_bias=0.351 dem_rep_part=0.272 gpt4_politic=0.362 gpt4_politic=0.196 political_tw=0.265 qbias=0.680 webis_bias_f=0.252 webis_news_b=0.268 
+Traceback (most recent call last):
+  File "/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_aa_v3.py", line 586, in <module>
+    main()
+  File "/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_aa_v3.py", line 583, in main
+    train(args)
+  File "/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_aa_v3.py", line 491, in train
+    vlogits, _ = model(vrex_batch["input_ids"], vrex_batch["attention_mask"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_aa_v3.py", line 111, in forward
+    outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/transformers/models/deberta_v2/modeling_deberta_v2.py", line 874, in forward
+    encoder_outputs = self.encoder(
+                      ^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/transformers/models/deberta_v2/modeling_deberta_v2.py", line 674, in forward
+    output_states, attn_weights = layer_module(
+                                  ^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/transformers/models/deberta_v2/modeling_deberta_v2.py", line 442, in forward
+    attention_output, att_matrix = self.attention(
+                                   ^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/transformers/models/deberta_v2/modeling_deberta_v2.py", line 375, in forward
+    self_output, att_matrix = self.self(
+                              ^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/transformers/models/deberta_v2/modeling_deberta_v2.py", line 255, in forward
+    rel_att = self.disentangled_attention_bias(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/transformers/models/deberta_v2/modeling_deberta_v2.py", line 327, in disentangled_attention_bias
+    c2p_att = torch.bmm(query_layer, pos_key_layer.transpose(-1, -2))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 320.00 MiB. GPU 0 has a total capacity of 44.39 GiB of which 45.25 MiB is free. Including non-PyTorch memory, this process has 44.34 GiB memory in use. Of the allocated memory 43.73 GiB is allocated by PyTorch, and 115.65 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

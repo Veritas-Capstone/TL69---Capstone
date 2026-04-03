@@ -1,0 +1,86 @@
+  AA + Regularizations
+  Config: aa_reg_l0.7_sd0.05_rd5.0_ls0.1
+  lambda=0.7, spectral=0.05, rdrop=5.0
+  label_smoothing=0.1, vrex=0.0
+  max_length=256, leave_out=None
+  Effective BS: 40
+  Output: /nfs/veritas/kazim18/TL69---Capstone/experiments/aa_regularized/aa_reg_l0.7_sd0.05_rd5.0_ls0.1/model
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+  Trainable params: 434,279,691
+    Ep 1, step 1211/6058, loss=3.7471
+    Ep 1, step 2422/6058, loss=3.6071
+    Ep 1, step 3633/6058, loss=3.5130
+    Ep 1, step 4844/6058, loss=3.4777
+    Ep 1, step 6055/6058, loss=3.4653
+  Epoch 1/4: loss=3.4651, val_acc=0.689, val_f1=0.661
+    Saved (F1=0.661)
+    Ep 2, step 1211/6058, loss=3.3766
+    Ep 2, step 2422/6058, loss=3.4160
+    Ep 2, step 3633/6058, loss=3.4024
+    Ep 2, step 4844/6058, loss=3.4001
+    Ep 2, step 6055/6058, loss=3.3910
+  Epoch 2/4: loss=3.3910, val_acc=0.566, val_f1=0.478
+    Ep 3, step 1211/6058, loss=3.3331
+    Ep 3, step 2422/6058, loss=3.3330
+    Ep 3, step 3633/6058, loss=3.3018
+    Ep 3, step 4844/6058, loss=3.2829
+    Ep 3, step 6055/6058, loss=3.2707
+  Epoch 3/4: loss=3.2706, val_acc=0.575, val_f1=0.491
+    Ep 4, step 1211/6058, loss=3.2020
+    Ep 4, step 2422/6058, loss=3.1922
+    Ep 4, step 3633/6058, loss=3.1883
+    Ep 4, step 4844/6058, loss=3.1927
+    Ep 4, step 6055/6058, loss=3.1918
+  Epoch 4/4: loss=3.1918, val_acc=0.562, val_f1=0.496
+
+  Best val F1: 0.661
+
+  Evaluating on 106 AllSides articles...
+
+  [aa_reg_l0.7_sd0.05_rd5.0_ls0.1] OOD Results
+  Accuracy: 54.7%
+  Macro F1: 0.536
+
+              precision    recall  f1-score   support
+
+        left       0.55      0.65      0.59        37
+      center       0.48      0.36      0.41        33
+       right       0.59      0.61      0.60        36
+
+    accuracy                           0.55       106
+   macro avg       0.54      0.54      0.54       106
+weighted avg       0.54      0.55      0.54       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       24        6        7
+      center       13       12        8
+       right        7        7       22
+
+  Confidence abstention:
+    t=0.45: 62/106 (58%), acc=64.5%, F1=0.628
+    t=0.50: 44/106 (42%), acc=68.2%, F1=0.663
+    t=0.55: 32/106 (30%), acc=71.9%, F1=0.713
+    t=0.60: 28/106 (26%), acc=75.0%, F1=0.749
+    t=0.65: 17/106 (16%), acc=76.5%, F1=0.696
+    t=0.70: 8/106 (8%), acc=62.5%, F1=0.489
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 71.4% (20/28)
+    Center      : 36.4% (12/33)
+    Lean Right  : 63.2% (12/19)
+    Right       : 58.8% (10/17)
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/aa_regularized/aa_reg_l0.7_sd0.05_rd5.0_ls0.1/results

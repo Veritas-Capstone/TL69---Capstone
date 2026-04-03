@@ -1,0 +1,13 @@
+{
+  "config": "leace_dimsNone_from_v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10_ml512",
+  "model_path": "/nfs/veritas/kazim18/TL69---Capstone/experiments/v3/v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10/model",
+  "erase_dims": null,
+  "mlp_epochs": 50,
+  "max_length": 512,
+  "seed": 42,
+  "source_acc_before_erasure": 0.9625899755662682,
+  "source_acc_after_erasure": 0.26162253186290696,
+  "ood_accuracy": 0.6132075471698113,
+  "ood_macro_f1": 0.6124147971676263,
+  "best_val_f1": 0.8493266275317052
+}

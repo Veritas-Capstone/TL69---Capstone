@@ -1,0 +1,18 @@
+{
+  "config": "jtt_v2_bert_up5.0_s1e1_ep8",
+  "base_model": "bert-base-uncased",
+  "epochs": 8,
+  "stage1_epochs": 1,
+  "upweight": 5.0,
+  "batch_size": 32,
+  "grad_accum": 1,
+  "lr": 2e-05,
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "seed": 42,
+  "error_set_size": 16311,
+  "error_gradient_share": 0.648208494944999,
+  "ood_accuracy": 0.4056603773584906,
+  "ood_macro_f1": 0.39478212928505324,
+  "best_val_f1": 0.750184595941966
+}

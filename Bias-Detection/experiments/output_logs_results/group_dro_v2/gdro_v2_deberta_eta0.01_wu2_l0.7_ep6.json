@@ -1,0 +1,25 @@
+{
+  "config": "gdro_v2_deberta_eta0.01_wu2_l0.7_ep6",
+  "base_model": "microsoft/deberta-v3-large",
+  "epochs": 6,
+  "batch_size": 10,
+  "grad_accum": 4,
+  "lr": 3e-05,
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "seed": 42,
+  "dro_eta": 0.01,
+  "warmup_epochs": 2,
+  "best_val_f1": 0.8595325919146536,
+  "best_ood_f1": 0.5111432772723096,
+  "final_group_weights": [
+    0.12495585530996323,
+    0.1246260330080986,
+    0.12579916417598724,
+    0.12439382821321487,
+    0.1246345266699791,
+    0.12634600698947906,
+    0.12458854913711548,
+    0.12465599924325943
+  ]
+}

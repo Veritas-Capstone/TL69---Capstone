@@ -1,0 +1,19 @@
+{
+  "config": "aa_reg_l0.7_sd0.05_rd5.0_ls0.1_vrex10.0",
+  "epochs": 4,
+  "batch_size": 10,
+  "grad_accum": 4,
+  "lr": 3e-05,
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "seed": 42,
+  "spectral_lambda": 0.05,
+  "rdrop_alpha": 5.0,
+  "label_smoothing": 0.1,
+  "vrex_beta": 10.0,
+  "vrex_warmup": 0.3,
+  "leave_out": null,
+  "ood_accuracy": 0.4811320754716981,
+  "ood_macro_f1": 0.4829485107365505,
+  "best_val_f1": 0.8552030104222349
+}

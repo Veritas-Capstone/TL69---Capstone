@@ -1,0 +1,16 @@
+{
+  "config": "jtt_up50.0_s1ep2_l0.7",
+  "epochs": 4,
+  "stage1_epochs": 2,
+  "upweight": 50.0,
+  "batch_size": 10,
+  "grad_accum": 4,
+  "lr": 3e-05,
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "seed": 42,
+  "error_set_size": 4936,
+  "ood_accuracy": 0.33962264150943394,
+  "ood_macro_f1": 0.16901408450704225,
+  "best_val_f1": 0.19635508524397413
+}

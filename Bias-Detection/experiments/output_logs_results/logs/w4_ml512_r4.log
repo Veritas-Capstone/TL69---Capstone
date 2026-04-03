@@ -1,0 +1,422 @@
+  Config: v3_deberta_l0.7_ml512_ep8_r4
+  Base model: microsoft/deberta-v3-large
+  lambda=0.7, spectral=0.0
+  rdrop=0.0
+  label_smoothing=0.0
+  vrex=0.0
+  max_length=512, epochs=8
+  Effective BS: 40
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+  Trainable params: 434,279,691
+    Ep 1, step 1211/6058, loss=2.8579
+    Ep 1, step 2422/6058, loss=3.0639
+    Ep 1, step 3633/6058, loss=2.9131
+    Ep 1, step 4844/6058, loss=2.8332
+    Ep 1, step 6055/6058, loss=2.7497
+
+  Epoch 1/8: loss=2.7496, val_acc=0.760, val_f1=0.740
+    Saved (val F1=0.740)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep1] OOD Results
+  Accuracy: 42.5%
+  Macro F1: 0.414
+
+              precision    recall  f1-score   support
+
+        left       0.41      0.38      0.39        37
+      center       0.37      0.67      0.47        33
+       right       0.75      0.25      0.38        36
+
+    accuracy                           0.42       106
+   macro avg       0.51      0.43      0.41       106
+weighted avg       0.51      0.42      0.41       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       14       21        2
+      center       10       22        1
+       right       10       17        9
+
+  Confidence abstention:
+    t=0.45: 92/106 (87%), acc=42.4%, F1=0.409
+    t=0.50: 83/106 (78%), acc=44.6%, F1=0.432
+    t=0.55: 70/106 (66%), acc=45.7%, F1=0.445
+    t=0.60: 61/106 (58%), acc=44.3%, F1=0.426
+    t=0.65: 53/106 (50%), acc=43.4%, F1=0.417
+    t=0.70: 43/106 (41%), acc=48.8%, F1=0.481
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 35.7% (10/28)
+    Center      : 66.7% (22/33)
+    Lean Right  : 15.8% (3/19)
+    Right       : 35.3% (6/17)
+    Best OOD (F1=0.414)
+    Ep 2, step 1211/6058, loss=2.3218
+    Ep 2, step 2422/6058, loss=2.2555
+    Ep 2, step 3633/6058, loss=2.2092
+    Ep 2, step 4844/6058, loss=2.1638
+    Ep 2, step 6055/6058, loss=2.1252
+
+  Epoch 2/8: loss=2.1251, val_acc=0.825, val_f1=0.815
+    Saved (val F1=0.815)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep2] OOD Results
+  Accuracy: 50.9%
+  Macro F1: 0.464
+
+              precision    recall  f1-score   support
+
+        left       0.45      0.95      0.61        37
+      center       0.53      0.30      0.38        33
+       right       1.00      0.25      0.40        36
+
+    accuracy                           0.51       106
+   macro avg       0.66      0.50      0.46       106
+weighted avg       0.66      0.51      0.47       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       35        2        0
+      center       23       10        0
+       right       20        7        9
+
+  Confidence abstention:
+    t=0.45: 85/106 (80%), acc=56.5%, F1=0.512
+    t=0.50: 70/106 (66%), acc=60.0%, F1=0.548
+    t=0.55: 57/106 (54%), acc=57.9%, F1=0.545
+    t=0.60: 45/106 (42%), acc=62.2%, F1=0.593
+    t=0.65: 36/106 (34%), acc=63.9%, F1=0.629
+    t=0.70: 32/106 (30%), acc=65.6%, F1=0.648
+
+  Breakdown:
+    Left        : 88.9% (8/9)
+    Lean Left   : 96.4% (27/28)
+    Center      : 30.3% (10/33)
+    Lean Right  : 21.1% (4/19)
+    Right       : 29.4% (5/17)
+    Best OOD (F1=0.464)
+    Ep 3, step 1211/6058, loss=1.8374
+    Ep 3, step 2422/6058, loss=1.8181
+    Ep 3, step 3633/6058, loss=1.8015
+    Ep 3, step 4844/6058, loss=1.7851
+    Ep 3, step 6055/6058, loss=1.7717
+
+  Epoch 3/8: loss=1.7716, val_acc=0.868, val_f1=0.864
+    Saved (val F1=0.864)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep3] OOD Results
+  Accuracy: 42.5%
+  Macro F1: 0.421
+
+              precision    recall  f1-score   support
+
+        left       0.44      0.30      0.35        37
+      center       0.36      0.48      0.42        33
+       right       0.49      0.50      0.49        36
+
+    accuracy                           0.42       106
+   macro avg       0.43      0.43      0.42       106
+weighted avg       0.43      0.42      0.42       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       11       16       10
+      center        8       16        9
+       right        6       12       18
+
+  Confidence abstention:
+    t=0.45: 100/106 (94%), acc=43.0%, F1=0.427
+    t=0.50: 91/106 (86%), acc=44.0%, F1=0.434
+    t=0.55: 84/106 (79%), acc=45.2%, F1=0.446
+    t=0.60: 72/106 (68%), acc=47.2%, F1=0.467
+    t=0.65: 66/106 (62%), acc=48.5%, F1=0.477
+    t=0.70: 59/106 (56%), acc=50.8%, F1=0.497
+
+  Breakdown:
+    Left        : 33.3% (3/9)
+    Lean Left   : 28.6% (8/28)
+    Center      : 48.5% (16/33)
+    Lean Right  : 47.4% (9/19)
+    Right       : 52.9% (9/17)
+    Ep 4, step 1211/6058, loss=1.6120
+    Ep 4, step 2422/6058, loss=1.6113
+    Ep 4, step 3633/6058, loss=1.6095
+    Ep 4, step 4844/6058, loss=1.6062
+    Ep 4, step 6055/6058, loss=1.6089
+
+  Epoch 4/8: loss=1.6089, val_acc=0.869, val_f1=0.861
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep4] OOD Results
+  Accuracy: 47.2%
+  Macro F1: 0.466
+
+              precision    recall  f1-score   support
+
+        left       0.54      0.59      0.56        37
+      center       0.38      0.36      0.37        33
+       right       0.48      0.44      0.46        36
+
+    accuracy                           0.47       106
+   macro avg       0.47      0.47      0.47       106
+weighted avg       0.47      0.47      0.47       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       22        9        6
+      center       10       12       11
+       right        9       11       16
+
+  Confidence abstention:
+    t=0.45: 105/106 (99%), acc=46.7%, F1=0.462
+    t=0.50: 102/106 (96%), acc=48.0%, F1=0.475
+    t=0.55: 97/106 (92%), acc=48.5%, F1=0.479
+    t=0.60: 92/106 (87%), acc=50.0%, F1=0.495
+    t=0.65: 87/106 (82%), acc=49.4%, F1=0.489
+    t=0.70: 85/106 (80%), acc=49.4%, F1=0.489
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 64.3% (18/28)
+    Center      : 36.4% (12/33)
+    Lean Right  : 47.4% (9/19)
+    Right       : 41.2% (7/17)
+    Best OOD (F1=0.466)
+    Ep 5, step 1211/6058, loss=1.5447
+    Ep 5, step 2422/6058, loss=1.5322
+    Ep 5, step 3633/6058, loss=1.5265
+    Ep 5, step 4844/6058, loss=1.5208
+    Ep 5, step 6055/6058, loss=1.5183
+
+  Epoch 5/8: loss=1.5185, val_acc=0.863, val_f1=0.846
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep5] OOD Results
+  Accuracy: 50.0%
+  Macro F1: 0.504
+
+              precision    recall  f1-score   support
+
+        left       0.49      0.49      0.49        37
+      center       0.40      0.58      0.47        33
+       right       0.73      0.44      0.55        36
+
+    accuracy                           0.50       106
+   macro avg       0.54      0.50      0.50       106
+weighted avg       0.54      0.50      0.51       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       18       17        2
+      center       10       19        4
+       right        9       11       16
+
+  Confidence abstention:
+    t=0.45: 102/106 (96%), acc=50.0%, F1=0.504
+    t=0.50: 97/106 (92%), acc=49.5%, F1=0.499
+    t=0.55: 92/106 (87%), acc=46.7%, F1=0.469
+    t=0.60: 88/106 (83%), acc=46.6%, F1=0.466
+    t=0.65: 84/106 (79%), acc=46.4%, F1=0.464
+    t=0.70: 76/106 (72%), acc=47.4%, F1=0.471
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 50.0% (14/28)
+    Center      : 57.6% (19/33)
+    Lean Right  : 36.8% (7/19)
+    Right       : 52.9% (9/17)
+    Best OOD (F1=0.504)
+    Ep 6, step 1211/6058, loss=1.5078
+    Ep 6, step 2422/6058, loss=1.5005
+    Ep 6, step 3633/6058, loss=1.4922
+    Ep 6, step 4844/6058, loss=1.4882
+    Ep 6, step 6055/6058, loss=1.4839
+
+  Epoch 6/8: loss=1.4838, val_acc=0.864, val_f1=0.847
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep6] OOD Results
+  Accuracy: 43.4%
+  Macro F1: 0.434
+
+              precision    recall  f1-score   support
+
+        left       0.40      0.32      0.36        37
+      center       0.38      0.55      0.45        33
+       right       0.55      0.44      0.49        36
+
+    accuracy                           0.43       106
+   macro avg       0.44      0.44      0.43       106
+weighted avg       0.45      0.43      0.43       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       12       18        7
+      center        9       18        6
+       right        9       11       16
+
+  Confidence abstention:
+    t=0.45: 106/106 (100%), acc=43.4%, F1=0.434
+    t=0.50: 105/106 (99%), acc=42.9%, F1=0.427
+    t=0.55: 105/106 (99%), acc=42.9%, F1=0.427
+    t=0.60: 99/106 (93%), acc=45.5%, F1=0.453
+    t=0.65: 97/106 (92%), acc=46.4%, F1=0.462
+    t=0.70: 97/106 (92%), acc=46.4%, F1=0.462
+
+  Breakdown:
+    Left        : 22.2% (2/9)
+    Lean Left   : 35.7% (10/28)
+    Center      : 54.5% (18/33)
+    Lean Right  : 36.8% (7/19)
+    Right       : 52.9% (9/17)
+    Ep 7, step 1211/6058, loss=1.4338
+    Ep 7, step 2422/6058, loss=1.4374
+    Ep 7, step 3633/6058, loss=1.4379
+    Ep 7, step 4844/6058, loss=1.4392
+    Ep 7, step 6055/6058, loss=1.4384
+
+  Epoch 7/8: loss=1.4384, val_acc=0.875, val_f1=0.862
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep7] OOD Results
+  Accuracy: 46.2%
+  Macro F1: 0.462
+
+              precision    recall  f1-score   support
+
+        left       0.44      0.43      0.44        37
+      center       0.43      0.55      0.48        33
+       right       0.54      0.42      0.47        36
+
+    accuracy                           0.46       106
+   macro avg       0.47      0.46      0.46       106
+weighted avg       0.47      0.46      0.46       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       16       14        7
+      center        9       18        6
+       right       11       10       15
+
+  Confidence abstention:
+    t=0.45: 105/106 (99%), acc=46.7%, F1=0.467
+    t=0.50: 103/106 (97%), acc=47.6%, F1=0.476
+    t=0.55: 103/106 (97%), acc=47.6%, F1=0.476
+    t=0.60: 102/106 (96%), acc=47.1%, F1=0.472
+    t=0.65: 100/106 (94%), acc=48.0%, F1=0.480
+    t=0.70: 99/106 (93%), acc=47.5%, F1=0.475
+
+  Breakdown:
+    Left        : 22.2% (2/9)
+    Lean Left   : 50.0% (14/28)
+    Center      : 54.5% (18/33)
+    Lean Right  : 31.6% (6/19)
+    Right       : 52.9% (9/17)
+    Ep 8, step 1211/6058, loss=1.4130
+    Ep 8, step 2422/6058, loss=1.4116
+    Ep 8, step 3633/6058, loss=1.4100
+    Ep 8, step 4844/6058, loss=1.4063
+    Ep 8, step 6055/6058, loss=1.4042
+
+  Epoch 8/8: loss=1.4043, val_acc=0.877, val_f1=0.865
+    Saved (val F1=0.865)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_ep8] OOD Results
+  Accuracy: 42.5%
+  Macro F1: 0.426
+
+              precision    recall  f1-score   support
+
+        left       0.41      0.38      0.39        37
+      center       0.36      0.45      0.40        33
+       right       0.53      0.44      0.48        36
+
+    accuracy                           0.42       106
+   macro avg       0.43      0.43      0.43       106
+weighted avg       0.44      0.42      0.43       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       14       17        6
+      center       10       15        8
+       right       10       10       16
+
+  Confidence abstention:
+    t=0.45: 106/106 (100%), acc=42.5%, F1=0.426
+    t=0.50: 106/106 (100%), acc=42.5%, F1=0.426
+    t=0.55: 102/106 (96%), acc=42.2%, F1=0.424
+    t=0.60: 101/106 (95%), acc=42.6%, F1=0.429
+    t=0.65: 100/106 (94%), acc=43.0%, F1=0.432
+    t=0.70: 98/106 (92%), acc=42.9%, F1=0.431
+
+  Breakdown:
+    Left        : 22.2% (2/9)
+    Lean Left   : 42.9% (12/28)
+    Center      : 45.5% (15/33)
+    Lean Right  : 36.8% (7/19)
+    Right       : 52.9% (9/17)
+
+  Best val F1: 0.865, Best OOD F1: 0.504
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_deberta_l0.7_ml512_ep8_r4_BEST_OOD] OOD Results
+  Accuracy: 50.0%
+  Macro F1: 0.504
+
+              precision    recall  f1-score   support
+
+        left       0.49      0.49      0.49        37
+      center       0.40      0.58      0.47        33
+       right       0.73      0.44      0.55        36
+
+    accuracy                           0.50       106
+   macro avg       0.54      0.50      0.50       106
+weighted avg       0.54      0.50      0.51       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       18       17        2
+      center       10       19        4
+       right        9       11       16
+
+  Confidence abstention:
+    t=0.45: 102/106 (96%), acc=50.0%, F1=0.504
+    t=0.50: 97/106 (92%), acc=49.5%, F1=0.499
+    t=0.55: 92/106 (87%), acc=46.7%, F1=0.469
+    t=0.60: 88/106 (83%), acc=46.6%, F1=0.466
+    t=0.65: 84/106 (79%), acc=46.4%, F1=0.464
+    t=0.70: 76/106 (72%), acc=47.4%, F1=0.471
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 50.0% (14/28)
+    Center      : 57.6% (19/33)
+    Lean Right  : 36.8% (7/19)
+    Right       : 52.9% (9/17)
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/annoyance/v3/v3_deberta_l0.7_ml512_ep8_r4/results

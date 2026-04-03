@@ -1,0 +1,99 @@
+  Config: jtt_v2_bert_up5.0_s1e1_ep8
+  Upweight: 5.0× (was 20-50×, now 3-5×)
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+
+  STAGE 1: 1 epoch(s)
+    [S1] Ep 1, step 378/1893, loss=2.7845
+    [S1] Ep 1, step 756/1893, loss=2.6815
+    [S1] Ep 1, step 1134/1893, loss=2.6128
+    [S1] Ep 1, step 1512/1893, loss=2.5529
+    [S1] Ep 1, step 1890/1893, loss=2.5055
+  [S1] Epoch 1/1: val_f1=0.705
+    Saved (F1=0.705)
+
+  Error set: 16311/60572 (26.9%)
+  Effective gradient share: 64.8% (vs 26.9% of data)
+
+  STAGE 2: 8 epochs with 5.0× upweight
+    [S2] Ep 1, step 378/1893, loss=3.5975
+    [S2] Ep 1, step 756/1893, loss=3.5875
+    [S2] Ep 1, step 1134/1893, loss=3.5716
+    [S2] Ep 1, step 1512/1893, loss=3.5767
+    [S2] Ep 1, step 1890/1893, loss=3.5579
+  [S2] Epoch 1/8: val_f1=0.268
+    Saved (F1=0.268)
+    [S2] Ep 2, step 378/1893, loss=3.4616
+    [S2] Ep 2, step 756/1893, loss=3.4486
+    [S2] Ep 2, step 1134/1893, loss=3.4345
+    [S2] Ep 2, step 1512/1893, loss=3.4337
+    [S2] Ep 2, step 1890/1893, loss=3.4276
+  [S2] Epoch 2/8: val_f1=0.560
+    Saved (F1=0.560)
+    [S2] Ep 3, step 378/1893, loss=3.2912
+    [S2] Ep 3, step 756/1893, loss=3.2623
+    [S2] Ep 3, step 1134/1893, loss=3.2455
+    [S2] Ep 3, step 1512/1893, loss=3.2186
+    [S2] Ep 3, step 1890/1893, loss=3.1962
+  [S2] Epoch 3/8: val_f1=0.611
+    Saved (F1=0.611)
+    [S2] Ep 4, step 378/1893, loss=2.8949
+    [S2] Ep 4, step 756/1893, loss=2.8698
+    [S2] Ep 4, step 1134/1893, loss=2.8569
+    [S2] Ep 4, step 1512/1893, loss=2.8340
+    [S2] Ep 4, step 1890/1893, loss=2.8242
+  [S2] Epoch 4/8: val_f1=0.694
+    Saved (F1=0.694)
+    [S2] Ep 5, step 378/1893, loss=2.5131
+    [S2] Ep 5, step 756/1893, loss=2.5127
+    [S2] Ep 5, step 1134/1893, loss=2.4886
+    [S2] Ep 5, step 1512/1893, loss=2.4769
+    [S2] Ep 5, step 1890/1893, loss=2.4735
+  [S2] Epoch 5/8: val_f1=0.683
+    [S2] Ep 6, step 378/1893, loss=2.2216
+    [S2] Ep 6, step 756/1893, loss=2.2173
+    [S2] Ep 6, step 1134/1893, loss=2.2297
+    [S2] Ep 6, step 1512/1893, loss=2.2292
+    [S2] Ep 6, step 1890/1893, loss=2.2267
+  [S2] Epoch 6/8: val_f1=0.718
+    Saved (F1=0.718)
+    [S2] Ep 7, step 378/1893, loss=2.0936
+    [S2] Ep 7, step 756/1893, loss=2.0879
+    [S2] Ep 7, step 1134/1893, loss=2.0861
+    [S2] Ep 7, step 1512/1893, loss=2.0914
+    [S2] Ep 7, step 1890/1893, loss=2.0921
+  [S2] Epoch 7/8: val_f1=0.750
+    Saved (F1=0.750)
+    [S2] Ep 8, step 378/1893, loss=1.9537
+    [S2] Ep 8, step 756/1893, loss=1.9461
+    [S2] Ep 8, step 1134/1893, loss=1.9561
+    [S2] Ep 8, step 1512/1893, loss=1.9448
+    [S2] Ep 8, step 1890/1893, loss=1.9414
+  [S2] Epoch 8/8: val_f1=0.742
+
+  [jtt_v2_bert_up5.0_s1e1_ep8] OOD: Acc=40.6%, F1=0.395
+              precision    recall  f1-score   support
+
+        left       0.39      0.46      0.42        37
+      center       0.36      0.24      0.29        33
+       right       0.45      0.50      0.47        36
+
+    accuracy                           0.41       106
+   macro avg       0.40      0.40      0.39       106
+weighted avg       0.40      0.41      0.40       106
+
+                 left   center    right
+        left       17        8       12
+      center       15        8       10
+       right       12        6       18
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/jtt_v2/jtt_v2_bert_up5.0_s1e1_ep8/results

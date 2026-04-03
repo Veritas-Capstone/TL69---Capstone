@@ -1,0 +1,422 @@
+  Config: v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8
+  Base model: bert-base-uncased
+  lambda=0.7, spectral=0.05
+  rdrop=0.5
+  label_smoothing=0.1
+  vrex=0.0
+  max_length=256, epochs=8
+  Effective BS: 32
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+  Trainable params: 109,683,467
+    Ep 1, step 378/1893, loss=2.7633, rdrop_kl=0.0094
+    Ep 1, step 756/1893, loss=2.9194, rdrop_kl=0.0103
+    Ep 1, step 1134/1893, loss=2.9023, rdrop_kl=0.0106
+    Ep 1, step 1512/1893, loss=2.8549, rdrop_kl=0.0107
+    Ep 1, step 1890/1893, loss=2.8016, rdrop_kl=0.0108
+
+  Epoch 1/8: loss=2.8013, val_acc=0.690, val_f1=0.674
+    Saved (val F1=0.674)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep1] OOD Results
+  Accuracy: 37.7%
+  Macro F1: 0.369
+
+              precision    recall  f1-score   support
+
+        left       0.40      0.46      0.42        37
+      center       0.38      0.45      0.42        33
+       right       0.33      0.22      0.27        36
+
+    accuracy                           0.38       106
+   macro avg       0.37      0.38      0.37       106
+weighted avg       0.37      0.38      0.37       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       17       14        6
+      center        8       15       10
+       right       18       10        8
+
+  Confidence abstention:
+    t=0.45: 53/106 (50%), acc=43.4%, F1=0.382
+    t=0.50: 35/106 (33%), acc=48.6%, F1=0.427
+    t=0.55: 24/106 (23%), acc=54.2%, F1=0.511
+    t=0.60: 18/106 (17%), acc=50.0%, F1=0.502
+    t=0.65: 12/106 (11%), acc=41.7%, F1=0.252
+    t=0.70: 5/106 (5%), acc=40.0%, F1=0.267
+
+  Breakdown:
+    Left        : 33.3% (3/9)
+    Lean Left   : 50.0% (14/28)
+    Center      : 45.5% (15/33)
+    Lean Right  : 26.3% (5/19)
+    Right       : 17.6% (3/17)
+    Best OOD (F1=0.369)
+    Ep 2, step 378/1893, loss=2.4826, rdrop_kl=0.0110
+    Ep 2, step 756/1893, loss=2.4545, rdrop_kl=0.0112
+    Ep 2, step 1134/1893, loss=2.4252, rdrop_kl=0.0113
+    Ep 2, step 1512/1893, loss=2.4024, rdrop_kl=0.0114
+    Ep 2, step 1890/1893, loss=2.3814, rdrop_kl=0.0114
+
+  Epoch 2/8: loss=2.3813, val_acc=0.791, val_f1=0.766
+    Saved (val F1=0.766)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep2] OOD Results
+  Accuracy: 47.2%
+  Macro F1: 0.441
+
+              precision    recall  f1-score   support
+
+        left       0.43      0.78      0.56        37
+      center       0.53      0.24      0.33        33
+       right       0.54      0.36      0.43        36
+
+    accuracy                           0.47       106
+   macro avg       0.50      0.46      0.44       106
+weighted avg       0.50      0.47      0.45       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       29        4        4
+      center       18        8        7
+       right       20        3       13
+
+  Confidence abstention:
+    t=0.45: 70/106 (66%), acc=51.4%, F1=0.481
+    t=0.50: 50/106 (47%), acc=52.0%, F1=0.487
+    t=0.55: 36/106 (34%), acc=58.3%, F1=0.568
+    t=0.60: 24/106 (23%), acc=54.2%, F1=0.494
+    t=0.65: 14/106 (13%), acc=42.9%, F1=0.429
+    t=0.70: 9/106 (8%), acc=44.4%, F1=0.481
+
+  Breakdown:
+    Left        : 66.7% (6/9)
+    Lean Left   : 82.1% (23/28)
+    Center      : 24.2% (8/33)
+    Lean Right  : 31.6% (6/19)
+    Right       : 41.2% (7/17)
+    Best OOD (F1=0.441)
+    Ep 3, step 378/1893, loss=2.2022, rdrop_kl=0.0127
+    Ep 3, step 756/1893, loss=2.1897, rdrop_kl=0.0132
+    Ep 3, step 1134/1893, loss=2.1835, rdrop_kl=0.0135
+    Ep 3, step 1512/1893, loss=2.1774, rdrop_kl=0.0136
+    Ep 3, step 1890/1893, loss=2.1697, rdrop_kl=0.0136
+
+  Epoch 3/8: loss=2.1695, val_acc=0.785, val_f1=0.758
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep3] OOD Results
+  Accuracy: 47.2%
+  Macro F1: 0.462
+
+              precision    recall  f1-score   support
+
+        left       0.48      0.54      0.51        37
+      center       0.41      0.61      0.49        33
+       right       0.67      0.28      0.39        36
+
+    accuracy                           0.47       106
+   macro avg       0.52      0.47      0.46       106
+weighted avg       0.52      0.47      0.46       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       20       15        2
+      center       10       20        3
+       right       12       14       10
+
+  Confidence abstention:
+    t=0.45: 85/106 (80%), acc=50.6%, F1=0.487
+    t=0.50: 71/106 (67%), acc=50.7%, F1=0.489
+    t=0.55: 57/106 (54%), acc=54.4%, F1=0.531
+    t=0.60: 47/106 (44%), acc=48.9%, F1=0.486
+    t=0.65: 40/106 (38%), acc=52.5%, F1=0.526
+    t=0.70: 28/106 (26%), acc=53.6%, F1=0.528
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 57.1% (16/28)
+    Center      : 60.6% (20/33)
+    Lean Right  : 31.6% (6/19)
+    Right       : 23.5% (4/17)
+    Best OOD (F1=0.462)
+    Ep 4, step 378/1893, loss=2.0368, rdrop_kl=0.0148
+    Ep 4, step 756/1893, loss=2.0376, rdrop_kl=0.0154
+    Ep 4, step 1134/1893, loss=2.0350, rdrop_kl=0.0156
+    Ep 4, step 1512/1893, loss=2.0257, rdrop_kl=0.0156
+    Ep 4, step 1890/1893, loss=2.0232, rdrop_kl=0.0156
+
+  Epoch 4/8: loss=2.0232, val_acc=0.812, val_f1=0.790
+    Saved (val F1=0.790)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep4] OOD Results
+  Accuracy: 55.7%
+  Macro F1: 0.551
+
+              precision    recall  f1-score   support
+
+        left       0.54      0.70      0.61        37
+      center       0.57      0.48      0.52        33
+       right       0.57      0.47      0.52        36
+
+    accuracy                           0.56       106
+   macro avg       0.56      0.55      0.55       106
+weighted avg       0.56      0.56      0.55       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       26        7        4
+      center        8       16        9
+       right       14        5       17
+
+  Confidence abstention:
+    t=0.45: 94/106 (89%), acc=56.4%, F1=0.557
+    t=0.50: 82/106 (77%), acc=54.9%, F1=0.537
+    t=0.55: 76/106 (72%), acc=55.3%, F1=0.544
+    t=0.60: 65/106 (61%), acc=58.5%, F1=0.573
+    t=0.65: 55/106 (52%), acc=60.0%, F1=0.589
+    t=0.70: 44/106 (42%), acc=56.8%, F1=0.562
+
+  Breakdown:
+    Left        : 55.6% (5/9)
+    Lean Left   : 75.0% (21/28)
+    Center      : 48.5% (16/33)
+    Lean Right  : 47.4% (9/19)
+    Right       : 47.1% (8/17)
+    Best OOD (F1=0.551)
+    Ep 5, step 378/1893, loss=1.9385, rdrop_kl=0.0169
+    Ep 5, step 756/1893, loss=1.9411, rdrop_kl=0.0172
+    Ep 5, step 1134/1893, loss=1.9388, rdrop_kl=0.0171
+    Ep 5, step 1512/1893, loss=1.9360, rdrop_kl=0.0170
+    Ep 5, step 1890/1893, loss=1.9331, rdrop_kl=0.0169
+
+  Epoch 5/8: loss=1.9332, val_acc=0.802, val_f1=0.782
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep5] OOD Results
+  Accuracy: 45.3%
+  Macro F1: 0.445
+
+              precision    recall  f1-score   support
+
+        left       0.47      0.51      0.49        37
+      center       0.39      0.58      0.46        33
+       right       0.59      0.28      0.38        36
+
+    accuracy                           0.45       106
+   macro avg       0.48      0.46      0.44       106
+weighted avg       0.49      0.45      0.44       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       19       15        3
+      center       10       19        4
+       right       11       15       10
+
+  Confidence abstention:
+    t=0.45: 96/106 (91%), acc=45.8%, F1=0.445
+    t=0.50: 87/106 (82%), acc=48.3%, F1=0.471
+    t=0.55: 74/106 (70%), acc=50.0%, F1=0.491
+    t=0.60: 68/106 (64%), acc=51.5%, F1=0.505
+    t=0.65: 60/106 (57%), acc=50.0%, F1=0.492
+    t=0.70: 52/106 (49%), acc=50.0%, F1=0.492
+
+  Breakdown:
+    Left        : 33.3% (3/9)
+    Lean Left   : 57.1% (16/28)
+    Center      : 57.6% (19/33)
+    Lean Right  : 15.8% (3/19)
+    Right       : 41.2% (7/17)
+    Ep 6, step 378/1893, loss=1.8857, rdrop_kl=0.0147
+    Ep 6, step 756/1893, loss=1.8886, rdrop_kl=0.0153
+    Ep 6, step 1134/1893, loss=1.8838, rdrop_kl=0.0156
+    Ep 6, step 1512/1893, loss=1.8812, rdrop_kl=0.0159
+    Ep 6, step 1890/1893, loss=1.8796, rdrop_kl=0.0158
+
+  Epoch 6/8: loss=1.8795, val_acc=0.824, val_f1=0.811
+    Saved (val F1=0.811)
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep6] OOD Results
+  Accuracy: 51.9%
+  Macro F1: 0.493
+
+              precision    recall  f1-score   support
+
+        left       0.48      0.78      0.60        37
+      center       0.52      0.52      0.52        33
+       right       0.69      0.25      0.37        36
+
+    accuracy                           0.52       106
+   macro avg       0.56      0.52      0.49       106
+weighted avg       0.56      0.52      0.49       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       29        6        2
+      center       14       17        2
+       right       17       10        9
+
+  Confidence abstention:
+    t=0.45: 101/106 (95%), acc=52.5%, F1=0.500
+    t=0.50: 94/106 (89%), acc=55.3%, F1=0.525
+    t=0.55: 90/106 (85%), acc=54.4%, F1=0.518
+    t=0.60: 87/106 (82%), acc=56.3%, F1=0.535
+    t=0.65: 84/106 (79%), acc=57.1%, F1=0.545
+    t=0.70: 80/106 (75%), acc=57.5%, F1=0.551
+
+  Breakdown:
+    Left        : 88.9% (8/9)
+    Lean Left   : 75.0% (21/28)
+    Center      : 51.5% (17/33)
+    Lean Right  : 15.8% (3/19)
+    Right       : 35.3% (6/17)
+    Ep 7, step 378/1893, loss=1.8607, rdrop_kl=0.0139
+    Ep 7, step 756/1893, loss=1.8606, rdrop_kl=0.0140
+    Ep 7, step 1134/1893, loss=1.8601, rdrop_kl=0.0140
+    Ep 7, step 1512/1893, loss=1.8563, rdrop_kl=0.0140
+    Ep 7, step 1890/1893, loss=1.8529, rdrop_kl=0.0139
+
+  Epoch 7/8: loss=1.8529, val_acc=0.821, val_f1=0.806
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep7] OOD Results
+  Accuracy: 48.1%
+  Macro F1: 0.458
+
+              precision    recall  f1-score   support
+
+        left       0.47      0.73      0.57        37
+      center       0.44      0.45      0.45        33
+       right       0.60      0.25      0.35        36
+
+    accuracy                           0.48       106
+   macro avg       0.50      0.48      0.46       106
+weighted avg       0.51      0.48      0.46       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       27        8        2
+      center       14       15        4
+       right       16       11        9
+
+  Confidence abstention:
+    t=0.45: 106/106 (100%), acc=48.1%, F1=0.458
+    t=0.50: 103/106 (97%), acc=49.5%, F1=0.472
+    t=0.55: 99/106 (93%), acc=51.5%, F1=0.491
+    t=0.60: 96/106 (91%), acc=52.1%, F1=0.492
+    t=0.65: 91/106 (86%), acc=54.9%, F1=0.521
+    t=0.70: 87/106 (82%), acc=56.3%, F1=0.533
+
+  Breakdown:
+    Left        : 77.8% (7/9)
+    Lean Left   : 71.4% (20/28)
+    Center      : 45.5% (15/33)
+    Lean Right  : 15.8% (3/19)
+    Right       : 35.3% (6/17)
+    Ep 8, step 378/1893, loss=1.8318, rdrop_kl=0.0113
+    Ep 8, step 756/1893, loss=1.8380, rdrop_kl=0.0120
+    Ep 8, step 1134/1893, loss=1.8349, rdrop_kl=0.0119
+    Ep 8, step 1512/1893, loss=1.8369, rdrop_kl=0.0121
+    Ep 8, step 1890/1893, loss=1.8365, rdrop_kl=0.0123
+
+  Epoch 8/8: loss=1.8365, val_acc=0.826, val_f1=0.809
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_ep8] OOD Results
+  Accuracy: 50.0%
+  Macro F1: 0.480
+
+              precision    recall  f1-score   support
+
+        left       0.50      0.73      0.59        37
+      center       0.46      0.48      0.47        33
+       right       0.59      0.28      0.38        36
+
+    accuracy                           0.50       106
+   macro avg       0.52      0.50      0.48       106
+weighted avg       0.52      0.50      0.48       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       27        8        2
+      center       12       16        5
+       right       15       11       10
+
+  Confidence abstention:
+    t=0.45: 105/106 (99%), acc=50.5%, F1=0.485
+    t=0.50: 102/106 (96%), acc=52.0%, F1=0.500
+    t=0.55: 95/106 (90%), acc=52.6%, F1=0.498
+    t=0.60: 93/106 (88%), acc=53.8%, F1=0.509
+    t=0.65: 91/106 (86%), acc=53.8%, F1=0.509
+    t=0.70: 88/106 (83%), acc=53.4%, F1=0.502
+
+  Breakdown:
+    Left        : 77.8% (7/9)
+    Lean Left   : 71.4% (20/28)
+    Center      : 48.5% (16/33)
+    Lean Right  : 15.8% (3/19)
+    Right       : 41.2% (7/17)
+
+  Best val F1: 0.811, Best OOD F1: 0.551
+
+  Evaluating on 106 AllSides articles...
+
+  [v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8_BEST_OOD] OOD Results
+  Accuracy: 55.7%
+  Macro F1: 0.551
+
+              precision    recall  f1-score   support
+
+        left       0.54      0.70      0.61        37
+      center       0.57      0.48      0.52        33
+       right       0.57      0.47      0.52        36
+
+    accuracy                           0.56       106
+   macro avg       0.56      0.55      0.55       106
+weighted avg       0.56      0.56      0.55       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       26        7        4
+      center        8       16        9
+       right       14        5       17
+
+  Confidence abstention:
+    t=0.45: 94/106 (89%), acc=56.4%, F1=0.557
+    t=0.50: 82/106 (77%), acc=54.9%, F1=0.537
+    t=0.55: 76/106 (72%), acc=55.3%, F1=0.544
+    t=0.60: 65/106 (61%), acc=58.5%, F1=0.573
+    t=0.65: 55/106 (52%), acc=60.0%, F1=0.589
+    t=0.70: 44/106 (42%), acc=56.8%, F1=0.562
+
+  Breakdown:
+    Left        : 55.6% (5/9)
+    Lean Left   : 75.0% (21/28)
+    Center      : 48.5% (16/33)
+    Lean Right  : 47.4% (9/19)
+    Right       : 47.1% (8/17)
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/v3/v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8/results

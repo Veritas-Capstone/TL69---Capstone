@@ -1,0 +1,18 @@
+{
+  "config": "jtt_v2_deberta_up3.0_s1e1_ep6",
+  "base_model": "microsoft/deberta-v3-large",
+  "epochs": 6,
+  "stage1_epochs": 1,
+  "upweight": 3.0,
+  "batch_size": 10,
+  "grad_accum": 4,
+  "lr": 3e-05,
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "seed": 42,
+  "error_set_size": 8832,
+  "error_gradient_share": 0.33866762104402065,
+  "ood_accuracy": 0.3584905660377358,
+  "ood_macro_f1": 0.35281907433380083,
+  "best_val_f1": 0.861922907790443
+}

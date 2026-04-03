@@ -1,0 +1,160 @@
+  Config: leace_dimsNone_from_v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10_ml512
+  Erase dims: None
+  Model: /nfs/veritas/kazim18/TL69---Capstone/experiments/v3/v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10/model
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+
+  Loading AA model from /nfs/veritas/kazim18/TL69---Capstone/experiments/v3/v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10/model
+
+  Extracting train embeddings...
+    Extracted 32/60572...
+    Extracted 1632/60572...
+    Extracted 3232/60572...
+    Extracted 4832/60572...
+    Extracted 6432/60572...
+    Extracted 8032/60572...
+    Extracted 9632/60572...
+    Extracted 11232/60572...
+    Extracted 12832/60572...
+    Extracted 14432/60572...
+    Extracted 16032/60572...
+    Extracted 17632/60572...
+    Extracted 19232/60572...
+    Extracted 20832/60572...
+    Extracted 22432/60572...
+    Extracted 24032/60572...
+    Extracted 25632/60572...
+    Extracted 27232/60572...
+    Extracted 28832/60572...
+    Extracted 30432/60572...
+    Extracted 32032/60572...
+    Extracted 33632/60572...
+    Extracted 35232/60572...
+    Extracted 36832/60572...
+    Extracted 38432/60572...
+    Extracted 40032/60572...
+    Extracted 41632/60572...
+    Extracted 43232/60572...
+    Extracted 44832/60572...
+    Extracted 46432/60572...
+    Extracted 48032/60572...
+    Extracted 49632/60572...
+    Extracted 51232/60572...
+    Extracted 52832/60572...
+    Extracted 54432/60572...
+    Extracted 56032/60572...
+    Extracted 57632/60572...
+    Extracted 59232/60572...
+  Extracting val embeddings...
+    Extracted 32/800...
+  Embedding dim: 1024
+/u50/kazim18/venvs/py311/lib64/python3.11/site-packages/sklearn/linear_model/_logistic.py:465: ConvergenceWarning: lbfgs failed to converge (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.
+
+Increase the number of iterations (max_iter) or scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+
+  Source predictability BEFORE erasure: 96.3%
+
+  Fitting LEACE eraser...
+  concept-erasure not installed, using manual SVD-based LEACE
+  LEACE: erasing 7 directions (singular values: [2620.47 2325.55 1635.36 1334.85 1143.88  704.96  475.33])
+/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_leace.py:413: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  train_erased = torch.tensor(
+/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_leace.py:415: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  val_erased = torch.tensor(
+  Source predictability AFTER erasure: 26.2%
+  Source info removed: 70.1%
+
+  Training MLP classifier on erased embeddings...
+  Epoch 1/50: loss=0.4272, val_acc=0.858, val_f1=0.845
+    Saved (F1=0.845)
+  Epoch 2/50: loss=0.4139, val_acc=0.860, val_f1=0.846
+    Saved (F1=0.846)
+  Epoch 3/50: loss=0.4131, val_acc=0.843, val_f1=0.827
+  Epoch 4/50: loss=0.4118, val_acc=0.858, val_f1=0.844
+  Epoch 5/50: loss=0.4117, val_acc=0.856, val_f1=0.843
+  Epoch 6/50: loss=0.4113, val_acc=0.855, val_f1=0.840
+  Epoch 7/50: loss=0.4107, val_acc=0.854, val_f1=0.841
+  Epoch 8/50: loss=0.4106, val_acc=0.856, val_f1=0.843
+  Epoch 9/50: loss=0.4097, val_acc=0.856, val_f1=0.841
+  Epoch 10/50: loss=0.4105, val_acc=0.848, val_f1=0.832
+  Epoch 11/50: loss=0.4097, val_acc=0.855, val_f1=0.841
+  Epoch 12/50: loss=0.4094, val_acc=0.853, val_f1=0.837
+  Epoch 13/50: loss=0.4093, val_acc=0.851, val_f1=0.837
+  Epoch 14/50: loss=0.4088, val_acc=0.855, val_f1=0.843
+  Epoch 15/50: loss=0.4095, val_acc=0.856, val_f1=0.844
+  Epoch 16/50: loss=0.4080, val_acc=0.851, val_f1=0.837
+  Epoch 17/50: loss=0.4078, val_acc=0.851, val_f1=0.839
+  Epoch 18/50: loss=0.4075, val_acc=0.854, val_f1=0.840
+  Epoch 19/50: loss=0.4073, val_acc=0.851, val_f1=0.839
+  Epoch 20/50: loss=0.4071, val_acc=0.855, val_f1=0.842
+  Epoch 21/50: loss=0.4074, val_acc=0.856, val_f1=0.841
+  Epoch 22/50: loss=0.4072, val_acc=0.853, val_f1=0.836
+  Epoch 23/50: loss=0.4063, val_acc=0.861, val_f1=0.849
+    Saved (F1=0.849)
+  Epoch 24/50: loss=0.4064, val_acc=0.851, val_f1=0.835
+  Epoch 25/50: loss=0.4058, val_acc=0.854, val_f1=0.837
+  Epoch 26/50: loss=0.4054, val_acc=0.853, val_f1=0.838
+  Epoch 27/50: loss=0.4059, val_acc=0.855, val_f1=0.839
+  Epoch 28/50: loss=0.4054, val_acc=0.859, val_f1=0.843
+  Epoch 29/50: loss=0.4054, val_acc=0.858, val_f1=0.842
+  Epoch 30/50: loss=0.4056, val_acc=0.858, val_f1=0.840
+  Epoch 31/50: loss=0.4046, val_acc=0.856, val_f1=0.841
+  Epoch 32/50: loss=0.4043, val_acc=0.851, val_f1=0.837
+  Epoch 33/50: loss=0.4039, val_acc=0.858, val_f1=0.842
+  Epoch 34/50: loss=0.4037, val_acc=0.853, val_f1=0.839
+  Epoch 35/50: loss=0.4049, val_acc=0.855, val_f1=0.840
+  Epoch 36/50: loss=0.4041, val_acc=0.851, val_f1=0.837
+  Epoch 37/50: loss=0.4034, val_acc=0.858, val_f1=0.839
+  Epoch 38/50: loss=0.4033, val_acc=0.859, val_f1=0.847
+  Epoch 39/50: loss=0.4023, val_acc=0.854, val_f1=0.837
+  Epoch 40/50: loss=0.4023, val_acc=0.855, val_f1=0.838
+  Epoch 41/50: loss=0.4028, val_acc=0.861, val_f1=0.844
+  Epoch 42/50: loss=0.4021, val_acc=0.860, val_f1=0.846
+  Epoch 43/50: loss=0.4020, val_acc=0.854, val_f1=0.841
+  Epoch 44/50: loss=0.4011, val_acc=0.854, val_f1=0.841
+  Epoch 45/50: loss=0.4016, val_acc=0.856, val_f1=0.842
+  Epoch 46/50: loss=0.4016, val_acc=0.854, val_f1=0.839
+  Epoch 47/50: loss=0.4020, val_acc=0.859, val_f1=0.844
+  Epoch 48/50: loss=0.4010, val_acc=0.864, val_f1=0.849
+  Epoch 49/50: loss=0.4007, val_acc=0.851, val_f1=0.834
+  Epoch 50/50: loss=0.4011, val_acc=0.855, val_f1=0.837
+
+  Evaluating on AllSides OOD...
+    Extracted 32/106...
+/nfs/veritas/kazim18/TL69---Capstone/experiments/v4/train_leace.py:494: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  ood_erased = torch.tensor(eraser.transform(ood_embeds), dtype=torch.float32)
+
+  [leace_dimsNone_from_v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10_ml512] OOD Results
+  Accuracy: 61.3%
+  Macro F1: 0.612
+              precision    recall  f1-score   support
+
+        left       0.62      0.54      0.58        37
+      center       0.57      0.64      0.60        33
+       right       0.65      0.67      0.66        36
+
+    accuracy                           0.61       106
+   macro avg       0.61      0.61      0.61       106
+weighted avg       0.62      0.61      0.61       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       20        9        8
+      center        7       21        5
+       right        5        7       24
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/leace/leace_dimsNone_from_v3_deberta_l0.7_sd0.05_ls0.1_ml512_ep10_ml512/results

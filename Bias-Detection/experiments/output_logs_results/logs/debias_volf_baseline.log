@@ -1,0 +1,133 @@
+Loaded 106 articles
+Distribution: Counter({'left': 37, 'right': 36, 'center': 33})
+  [  1/106] X  Washington Times           True: right     Pred: center    L=0.000 C=0.999 R=0.001
+  [  2/106] +  BBC News                   True: center    Pred: center    L=0.000 C=1.000 R=0.000
+  [  3/106] +  New York Times (News)      True: left      Pred: left      L=0.996 C=0.004 R=0.000
+  [  4/106] +  New York Post (News)       True: right     Pred: right     L=0.000 C=0.000 R=1.000
+  [  5/106] X  Gothamist                  True: center    Pred: right     L=0.246 C=0.002 R=0.752
+  [  6/106] X  Washington Post            True: left      Pred: center    L=0.013 C=0.970 R=0.016
+  [  7/106] X  The Guardian               True: left      Pred: center    L=0.013 C=0.977 R=0.010
+  [  8/106] X  Newsweek                   True: center    Pred: left      L=0.980 C=0.013 R=0.007
+  [  9/106] X  Fox News Digital           True: right     Pred: center    L=0.056 C=0.891 R=0.054
+  [ 10/106] +  CNN Digital                True: left      Pred: left      L=1.000 C=0.000 R=0.000
+  [ 11/106] X  Washington Post            True: left      Pred: center    L=0.002 C=0.966 R=0.032
+  [ 12/106] +  FactCheck.org              True: left      Pred: left      L=0.999 C=0.001 R=0.000
+  [ 13/106] X  Washington Post            True: left      Pred: center    L=0.007 C=0.784 R=0.210
+  [ 14/106] +  Washington Post            True: left      Pred: left      L=0.902 C=0.054 R=0.043
+  [ 15/106] X  USA TODAY                  True: left      Pred: center    L=0.037 C=0.963 R=0.000
+  [ 16/106] X  The Guardian               True: left      Pred: center    L=0.078 C=0.914 R=0.008
+  [ 17/106] +  Politico                   True: left      Pred: left      L=0.942 C=0.058 R=0.000
+  [ 18/106] +  FactCheck.org              True: left      Pred: left      L=0.997 C=0.003 R=0.000
+  [ 19/106] X  Newsweek                   True: center    Pred: left      L=0.997 C=0.001 R=0.003
+  [ 20/106] X  Foreign Policy             True: center    Pred: left      L=0.957 C=0.042 R=0.000
+  [ 21/106] +  The Hill                   True: center    Pred: center    L=0.000 C=1.000 R=0.000
+  [ 22/106] X  Wall Street Journal (News)  True: center    Pred: left      L=0.984 C=0.011 R=0.005
+  [ 23/106] +  The Hill                   True: center    Pred: center    L=0.000 C=1.000 R=0.000
+  [ 24/106] X  Wall Street Journal (News)  True: center    Pred: left      L=0.971 C=0.005 R=0.024
+  [ 25/106] +  The Hill                   True: center    Pred: center    L=0.007 C=0.975 R=0.018
+  [ 26/106] X  Forbes                     True: center    Pred: right     L=0.018 C=0.001 R=0.981
+  [ 27/106] +  BBC News                   True: center    Pred: center    L=0.001 C=0.998 R=0.001
+  [ 28/106] +  UnHerd                     True: center    Pred: center    L=0.288 C=0.712 R=0.001
+  [ 29/106] X  The Epoch Times            True: right     Pred: center    L=0.189 C=0.788 R=0.023
+  [ 30/106] X  Cal Thomas                 True: right     Pred: left      L=1.000 C=0.000 R=0.000
+  [ 31/106] +  The Federalist             True: right     Pred: right     L=0.004 C=0.001 R=0.995
+  [ 32/106] X  Fox News (Opinion)         True: right     Pred: center    L=0.209 C=0.607 R=0.185
+  [ 33/106] X  New York Post (News)       True: right     Pred: center    L=0.000 C=0.999 R=0.000
+  [ 34/106] X  Fox News Digital           True: right     Pred: center    L=0.001 C=0.916 R=0.083
+  [ 35/106] X  Washington Times           True: right     Pred: center    L=0.022 C=0.929 R=0.049
+  [ 36/106] +  John Stossel               True: right     Pred: right     L=0.000 C=0.000 R=1.000
+  [ 37/106] X  The National Desk          True: right     Pred: center    L=0.015 C=0.983 R=0.003
+  [ 38/106] X  The Daily Wire             True: right     Pred: left      L=0.753 C=0.217 R=0.030
+  [ 39/106] X  Fox News Digital           True: right     Pred: center    L=0.000 C=1.000 R=0.000
+  [ 40/106] +  The Hill                   True: center    Pred: center    L=0.002 C=0.997 R=0.001
+  [ 41/106] +  CNN Digital                True: left      Pred: left      L=0.981 C=0.017 R=0.003
+  [ 42/106] X  Washington Post            True: left      Pred: center    L=0.037 C=0.952 R=0.012
+  [ 43/106] X  Washington Examiner        True: right     Pred: left      L=0.974 C=0.007 R=0.019
+  [ 44/106] +  Associated Press           True: left      Pred: left      L=0.905 C=0.091 R=0.004
+  [ 45/106] +  Snopes                     True: left      Pred: left      L=0.998 C=0.001 R=0.001
+  [ 46/106] X  PBS NewsHour               True: left      Pred: center    L=0.004 C=0.994 R=0.002
+  [ 47/106] X  Snopes                     True: left      Pred: center    L=0.002 C=0.998 R=0.000
+  [ 48/106] +  New York Times (News)      True: left      Pred: left      L=1.000 C=0.000 R=0.000
+  [ 49/106] X  Politico                   True: left      Pred: center    L=0.150 C=0.736 R=0.114
+  [ 50/106] +  FactCheck.org              True: left      Pred: left      L=0.999 C=0.001 R=0.000
+  [ 51/106] +  Media Matters              True: left      Pred: left      L=0.991 C=0.009 R=0.000
+  [ 52/106] +  The Nation                 True: left      Pred: left      L=1.000 C=0.000 R=0.000
+  [ 53/106] X  Axios                      True: left      Pred: center    L=0.000 C=1.000 R=0.000
+  [ 54/106] +  Gigafact                   True: center    Pred: center    L=0.001 C=0.999 R=0.000
+  [ 55/106] +  Gigafact                   True: center    Pred: center    L=0.020 C=0.979 R=0.000
+  [ 56/106] +  Wall Street Journal (News)  True: center    Pred: center    L=0.000 C=1.000 R=0.000
+  [ 57/106] X  Christianity Today         True: center    Pred: left      L=1.000 C=0.000 R=0.000
+  [ 58/106] X  Straight Arrow News        True: center    Pred: left      L=0.998 C=0.002 R=0.000
+  [ 59/106] +  BBC News                   True: center    Pred: center    L=0.003 C=0.997 R=0.000
+  [ 60/106] +  Reuters                    True: center    Pred: center    L=0.001 C=0.995 R=0.004
+  [ 61/106] X  The National Desk          True: right     Pred: center    L=0.003 C=0.997 R=0.000
+  [ 62/106] X  The National Desk          True: right     Pred: center    L=0.000 C=0.999 R=0.000
+  [ 63/106] X  National Review (Opinion)  True: right     Pred: left      L=1.000 C=0.000 R=0.000
+  [ 64/106] +  Newsmax (News)             True: right     Pred: right     L=0.000 C=0.000 R=1.000
+  [ 65/106] +  CBN                        True: right     Pred: right     L=0.000 C=0.000 R=1.000
+  [ 66/106] +  Newsmax (News)             True: right     Pred: right     L=0.000 C=0.000 R=1.000
+  [ 67/106] X  ZeroHedge                  True: right     Pred: left      L=0.994 C=0.001 R=0.005
+  [ 68/106] X  The Free Press             True: right     Pred: left      L=0.999 C=0.001 R=0.000
+  [ 69/106] +  New York Post (News)       True: right     Pred: right     L=0.403 C=0.020 R=0.576
+  [ 70/106] X  Newsweek                   True: center    Pred: left      L=0.996 C=0.003 R=0.001
+  [ 71/106] X  San Francisco Chronicle    True: left      Pred: right     L=0.058 C=0.020 R=0.922
+  [ 72/106] +  Reuters                    True: center    Pred: center    L=0.016 C=0.982 R=0.002
+  [ 73/106] +  CNN Digital                True: left      Pred: left      L=1.000 C=0.000 R=0.000
+  [ 74/106] +  Fox Business               True: right     Pred: right     L=0.002 C=0.189 R=0.810
+  [ 75/106] X  The Washington Stand       True: right     Pred: center    L=0.018 C=0.799 R=0.183
+  [ 76/106] X  Hartford Courant           True: center    Pred: right     L=0.056 C=0.019 R=0.925
+  [ 77/106] X  NBC Connecticut            True: left      Pred: center    L=0.380 C=0.536 R=0.085
+  [ 78/106] X  Washington Post            True: left      Pred: center    L=0.397 C=0.592 R=0.011
+  [ 79/106] +  CNN Digital                True: left      Pred: left      L=1.000 C=0.000 R=0.000
+  [ 80/106] X  Associated Press           True: left      Pred: center    L=0.034 C=0.783 R=0.183
+  [ 81/106] +  ABC News (Online)          True: left      Pred: left      L=0.994 C=0.001 R=0.005
+  [ 82/106] +  Associated Press           True: left      Pred: left      L=0.884 C=0.069 R=0.047
+  [ 83/106] +  New York Times (Opinion)   True: left      Pred: left      L=1.000 C=0.000 R=0.000
+  [ 84/106] X  Politico                   True: left      Pred: center    L=0.048 C=0.890 R=0.062
+  [ 85/106] +  FactCheck.org              True: left      Pred: left      L=0.996 C=0.004 R=0.000
+  [ 86/106] +  CNBC                       True: left      Pred: left      L=0.997 C=0.000 R=0.002
+  [ 87/106] +  Washington Post            True: left      Pred: left      L=0.913 C=0.086 R=0.001
+  [ 88/106] X  Reuters                    True: center    Pred: right     L=0.066 C=0.183 R=0.751
+  [ 89/106] X  Reuters                    True: center    Pred: left      L=0.757 C=0.069 R=0.174
+  [ 90/106] +  Anadolu Agency             True: center    Pred: center    L=0.064 C=0.903 R=0.033
+  [ 91/106] +  BBC News                   True: center    Pred: center    L=0.000 C=0.999 R=0.000
+  [ 92/106] +  Newsweek                   True: center    Pred: center    L=0.000 C=1.000 R=0.000
+  [ 93/106] X  The Hill                   True: center    Pred: left      L=0.999 C=0.000 R=0.001
+  [ 94/106] +  Wall Street Journal (News)  True: center    Pred: center    L=0.003 C=0.984 R=0.013
+  [ 95/106] +  NewsNation                 True: center    Pred: center    L=0.011 C=0.989 R=0.000
+  [ 96/106] X  UnHerd                     True: center    Pred: left      L=1.000 C=0.000 R=0.000
+  [ 97/106] X  RT                         True: right     Pred: center    L=0.000 C=0.999 R=0.001
+  [ 98/106] X  The Epoch Times            True: right     Pred: center    L=0.425 C=0.566 R=0.009
+  [ 99/106] X  ZeroHedge                  True: right     Pred: left      L=1.000 C=0.000 R=0.000
+  [100/106] X  New York Post (News)       True: right     Pred: left      L=0.990 C=0.000 R=0.010
+  [101/106] +  The Federalist             True: right     Pred: right     L=0.000 C=0.000 R=1.000
+  [102/106] X  The Center Square          True: right     Pred: center    L=0.012 C=0.958 R=0.031
+  [103/106] +  The Epoch Times            True: right     Pred: right     L=0.004 C=0.005 R=0.992
+  [104/106] +  Townhall                   True: right     Pred: right     L=0.078 C=0.010 R=0.912
+  [105/106] X  Washington Examiner        True: right     Pred: left      L=0.902 C=0.048 R=0.050
+  [106/106] X  GB News                    True: right     Pred: center    L=0.001 C=0.997 R=0.001
+
+Accuracy: 47.2%
+Macro F1: 0.467
+              precision    recall  f1-score   support
+
+        left       0.51      0.57      0.54        37
+      center       0.37      0.55      0.44        33
+       right       0.69      0.31      0.42        36
+
+    accuracy                           0.47       106
+   macro avg       0.52      0.47      0.47       106
+weighted avg       0.53      0.47      0.47       106
+
+Confusion Matrix:
+               left   center    right
+      left       21       15        1
+    center       11       18        4
+     right        9       16       11
+
+Breakdown:
+  Left        : 55.6% (5/9)
+  Lean Left   : 57.1% (16/28)
+  Center      : 54.5% (18/33)
+  Lean Right  : 26.3% (5/19)
+  Right       : 35.3% (6/17)

@@ -1,0 +1,89 @@
+  Config: lambda1.0
+  lambda: 1.0
+  Center weight: 1.0
+  Max length: 256
+  Effective BS: 40
+  Output: /nfs/veritas/kazim18/TL69---Capstone/experiments/adversarial/lambda1.0/model
+  Device: cuda
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+  Trainable params: 434,279,691
+    Epoch 1, step 1211/6058, loss=4.5824
+    Epoch 1, step 2422/6058, loss=4.5132
+    Epoch 1, step 3633/6058, loss=4.3262
+    Epoch 1, step 4844/6058, loss=4.1708
+    Epoch 1, step 6055/6058, loss=4.0349
+  Epoch 1/4: loss=4.0347, val_acc=0.811, val_f1=0.789
+    Saved (F1=0.789)
+    Epoch 2, step 1211/6058, loss=3.2383
+    Epoch 2, step 2422/6058, loss=3.1591
+    Epoch 2, step 3633/6058, loss=3.0790
+    Epoch 2, step 4844/6058, loss=3.0186
+    Epoch 2, step 6055/6058, loss=2.9681
+  Epoch 2/4: loss=2.9679, val_acc=0.841, val_f1=0.824
+    Saved (F1=0.824)
+    Epoch 3, step 1211/6058, loss=2.5720
+    Epoch 3, step 2422/6058, loss=2.5412
+    Epoch 3, step 3633/6058, loss=2.5140
+    Epoch 3, step 4844/6058, loss=2.4879
+    Epoch 3, step 6055/6058, loss=2.4694
+  Epoch 3/4: loss=2.4696, val_acc=0.855, val_f1=0.836
+    Saved (F1=0.836)
+    Epoch 4, step 1211/6058, loss=2.2921
+    Epoch 4, step 2422/6058, loss=2.2884
+    Epoch 4, step 3633/6058, loss=2.2795
+    Epoch 4, step 4844/6058, loss=2.2728
+    Epoch 4, step 6055/6058, loss=2.2677
+  Epoch 4/4: loss=2.2676, val_acc=0.864, val_f1=0.848
+    Saved (F1=0.848)
+
+  Best val F1: 0.848
+
+  Evaluating on 106 AllSides articles...
+
+  ADVERSARIAL [lambda1.0] — OOD Results
+  Accuracy: 50.0%
+  Macro F1: 0.500
+
+              precision    recall  f1-score   support
+
+        left       0.53      0.51      0.52        37
+      center       0.44      0.52      0.47        33
+       right       0.55      0.47      0.51        36
+
+    accuracy                           0.50       106
+   macro avg       0.50      0.50      0.50       106
+weighted avg       0.51      0.50      0.50       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       19       11        7
+      center        9       17        7
+       right        8       11       17
+
+  Confidence-Based Abstention Analysis:
+    Threshold 0.45: 104/106 articles (98%), acc=51.0%, F1=0.510
+    Threshold 0.50: 103/106 articles (97%), acc=51.5%, F1=0.514
+    Threshold 0.55: 103/106 articles (97%), acc=51.5%, F1=0.514
+    Threshold 0.60: 98/106 articles (92%), acc=52.0%, F1=0.521
+    Threshold 0.65: 94/106 articles (89%), acc=51.1%, F1=0.511
+    Threshold 0.70: 91/106 articles (86%), acc=51.6%, F1=0.516
+
+  Breakdown:
+    Left        : 44.4% (4/9)
+    Lean Left   : 53.6% (15/28)
+    Center      : 51.5% (17/33)
+    Lean Right  : 42.1% (8/19)
+    Right       : 52.9% (9/17)
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/adversarial/lambda1.0/results

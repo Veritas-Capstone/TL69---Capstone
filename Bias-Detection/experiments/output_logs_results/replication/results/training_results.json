@@ -1,0 +1,101 @@
+{
+  "best_epoch": 4,
+  "best_val_f1": 0.8768368663161626,
+  "test_accuracy": 0.8302480039567582,
+  "test_macro_f1": 0.8117127410625947,
+  "epochs": 4,
+  "lr": 3e-05,
+  "effective_batch_size": 40,
+  "train_size": 60519,
+  "val_size": 795,
+  "test_size": 28306,
+  "datasets_used": [
+    "article_bias_prediction",
+    "dem_rep_party_platform_topics",
+    "gpt4_political_bias",
+    "gpt4_political_ideologies",
+    "political_tweets",
+    "qbias",
+    "webis_bias_flipper_18",
+    "webis_news_bias_20"
+  ],
+  "dataset_stats": {
+    "article_bias_prediction": {
+      "train": 15826,
+      "val": 99,
+      "test": 5631,
+      "train_dist": {
+        "right": 3333,
+        "left": 3333,
+        "center": 9160
+      }
+    },
+    "dem_rep_party_platform_topics": {
+      "train": 9597,
+      "val": 100,
+      "test": 1733,
+      "train_dist": {
+        "right": 4597,
+        "left": 5000
+      }
+    },
+    "gpt4_political_bias": {
+      "train": 423,
+      "val": 99,
+      "test": 90,
+      "train_dist": {
+        "left": 124,
+        "right": 180,
+        "center": 119
+      }
+    },
+    "gpt4_political_ideologies": {
+      "train": 2620,
+      "val": 100,
+      "test": 480,
+      "train_dist": {
+        "left": 1310,
+        "right": 1310
+      }
+    },
+    "political_tweets": {
+      "train": 10000,
+      "val": 100,
+      "test": 15000,
+      "train_dist": {
+        "right": 5000,
+        "left": 5000
+      }
+    },
+    "qbias": {
+      "train": 10245,
+      "val": 99,
+      "test": 3256,
+      "train_dist": {
+        "left": 3333,
+        "right": 3333,
+        "center": 3579
+      }
+    },
+    "webis_bias_flipper_18": {
+      "train": 5342,
+      "val": 99,
+      "test": 959,
+      "train_dist": {
+        "center": 1243,
+        "left": 1986,
+        "right": 2113
+      }
+    },
+    "webis_news_bias_20": {
+      "train": 6466,
+      "val": 99,
+      "test": 1157,
+      "train_dist": {
+        "left": 3075,
+        "right": 2375,
+        "center": 1016
+      }
+    }
+  }
+}

@@ -1,0 +1,197 @@
+  AA with Volf Model Initialization
+  Config: volf_init_lambda0.7
+  Volf model: matous-volf/political-leaning-deberta-large
+  lambda: 0.7
+  Max length: 256
+  LR: 2e-05 (lower than scratch — fine-tuning pretrained)
+  Effective BS: 40
+  Device: cuda
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Loading Volf model weights from matous-volf/political-leaning-deberta-large...
+  Encoder weights loaded. Missing: 0, Unexpected: 0
+  Volf label mapping: {0: 'LABEL_0', 1: 'LABEL_1', 2: 'LABEL_2'}
+  Trainable params: 434,279,691
+    Epoch 1, step 1211/6058, loss=2.1254
+    Epoch 1, step 2422/6058, loss=2.3353
+    Epoch 1, step 3633/6058, loss=2.3004
+    Epoch 1, step 4844/6058, loss=2.3044
+    Epoch 1, step 6055/6058, loss=2.2696
+  Epoch 1/4: loss=2.2698, val_acc=0.902, val_f1=0.890
+    Saved (F1=0.890)
+    Epoch 2, step 1211/6058, loss=2.0842
+    Epoch 2, step 2422/6058, loss=2.0591
+    Epoch 2, step 3633/6058, loss=2.0284
+    Epoch 2, step 4844/6058, loss=2.0059
+    Epoch 2, step 6055/6058, loss=1.9882
+  Epoch 2/4: loss=1.9883, val_acc=0.887, val_f1=0.877
+    Epoch 3, step 1211/6058, loss=1.7792
+    Epoch 3, step 2422/6058, loss=1.7803
+    Epoch 3, step 3633/6058, loss=1.7782
+    Epoch 3, step 4844/6058, loss=1.7765
+    Epoch 3, step 6055/6058, loss=1.7697
+  Epoch 3/4: loss=1.7696, val_acc=0.907, val_f1=0.895
+    Saved (F1=0.895)
+    Epoch 4, step 1211/6058, loss=1.6950
+    Epoch 4, step 2422/6058, loss=1.7079
+    Epoch 4, step 3633/6058, loss=1.7063
+    Epoch 4, step 4844/6058, loss=1.7003
+    Epoch 4, step 6055/6058, loss=1.6989
+  Epoch 4/4: loss=1.6988, val_acc=0.910, val_f1=0.902
+    Saved (F1=0.902)
+
+  Best val F1: 0.902
+
+  Evaluating on 106 AllSides articles...
+  [  1/106] +  Washington Times           True: right     Pred: right   
+  [  2/106] +  BBC News                   True: center    Pred: center  
+  [  3/106] X  New York Times (News)      True: left      Pred: center  
+  [  4/106] +  New York Post (News)       True: right     Pred: right   
+  [  5/106] X  Gothamist                  True: center    Pred: right   
+  [  6/106] +  Washington Post            True: left      Pred: left    
+  [  7/106] X  The Guardian               True: left      Pred: center  
+  [  8/106] X  Newsweek                   True: center    Pred: left    
+  [  9/106] X  Fox News Digital           True: right     Pred: center  
+  [ 10/106] +  CNN Digital                True: left      Pred: left    
+  [ 11/106] X  Washington Post            True: left      Pred: center  
+  [ 12/106] +  FactCheck.org              True: left      Pred: left    
+  [ 13/106] +  Washington Post            True: left      Pred: left    
+  [ 14/106] +  Washington Post            True: left      Pred: left    
+  [ 15/106] +  USA TODAY                  True: left      Pred: left    
+  [ 16/106] +  The Guardian               True: left      Pred: left    
+  [ 17/106] X  Politico                   True: left      Pred: center  
+  [ 18/106] X  FactCheck.org              True: left      Pred: center  
+  [ 19/106] X  Newsweek                   True: center    Pred: left    
+  [ 20/106] X  Foreign Policy             True: center    Pred: left    
+  [ 21/106] +  The Hill                   True: center    Pred: center  
+  [ 22/106] X  Wall Street Journal (News)  True: center    Pred: left    
+  [ 23/106] X  The Hill                   True: center    Pred: right   
+  [ 24/106] +  Wall Street Journal (News)  True: center    Pred: center  
+  [ 25/106] X  The Hill                   True: center    Pred: right   
+  [ 26/106] X  Forbes                     True: center    Pred: right   
+  [ 27/106] +  BBC News                   True: center    Pred: center  
+  [ 28/106] +  UnHerd                     True: center    Pred: center  
+  [ 29/106] X  The Epoch Times            True: right     Pred: center  
+  [ 30/106] X  Cal Thomas                 True: right     Pred: left    
+  [ 31/106] +  The Federalist             True: right     Pred: right   
+  [ 32/106] X  Fox News (Opinion)         True: right     Pred: left    
+  [ 33/106] X  New York Post (News)       True: right     Pred: center  
+  [ 34/106] +  Fox News Digital           True: right     Pred: right   
+  [ 35/106] X  Washington Times           True: right     Pred: left    
+  [ 36/106] +  John Stossel               True: right     Pred: right   
+  [ 37/106] X  The National Desk          True: right     Pred: center  
+  [ 38/106] +  The Daily Wire             True: right     Pred: right   
+  [ 39/106] X  Fox News Digital           True: right     Pred: center  
+  [ 40/106] X  The Hill                   True: center    Pred: right   
+  [ 41/106] X  CNN Digital                True: left      Pred: center  
+  [ 42/106] +  Washington Post            True: left      Pred: left    
+  [ 43/106] +  Washington Examiner        True: right     Pred: right   
+  [ 44/106] X  Associated Press           True: left      Pred: center  
+  [ 45/106] X  Snopes                     True: left      Pred: center  
+  [ 46/106] X  PBS NewsHour               True: left      Pred: center  
+  [ 47/106] X  Snopes                     True: left      Pred: center  
+  [ 48/106] +  New York Times (News)      True: left      Pred: left    
+  [ 49/106] X  Politico                   True: left      Pred: right   
+  [ 50/106] X  FactCheck.org              True: left      Pred: center  
+  [ 51/106] +  Media Matters              True: left      Pred: left    
+  [ 52/106] +  The Nation                 True: left      Pred: left    
+  [ 53/106] X  Axios                      True: left      Pred: center  
+  [ 54/106] +  Gigafact                   True: center    Pred: center  
+  [ 55/106] +  Gigafact                   True: center    Pred: center  
+  [ 56/106] +  Wall Street Journal (News)  True: center    Pred: center  
+  [ 57/106] X  Christianity Today         True: center    Pred: left    
+  [ 58/106] X  Straight Arrow News        True: center    Pred: left    
+  [ 59/106] +  BBC News                   True: center    Pred: center  
+  [ 60/106] +  Reuters                    True: center    Pred: center  
+  [ 61/106] X  The National Desk          True: right     Pred: center  
+  [ 62/106] X  The National Desk          True: right     Pred: center  
+  [ 63/106] X  National Review (Opinion)  True: right     Pred: left    
+  [ 64/106] +  Newsmax (News)             True: right     Pred: right   
+  [ 65/106] +  CBN                        True: right     Pred: right   
+  [ 66/106] +  Newsmax (News)             True: right     Pred: right   
+  [ 67/106] X  ZeroHedge                  True: right     Pred: left    
+  [ 68/106] X  The Free Press             True: right     Pred: center  
+  [ 69/106] X  New York Post (News)       True: right     Pred: left    
+  [ 70/106] X  Newsweek                   True: center    Pred: left    
+  [ 71/106] +  San Francisco Chronicle    True: left      Pred: left    
+  [ 72/106] +  Reuters                    True: center    Pred: center  
+  [ 73/106] +  CNN Digital                True: left      Pred: left    
+  [ 74/106] +  Fox Business               True: right     Pred: right   
+  [ 75/106] +  The Washington Stand       True: right     Pred: right   
+  [ 76/106] X  Hartford Courant           True: center    Pred: right   
+  [ 77/106] +  NBC Connecticut            True: left      Pred: left    
+  [ 78/106] +  Washington Post            True: left      Pred: left    
+  [ 79/106] +  CNN Digital                True: left      Pred: left    
+  [ 80/106] X  Associated Press           True: left      Pred: center  
+  [ 81/106] +  ABC News (Online)          True: left      Pred: left    
+  [ 82/106] +  Associated Press           True: left      Pred: left    
+  [ 83/106] +  New York Times (Opinion)   True: left      Pred: left    
+  [ 84/106] X  Politico                   True: left      Pred: center  
+  [ 85/106] +  FactCheck.org              True: left      Pred: left    
+  [ 86/106] X  CNBC                       True: left      Pred: right   
+  [ 87/106] +  Washington Post            True: left      Pred: left    
+  [ 88/106] X  Reuters                    True: center    Pred: right   
+  [ 89/106] +  Reuters                    True: center    Pred: center  
+  [ 90/106] X  Anadolu Agency             True: center    Pred: right   
+  [ 91/106] +  BBC News                   True: center    Pred: center  
+  [ 92/106] +  Newsweek                   True: center    Pred: center  
+  [ 93/106] X  The Hill                   True: center    Pred: left    
+  [ 94/106] +  Wall Street Journal (News)  True: center    Pred: center  
+  [ 95/106] +  NewsNation                 True: center    Pred: center  
+  [ 96/106] X  UnHerd                     True: center    Pred: left    
+  [ 97/106] X  RT                         True: right     Pred: center  
+  [ 98/106] +  The Epoch Times            True: right     Pred: right   
+  [ 99/106] X  ZeroHedge                  True: right     Pred: left    
+  [100/106] X  New York Post (News)       True: right     Pred: left    
+  [101/106] +  The Federalist             True: right     Pred: right   
+  [102/106] +  The Center Square          True: right     Pred: right   
+  [103/106] +  The Epoch Times            True: right     Pred: right   
+  [104/106] +  Townhall                   True: right     Pred: right   
+  [105/106] +  Washington Examiner        True: right     Pred: right   
+  [106/106] X  GB News                    True: right     Pred: center  
+
+  AA + VOLF INIT [volf_init_lambda0.7] — OOD Results
+  Accuracy: 51.9%
+  Macro F1: 0.520
+
+              precision    recall  f1-score   support
+
+        left       0.55      0.57      0.56        37
+      center       0.40      0.48      0.44        33
+       right       0.64      0.50      0.56        36
+
+    accuracy                           0.52       106
+   macro avg       0.53      0.52      0.52       106
+weighted avg       0.54      0.52      0.52       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       21       14        2
+      center        9       16        8
+       right        8       10       18
+
+  Confidence abstention:
+    t=0.45: 106/106 (100%), acc=51.9%, F1=0.520
+    t=0.50: 106/106 (100%), acc=51.9%, F1=0.520
+    t=0.55: 105/106 (99%), acc=52.4%, F1=0.525
+    t=0.60: 104/106 (98%), acc=52.9%, F1=0.530
+    t=0.65: 101/106 (95%), acc=51.5%, F1=0.516
+    t=0.70: 99/106 (93%), acc=50.5%, F1=0.506
+
+  Breakdown:
+    Left        : 66.7% (6/9)
+    Lean Left   : 53.6% (15/28)
+    Center      : 48.5% (16/33)
+    Lean Right  : 47.4% (9/19)
+    Right       : 52.9% (9/17)
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/aa_volf_init/volf_init_lambda0.7/results

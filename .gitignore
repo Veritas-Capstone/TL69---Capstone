@@ -48,11 +48,12 @@ Bias-Detection/biasenv/
 Bias-Detection/datasets/
 .Bias-Detection/biasenv
 .Bias-Detection/datasets
+Bias-Detection/experiments/models
+Bias-Detection/experiments/datasets
 
 
 
 # specfic data file
-/Bias-Detection/models
 /api/claim_verification/data/unprocessed/
 /api/claim_verification/data/raw/
 /api/claim_verification/data/processed/averitec.csv
@@ -71,3 +72,6 @@ Bias-Detection/datasets/
 # ignore evaluation log files
 /api/claim_verification/eval_metrics/
 /api/claim_verification/training_metrics/
+
+# ignore model folder
+experiments/models

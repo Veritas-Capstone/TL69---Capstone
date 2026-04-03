@@ -1,0 +1,16 @@
+{
+  "config": "scl_a0.5_t0.1_l0.7_ml512",
+  "epochs": 4,
+  "batch_size": 10,
+  "grad_accum": 4,
+  "lr": 3e-05,
+  "lambda_adv": 0.7,
+  "max_length": 512,
+  "seed": 42,
+  "scl_alpha": 0.5,
+  "scl_temp": 0.1,
+  "proj_dim": 128,
+  "ood_accuracy": 0.4811320754716981,
+  "ood_macro_f1": 0.4786298035124326,
+  "best_val_f1": 0.8406535067712033
+}

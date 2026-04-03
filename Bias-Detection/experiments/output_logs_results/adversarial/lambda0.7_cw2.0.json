@@ -1,0 +1,9 @@
+{
+  "config": "lambda0.7_cw2.0",
+  "lambda_adv": 0.7,
+  "center_weight": 2.0,
+  "max_length": 256,
+  "accuracy": 0.3490566037735849,
+  "macro_f1": 0.1724941724941725,
+  "best_val_f1": 0.20729256388171116
+}

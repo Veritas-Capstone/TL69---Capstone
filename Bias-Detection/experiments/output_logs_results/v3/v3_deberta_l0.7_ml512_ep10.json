@@ -1,0 +1,18 @@
+{
+  "config": "v3_deberta_l0.7_ml512_ep10",
+  "base_model": "microsoft/deberta-v3-large",
+  "epochs": 10,
+  "batch_size": 10,
+  "grad_accum": 4,
+  "lr": 3e-05,
+  "lambda_adv": 0.7,
+  "max_length": 512,
+  "seed": 44,
+  "spectral_lambda": 0.0,
+  "rdrop_alpha": 0.0,
+  "label_smoothing": 0.0,
+  "vrex_beta": 0.0,
+  "best_val_f1": 0.8599991268603125,
+  "best_ood_accuracy": 0.5377358490566038,
+  "best_ood_f1": 0.5371517027863778
+}

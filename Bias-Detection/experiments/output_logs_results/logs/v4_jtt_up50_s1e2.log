@@ -1,0 +1,85 @@
+  JTT (Just Train Twice)
+  Config: jtt_up50.0_s1ep2_l0.7
+  Stage 1 epochs: 2
+  Upweight factor: 50.0×
+  Stage 2 epochs: 4
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+
+  STAGE 1: Training for 2 epoch(s)...
+    [S1] Ep 1, step 1211/6058, loss=3.0665
+    [S1] Ep 1, step 2422/6058, loss=2.9218
+    [S1] Ep 1, step 3633/6058, loss=2.8259
+    [S1] Ep 1, step 4844/6058, loss=2.7356
+    [S1] Ep 1, step 6055/6058, loss=2.6666
+  [S1] Epoch 1/2: loss=2.6665, val_acc=0.820, val_f1=0.801
+    Saved (F1=0.801)
+    [S1] Ep 2, step 1211/6058, loss=2.2894
+    [S1] Ep 2, step 2422/6058, loss=2.2586
+    [S1] Ep 2, step 3633/6058, loss=2.2387
+    [S1] Ep 2, step 4844/6058, loss=2.2116
+    [S1] Ep 2, step 6055/6058, loss=2.1853
+  [S1] Epoch 2/2: loss=2.1851, val_acc=0.860, val_f1=0.852
+    Saved (F1=0.852)
+
+  Identifying error set...
+  Error set: 4936/60572 (8.1%) examples misclassified
+
+  STAGE 2: Retraining with 50.0× upweighting on error set
+    [S2] Ep 1, step 1211/6058, loss=6.7625
+    [S2] Ep 1, step 2422/6058, loss=6.6116
+    [S2] Ep 1, step 3633/6058, loss=6.5638
+    [S2] Ep 1, step 4844/6058, loss=6.6311
+    [S2] Ep 1, step 6055/6058, loss=6.7003
+  [S2] Epoch 1/4: loss=6.6991, val_acc=0.131, val_f1=0.077
+    Saved (F1=0.077)
+    [S2] Ep 2, step 1211/6058, loss=6.9988
+    [S2] Ep 2, step 2422/6058, loss=6.8777
+    [S2] Ep 2, step 3633/6058, loss=6.8467
+    [S2] Ep 2, step 4844/6058, loss=6.8213
+    [S2] Ep 2, step 6055/6058, loss=6.8392
+  [S2] Epoch 2/4: loss=6.8388, val_acc=0.131, val_f1=0.077
+    [S2] Ep 3, step 1211/6058, loss=6.9565
+    [S2] Ep 3, step 2422/6058, loss=7.0699
+    [S2] Ep 3, step 3633/6058, loss=6.9678
+    [S2] Ep 3, step 4844/6058, loss=6.9360
+    [S2] Ep 3, step 6055/6058, loss=6.8613
+  [S2] Epoch 3/4: loss=6.8602, val_acc=0.417, val_f1=0.196
+    Saved (F1=0.196)
+    [S2] Ep 4, step 1211/6058, loss=6.6649
+    [S2] Ep 4, step 2422/6058, loss=6.7524
+    [S2] Ep 4, step 3633/6058, loss=6.7464
+    [S2] Ep 4, step 4844/6058, loss=6.7702
+    [S2] Ep 4, step 6055/6058, loss=6.7996
+  [S2] Epoch 4/4: loss=6.7990, val_acc=0.417, val_f1=0.196
+
+  Evaluating on 106 AllSides articles...
+
+  [jtt_up50.0_s1ep2_l0.7] AllSides OOD: Acc=34.0%, F1=0.169
+              precision    recall  f1-score   support
+
+        left       0.00      0.00      0.00        37
+      center       0.00      0.00      0.00        33
+       right       0.34      1.00      0.51        36
+
+    accuracy                           0.34       106
+   macro avg       0.11      0.33      0.17       106
+weighted avg       0.12      0.34      0.17       106
+
+  Confusion Matrix:
+                 left   center    right
+        left        0        0       37
+      center        0        0       33
+       right        0        0       36
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/jtt/jtt_up50.0_s1ep2_l0.7/results

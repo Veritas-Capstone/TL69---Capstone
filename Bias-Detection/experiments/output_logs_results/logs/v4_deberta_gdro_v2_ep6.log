@@ -1,0 +1,262 @@
+  Config: gdro_v2_deberta_eta0.01_wu2_l0.7_ep6
+  Base model: microsoft/deberta-v3-large
+  DRO η=0.01
+  ERM warmup: 2 epochs
+  Epochs: 6
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+    [ERM] Ep 1, step 1211/6058, loss=2.9883
+    [ERM] Ep 1, step 2422/6058, loss=3.0378
+    [ERM] Ep 1, step 3633/6058, loss=2.9361
+    [ERM] Ep 1, step 4844/6058, loss=2.8387
+    [ERM] Ep 1, step 6055/6058, loss=2.7556
+
+  Per-domain losses (epoch 1):
+    article_bias_prediction  : loss=0.6736, weight=0.1250
+    dem_rep_party_platform_to: loss=0.5561, weight=0.1250
+    gpt4_political_bias      : loss=0.8038, weight=0.1250
+    gpt4_political_ideologies: loss=0.2447, weight=0.1250
+    political_tweets         : loss=0.5485, weight=0.1250
+    qbias                    : loss=1.0756, weight=0.1250
+    webis_bias_flipper_18    : loss=0.6268, weight=0.1250
+    webis_news_bias_20       : loss=0.6207, weight=0.1250
+  (ERM warmup — DRO starts epoch 3)
+
+  Epoch 1/6: val_acc=0.786, val_f1=0.773
+    Saved (val F1=0.773)
+
+  [ep1] OOD: Acc=50.0%, F1=0.462
+              precision    recall  f1-score   support
+
+        left       0.41      0.92      0.57        37
+      center       0.73      0.33      0.46        33
+       right       0.89      0.22      0.36        36
+
+    accuracy                           0.50       106
+   macro avg       0.68      0.49      0.46       106
+weighted avg       0.67      0.50      0.46       106
+
+                 left   center    right
+        left       34        2        1
+      center       22       11        0
+       right       26        2        8
+    Best OOD (F1=0.462)
+    [ERM] Ep 2, step 1211/6058, loss=2.2895
+    [ERM] Ep 2, step 2422/6058, loss=2.2421
+    [ERM] Ep 2, step 3633/6058, loss=2.1899
+    [ERM] Ep 2, step 4844/6058, loss=2.1468
+    [ERM] Ep 2, step 6055/6058, loss=2.1150
+
+  Per-domain losses (epoch 2):
+    article_bias_prediction  : loss=0.4454, weight=0.1250
+    dem_rep_party_platform_to: loss=0.3758, weight=0.1250
+    gpt4_political_bias      : loss=0.4367, weight=0.1250
+    gpt4_political_ideologies: loss=0.0894, weight=0.1250
+    political_tweets         : loss=0.3794, weight=0.1250
+    qbias                    : loss=0.9415, weight=0.1250
+    webis_bias_flipper_18    : loss=0.3516, weight=0.1250
+    webis_news_bias_20       : loss=0.3582, weight=0.1250
+  (ERM warmup — DRO starts epoch 3)
+
+  Epoch 2/6: val_acc=0.836, val_f1=0.821
+    Saved (val F1=0.821)
+
+  [ep2] OOD: Acc=46.2%, F1=0.443
+              precision    recall  f1-score   support
+
+        left       0.39      0.76      0.51        37
+      center       0.56      0.30      0.39        33
+       right       0.69      0.31      0.42        36
+
+    accuracy                           0.46       106
+   macro avg       0.54      0.46      0.44       106
+weighted avg       0.54      0.46      0.45       106
+
+                 left   center    right
+        left       28        6        3
+      center       21       10        2
+       right       23        2       11
+    [DRO] Ep 3, step 1211/6058, loss=1.8441
+    [DRO] Ep 3, step 2422/6058, loss=1.8262
+    [DRO] Ep 3, step 3633/6058, loss=1.8081
+    [DRO] Ep 3, step 4844/6058, loss=1.7934
+    [DRO] Ep 3, step 6055/6058, loss=1.7775
+
+  Per-domain losses (epoch 3):
+    article_bias_prediction  : loss=0.2871, weight=0.1250
+    dem_rep_party_platform_to: loss=0.2073, weight=0.1250
+    gpt4_political_bias      : loss=0.4543, weight=0.1250
+    gpt4_political_ideologies: loss=0.0733, weight=0.1250
+    political_tweets         : loss=0.2137, weight=0.1250
+    qbias                    : loss=0.7465, weight=0.1250
+    webis_bias_flipper_18    : loss=0.2021, weight=0.1250
+    webis_news_bias_20       : loss=0.2199, weight=0.1250
+  → Updated weights (η=0.01):
+    article_bias_prediction  : 0.1250
+    dem_rep_party_platform_to: 0.1249
+    gpt4_political_bias      : 0.1252
+    gpt4_political_ideologies: 0.1247
+    political_tweets         : 0.1249
+    qbias                    : 0.1256
+    webis_bias_flipper_18    : 0.1249
+    webis_news_bias_20       : 0.1249
+
+  Epoch 3/6: val_acc=0.853, val_f1=0.833
+    Saved (val F1=0.833)
+
+  [ep3] OOD: Acc=47.2%, F1=0.469
+              precision    recall  f1-score   support
+
+        left       0.46      0.32      0.38        37
+      center       0.40      0.67      0.50        33
+       right       0.64      0.44      0.52        36
+
+    accuracy                           0.47       106
+   macro avg       0.50      0.48      0.47       106
+weighted avg       0.50      0.47      0.47       106
+
+                 left   center    right
+        left       12       21        4
+      center        6       22        5
+       right        8       12       16
+    Best OOD (F1=0.469)
+    [DRO] Ep 4, step 1211/6058, loss=1.6246
+    [DRO] Ep 4, step 2422/6058, loss=1.6158
+    [DRO] Ep 4, step 3633/6058, loss=1.6062
+    [DRO] Ep 4, step 4844/6058, loss=1.6018
+    [DRO] Ep 4, step 6055/6058, loss=1.5977
+
+  Per-domain losses (epoch 4):
+    article_bias_prediction  : loss=0.1808, weight=0.1250
+    dem_rep_party_platform_to: loss=0.1138, weight=0.1249
+    gpt4_political_bias      : loss=0.4257, weight=0.1252
+    gpt4_political_ideologies: loss=0.0452, weight=0.1247
+    political_tweets         : loss=0.1030, weight=0.1249
+    qbias                    : loss=0.5288, weight=0.1256
+    webis_bias_flipper_18    : loss=0.0947, weight=0.1249
+    webis_news_bias_20       : loss=0.1162, weight=0.1249
+  → Updated weights (η=0.01):
+    article_bias_prediction  : 0.1250
+    dem_rep_party_platform_to: 0.1248
+    gpt4_political_bias      : 0.1255
+    gpt4_political_ideologies: 0.1245
+    political_tweets         : 0.1248
+    qbias                    : 0.1260
+    webis_bias_flipper_18    : 0.1247
+    webis_news_bias_20       : 0.1248
+
+  Epoch 4/6: val_acc=0.864, val_f1=0.852
+    Saved (val F1=0.852)
+
+  [ep4] OOD: Acc=50.9%, F1=0.511
+              precision    recall  f1-score   support
+
+        left       0.49      0.54      0.51        37
+      center       0.44      0.52      0.47        33
+       right       0.65      0.47      0.55        36
+
+    accuracy                           0.51       106
+   macro avg       0.53      0.51      0.51       106
+weighted avg       0.53      0.51      0.51       106
+
+                 left   center    right
+        left       20       14        3
+      center       10       17        6
+       right       11        8       17
+    Best OOD (F1=0.511)
+    [DRO] Ep 5, step 1211/6058, loss=1.5190
+    [DRO] Ep 5, step 2422/6058, loss=1.5271
+    [DRO] Ep 5, step 3633/6058, loss=1.5243
+    [DRO] Ep 5, step 4844/6058, loss=1.5225
+    [DRO] Ep 5, step 6055/6058, loss=1.5262
+
+  Per-domain losses (epoch 5):
+    article_bias_prediction  : loss=0.1263, weight=0.1250
+    dem_rep_party_platform_to: loss=0.0538, weight=0.1248
+    gpt4_political_bias      : loss=0.2280, weight=0.1255
+    gpt4_political_ideologies: loss=0.0537, weight=0.1245
+    political_tweets         : loss=0.0568, weight=0.1248
+    qbias                    : loss=0.3357, weight=0.1260
+    webis_bias_flipper_18    : loss=0.0602, weight=0.1247
+    webis_news_bias_20       : loss=0.0625, weight=0.1248
+  → Updated weights (η=0.01):
+    article_bias_prediction  : 0.1250
+    dem_rep_party_platform_to: 0.1247
+    gpt4_political_bias      : 0.1256
+    gpt4_political_ideologies: 0.1244
+    political_tweets         : 0.1247
+    qbias                    : 0.1262
+    webis_bias_flipper_18    : 0.1247
+    webis_news_bias_20       : 0.1247
+
+  Epoch 5/6: val_acc=0.851, val_f1=0.837
+
+  [ep5] OOD: Acc=47.2%, F1=0.471
+              precision    recall  f1-score   support
+
+        left       0.50      0.41      0.45        37
+      center       0.41      0.61      0.49        33
+       right       0.56      0.42      0.48        36
+
+    accuracy                           0.47       106
+   macro avg       0.49      0.48      0.47       106
+weighted avg       0.49      0.47      0.47       106
+
+                 left   center    right
+        left       15       17        5
+      center        6       20        7
+       right        9       12       15
+    [DRO] Ep 6, step 1211/6058, loss=1.4942
+    [DRO] Ep 6, step 2422/6058, loss=1.4918
+    [DRO] Ep 6, step 3633/6058, loss=1.4950
+    [DRO] Ep 6, step 4844/6058, loss=1.4947
+    [DRO] Ep 6, step 6055/6058, loss=1.4940
+
+  Per-domain losses (epoch 6):
+    article_bias_prediction  : loss=0.0838, weight=0.1250
+    dem_rep_party_platform_to: loss=0.0388, weight=0.1247
+    gpt4_political_bias      : loss=0.2426, weight=0.1256
+    gpt4_political_ideologies: loss=0.0550, weight=0.1244
+    political_tweets         : loss=0.0470, weight=0.1247
+    qbias                    : loss=0.1734, weight=0.1262
+    webis_bias_flipper_18    : loss=0.0267, weight=0.1247
+    webis_news_bias_20       : loss=0.0393, weight=0.1247
+  → Updated weights (η=0.01):
+    article_bias_prediction  : 0.1250
+    dem_rep_party_platform_to: 0.1246
+    gpt4_political_bias      : 0.1258
+    gpt4_political_ideologies: 0.1244
+    political_tweets         : 0.1246
+    qbias                    : 0.1263
+    webis_bias_flipper_18    : 0.1246
+    webis_news_bias_20       : 0.1247
+
+  Epoch 6/6: val_acc=0.870, val_f1=0.860
+    Saved (val F1=0.860)
+
+  [ep6] OOD: Acc=46.2%, F1=0.461
+              precision    recall  f1-score   support
+
+        left       0.45      0.35      0.39        37
+      center       0.40      0.61      0.48        33
+       right       0.59      0.44      0.51        36
+
+    accuracy                           0.46       106
+   macro avg       0.48      0.47      0.46       106
+weighted avg       0.48      0.46      0.46       106
+
+                 left   center    right
+        left       13       19        5
+      center        7       20        6
+       right        9       11       16
+
+  Best val F1: 0.860, Best OOD F1: 0.511

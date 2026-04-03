@@ -1,0 +1,66 @@
+  Config: scl_a0.5_t0.1_l0.7_ml512
+  SCL α=0.5, temp=0.1
+  lambda=0.7
+  Effective BS: 40
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+  Train dist: Counter({0: 23115, 2: 22263, 1: 15194})
+  Trainable params: 435,460,491
+    Ep 1, step 1211/6057, loss=4.0131, scl=2.0910
+    Ep 1, step 2422/6057, loss=3.9599, scl=2.0217
+    Ep 1, step 3633/6057, loss=3.8514, scl=1.9819
+    Ep 1, step 4844/6057, loss=3.7623, scl=1.9538
+    Ep 1, step 6055/6057, loss=3.6783, scl=1.9289
+  Epoch 1/4: loss=3.6782, val_acc=0.799, val_f1=0.775
+    Saved (F1=0.775)
+    Ep 2, step 1211/6057, loss=3.1743, scl=1.7135
+    Ep 2, step 2422/6057, loss=3.1332, scl=1.7098
+    Ep 2, step 3633/6057, loss=3.0986, scl=1.7030
+    Ep 2, step 4844/6057, loss=3.0748, scl=1.6985
+    Ep 2, step 6055/6057, loss=3.0491, scl=1.6931
+  Epoch 2/4: loss=3.0492, val_acc=0.836, val_f1=0.824
+    Saved (F1=0.824)
+    Ep 3, step 1211/6057, loss=2.7727, scl=1.4976
+    Ep 3, step 2422/6057, loss=2.7505, scl=1.4918
+    Ep 3, step 3633/6057, loss=2.7399, scl=1.4899
+    Ep 3, step 4844/6057, loss=2.7306, scl=1.4844
+    Ep 3, step 6055/6057, loss=2.7170, scl=1.4769
+  Epoch 3/4: loss=2.7171, val_acc=0.831, val_f1=0.810
+    Ep 4, step 1211/6057, loss=2.5163, scl=1.2847
+    Ep 4, step 2422/6057, loss=2.5273, scl=1.2912
+    Ep 4, step 3633/6057, loss=2.5297, scl=1.2939
+    Ep 4, step 4844/6057, loss=2.5238, scl=1.2853
+    Ep 4, step 6055/6057, loss=2.5246, scl=1.2863
+  Epoch 4/4: loss=2.5245, val_acc=0.856, val_f1=0.841
+    Saved (F1=0.841)
+
+  Best val F1: 0.841
+  Evaluating on 106 AllSides articles...
+
+  [scl_a0.5_t0.1_l0.7_ml512] AllSides OOD: Acc=48.1%, F1=0.479
+              precision    recall  f1-score   support
+
+        left       0.47      0.43      0.45        37
+      center       0.44      0.64      0.52        33
+       right       0.58      0.39      0.47        36
+
+    accuracy                           0.48       106
+   macro avg       0.50      0.49      0.48       106
+weighted avg       0.50      0.48      0.48       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       16       15        6
+      center        8       21        4
+       right       10       12       14
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/scl_aa/scl_a0.5_t0.1_l0.7_ml512/results

@@ -1,0 +1,18 @@
+{
+  "config": "v3_bert_l0.7_sd0.05_rd0.5_ls0.1_ep8",
+  "base_model": "bert-base-uncased",
+  "epochs": 8,
+  "batch_size": 32,
+  "grad_accum": 1,
+  "lr": 2e-05,
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "seed": 42,
+  "spectral_lambda": 0.05,
+  "rdrop_alpha": 0.5,
+  "label_smoothing": 0.1,
+  "vrex_beta": 0.0,
+  "best_val_f1": 0.8108466642712178,
+  "best_ood_accuracy": 0.5566037735849056,
+  "best_ood_f1": 0.5505021283227648
+}

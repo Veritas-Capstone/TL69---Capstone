@@ -1,0 +1,8 @@
+{
+  "basil": {
+    "best_f1": 0.6825396825396827,
+    "best_epoch": 3,
+    "train_size": 270,
+    "val_size": 30
+  }
+}

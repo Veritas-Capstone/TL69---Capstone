@@ -1,0 +1,103 @@
+  Config: gdro_eta0.1_l2_0.1_l0.7
+  DRO η=0.1, L2 reg=0.1
+  GPU: NVIDIA L40S
+  article_bias_prediction: train=15847, val=100
+  dem_rep_party_platform_topics: train=9586, val=100
+  gpt4_political_bias: train=421, val=100
+  gpt4_political_ideologies: train=2620, val=100
+  political_tweets: train=10000, val=100
+  qbias: train=10294, val=100
+  webis_bias_flipper_18: train=5340, val=100
+  webis_news_bias_20: train=6464, val=100
+
+  Total: train=60572, val=800
+    Ep 1, step 1211/6058, loss=2.7667
+    Ep 1, step 2422/6058, loss=2.8932
+    Ep 1, step 3633/6058, loss=2.8592
+    Ep 1, step 4844/6058, loss=2.8102
+    Ep 1, step 6055/6058, loss=2.7941
+
+  Group weights after epoch 1:
+    article_bias_predict: weight=0.7964, avg_loss=1.0248
+    dem_rep_party_platfo: weight=0.0081, avg_loss=1.1873
+    gpt4_political_bias : weight=0.0000, avg_loss=1.3321
+    gpt4_political_ideol: weight=0.0000, avg_loss=1.4273
+    political_tweets    : weight=0.0087, avg_loss=1.1616
+    qbias               : weight=0.1868, avg_loss=1.1610
+    webis_bias_flipper_1: weight=0.0000, avg_loss=1.2391
+    webis_news_bias_20  : weight=0.0000, avg_loss=1.2616
+
+  Epoch 1/4: loss=2.7941, val_acc=0.231, val_f1=0.227
+    Saved (F1=0.227)
+    Ep 2, step 1211/6058, loss=2.6025
+    Ep 2, step 2422/6058, loss=2.5552
+    Ep 2, step 3633/6058, loss=2.4912
+    Ep 2, step 4844/6058, loss=2.4502
+    Ep 2, step 6055/6058, loss=2.4257
+
+  Group weights after epoch 2:
+    article_bias_predict: weight=0.5035, avg_loss=1.0498
+    dem_rep_party_platfo: weight=0.0000, avg_loss=1.2012
+    gpt4_political_bias : weight=0.0000, avg_loss=1.3004
+    gpt4_political_ideol: weight=0.0000, avg_loss=1.2622
+    political_tweets    : weight=0.4965, avg_loss=1.1878
+    qbias               : weight=0.0000, avg_loss=1.1409
+    webis_bias_flipper_1: weight=0.0000, avg_loss=1.2150
+    webis_news_bias_20  : weight=0.0000, avg_loss=1.2519
+
+  Epoch 2/4: loss=2.4256, val_acc=0.131, val_f1=0.077
+    Ep 3, step 1211/6058, loss=2.3014
+    Ep 3, step 2422/6058, loss=2.3044
+    Ep 3, step 3633/6058, loss=2.3078
+    Ep 3, step 4844/6058, loss=2.3106
+    Ep 3, step 6055/6058, loss=2.3121
+
+  Group weights after epoch 3:
+    article_bias_predict: weight=0.4873, avg_loss=1.0501
+    dem_rep_party_platfo: weight=0.0000, avg_loss=1.2206
+    gpt4_political_bias : weight=0.0000, avg_loss=1.1566
+    gpt4_political_ideol: weight=0.0000, avg_loss=1.2239
+    political_tweets    : weight=0.5127, avg_loss=1.2113
+    qbias               : weight=0.0000, avg_loss=1.1246
+    webis_bias_flipper_1: weight=0.0000, avg_loss=1.1538
+    webis_news_bias_20  : weight=0.0000, avg_loss=1.1771
+
+  Epoch 3/4: loss=2.3120, val_acc=0.131, val_f1=0.077
+    Ep 4, step 1211/6058, loss=2.3228
+    Ep 4, step 2422/6058, loss=2.3214
+    Ep 4, step 3633/6058, loss=2.3159
+    Ep 4, step 4844/6058, loss=2.3139
+    Ep 4, step 6055/6058, loss=2.3150
+
+  Group weights after epoch 4:
+    article_bias_predict: weight=0.6545, avg_loss=1.0561
+    dem_rep_party_platfo: weight=0.0000, avg_loss=1.1957
+    gpt4_political_bias : weight=0.0000, avg_loss=1.1189
+    gpt4_political_ideol: weight=0.0000, avg_loss=1.1944
+    political_tweets    : weight=0.3455, avg_loss=1.2000
+    qbias               : weight=0.0000, avg_loss=1.1095
+    webis_bias_flipper_1: weight=0.0000, avg_loss=1.1391
+    webis_news_bias_20  : weight=0.0000, avg_loss=1.1611
+
+  Epoch 4/4: loss=2.3150, val_acc=0.131, val_f1=0.077
+
+  Evaluating on 106 AllSides articles...
+
+  [gdro_eta0.1_l2_0.1_l0.7] AllSides OOD: Acc=28.3%, F1=0.227
+              precision    recall  f1-score   support
+
+        left       0.33      0.46      0.38        37
+      center       0.24      0.39      0.30        33
+       right       0.00      0.00      0.00        36
+
+    accuracy                           0.28       106
+   macro avg       0.19      0.28      0.23       106
+weighted avg       0.19      0.28      0.23       106
+
+  Confusion Matrix:
+                 left   center    right
+        left       17       20        0
+      center       20       13        0
+       right       15       21        0
+
+  Results saved to /nfs/veritas/kazim18/TL69---Capstone/experiments/group_dro/gdro_eta0.1_l2_0.1_l0.7/results

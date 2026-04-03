@@ -1,0 +1,9 @@
+{
+  "config": "volf_init_lambda0.7",
+  "init_from": "matous-volf/political-leaning-deberta-large",
+  "lambda_adv": 0.7,
+  "max_length": 256,
+  "accuracy": 0.5188679245283019,
+  "macro_f1": 0.5202853881278539,
+  "best_val_f1": 0.9016038192508781
+}
