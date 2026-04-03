@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # C extensions
 *.so
@@ -28,7 +29,10 @@ var/
 venv/
 ENV/
 env/
+gpu_venv/
 .gpu_venv/
+api/claim_verification/gpu_venv/
+Bias-Detection/biasenv/
 
 # Pytest cache
 .pytest_cache/
@@ -41,7 +45,7 @@ env/
 .DS_Store
 Thumbs.db
 
-# Archive/backups (optional)
+# Archive/backups
 archive/
 .vscode
 Bias-Detection/biasenv/
@@ -56,18 +60,15 @@ Bias-Detection/experiments/datasets
 # specfic data file
 /api/claim_verification/data/unprocessed/
 /api/claim_verification/data/raw/
-/api/claim_verification/data/processed/averitec.csv
-/api/claim_verification/data/processed/averitec_80.csv
-/api/claim_verification/data/processed/averitec_20.csv
-/api/claim_verification/data/processed/fever_train_claims.csv
-/api/claim_verification/data/processed/fever_train_claims_80.csv
-/api/claim_verification/data/processed/fever_train_claims_20.csv
+/api/claim_verification/data/processed/
 
 # ignore any python notebook file
 *.ipynb
 
-# ignore model files
-/api/claim_verification/models/
+# Models (VERY IMPORTANT — don't push these)
+api/claim_verification/models/
+!api/claim_verification/models/claim_evidence_attention.py
+!api/claim_verification/models/__init__.py
 
 # ignore evaluation log files
 /api/claim_verification/eval_metrics/
@@ -75,3 +76,23 @@ Bias-Detection/experiments/datasets
 
 # ignore model folder
 experiments/models
+# Large data (your wiki DB etc.)
+api/claim_verification/data/
+
+# Evaluation outputs
+api/claim_verification/evaluation/*.json
+api/claim_verification/evaluation/*.csv
+
+# Metrics logs
+api/claim_verification/eval_metrics/
+api/claim_verification/training_metrics/
+
+# Experiments
+experiments/
+
+# Logs
+*.log
+hs_err_pid*
+
+# Generated figures
+*.png

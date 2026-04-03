@@ -1,27 +1,29 @@
 import json
 import random
-import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-class PairwiseExpansionDataset(Dataset):
+class JointEvidenceDataset(Dataset):
     """
-    Expands a CSV row into multiple pairs:
-      (claim, evidence_sentence, label_id)
-    Better for initially training and fine-tuning the model.
+    Each sample is:
+        (claim, list of evidence sentences, label_id)
+    Used for multi-evidence attention models.
     """
     def __init__(
         self,
         df,
         LABEL_MAP,
+        max_evidence=10,
         nei_fill=False,
         nei_fill_prob=1.0,
         nei_fill_k=2,
         nei_fill_seed=10,
     ):
         self.LABEL_MAP = LABEL_MAP
-        pairs = []
+        self.max_evidence = max_evidence
+        self.samples = []
         rng = random.Random(nei_fill_seed)
+
         evidence_pool = []
         if nei_fill:
             for _, row in df.iterrows():
@@ -32,20 +34,15 @@ class PairwiseExpansionDataset(Dataset):
                 evidence_pool.extend(
                     [ev.strip() for ev in evid_list if isinstance(ev, str) and ev.strip()]
                 )
-        
+
         for _, row in df.iterrows():
             claim = str(row["claim"]).strip()
             label_id = LABEL_MAP[row["label"].upper()]
 
-            # Parse JSON list from CSV
+            # Load and clean evidence list
             evid_list = json.loads(row["evidence"])
-
-            # Only keep string evidence
             evid_list = [ev.strip() for ev in evid_list if isinstance(ev, str) and ev.strip()]
 
-            # Ensure NOT ENOUGH INFO rows still contribute a training example.
-            # Otherwise NEI rows with empty evidence are dropped and the model never
-            # sees the NEI label during training.
             if not evid_list:
                 if (
                     nei_fill
@@ -60,30 +57,53 @@ class PairwiseExpansionDataset(Dataset):
                     else:
                         evid_list = [" "]
                 else:
-                    evid_list = [" "]
+                    evid_list = [" "]  # handle NEI with no evidence
 
-            for ev in evid_list:
-                pairs.append((claim, ev, label_id))
+            # Truncate to max_evidence length
+            evid_list = evid_list[:self.max_evidence]
 
-        self.pairs = pairs
+            self.samples.append((claim, evid_list, label_id))
 
     def __len__(self):
-        return len(self.pairs)
+        return len(self.samples)
 
     def __getitem__(self, idx):
-        return self.pairs[idx]
+        return self.samples[idx]
 
+def collate_joint_batch(batch, tokenizer, max_length=256):
+    """
+    Collate for JointEvidenceDataset.
+    Tokenizes:
+      - claims: shape [B, L]
+      - evidence sentences: shape [B, K, L]
+    Returns:
+      claim_inputs, evidence_inputs, evidence_mask, labels
+    """
+    claims, evidence_lists, labels = zip(*batch)
+    B = len(claims)
+    K = max(len(evs) for evs in evidence_lists)
 
-def collate_pairwise(batch, tokenizer, max_length=256):
-    """
-    Collate for PairwiseExpansionDataset.
-    batch: list of (claim, evidence_sent, label_id)
-    Returns tokenized tensors and labels.
-    """
-    claims, evids, labels = zip(*batch)
-    enc = tokenizer(
-        list(evids), list(claims),
-        padding=True, truncation=True, max_length=max_length, return_tensors="pt"
+    # Pad evidence lists
+    padded_evids = []
+    evid_mask = []
+    for ev_list in evidence_lists:
+        padded = ev_list + [""] * (K - len(ev_list))
+        padded_evids.extend(padded)
+        evid_mask.append([1]*len(ev_list) + [0]*(K - len(ev_list)))
+
+    # Tokenize claims
+    claim_enc = tokenizer(
+        list(claims), padding=True, truncation=True, max_length=max_length, return_tensors="pt"
     )
+
+    # Tokenize evidence: flat then reshape
+    ev_enc = tokenizer(
+        padded_evids, padding=True, truncation=True, max_length=max_length, return_tensors="pt"
+    )
+    for k in ev_enc:
+        ev_enc[k] = ev_enc[k].view(B, K, -1)
+
+    evid_mask = torch.tensor(evid_mask, dtype=torch.long)
     labels = torch.tensor(labels, dtype=torch.long)
-    return enc, labels
+
+    return claim_enc, ev_enc, evid_mask, labels
