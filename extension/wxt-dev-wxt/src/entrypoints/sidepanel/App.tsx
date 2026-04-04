@@ -26,6 +26,7 @@ function App() {
 			return;
 		}
 
+		await browser.storage.local.clear();
 		setIsLoading(true);
 		setError(undefined);
 
