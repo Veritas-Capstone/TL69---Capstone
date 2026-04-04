@@ -9,10 +9,10 @@ export interface AnalysisResult {
 	};
 	bias_claims: {
 		text: string;
-		category: 'Left-leaning' | 'Right-leaning' | 'Centrist' | 'Neutral/Balanced';
+		category: 'Left-leaning' | 'Possibly Left-leaning' | 'Right-leaning' | 'Possibly Right-leaning' | 'Centrist' | 'Uncertain';
 		description: string;
 		valid: boolean;
-		top_tokens: TokenAttribution[];
+		confidence: number;
 	}[];
 	fact_check_claims: {
 		claim: string;

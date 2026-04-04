@@ -59,11 +59,13 @@ export default defineContentScript({
 				spans.forEach((span) => {
 					if (category) {
 						(span as HTMLElement).style.backgroundColor =
-							category === 'Left-leaning'
+							category.includes('Left')
 								? 'rgba(96, 165, 250, 0.4)'
-								: category === 'Right-leaning'
+								: category.includes('Right')
 									? 'rgba(248, 113, 113, 0.4)'
-									: 'rgba(192, 132, 252, 0.4)';
+									: category === 'Uncertain'
+										? 'rgba(156, 163, 175, 0.4)'
+										: 'rgba(192, 132, 252, 0.4)';
 					} else if (label) {
 						(span as HTMLElement).style.backgroundColor =
 							label === 'SUPPORTED'

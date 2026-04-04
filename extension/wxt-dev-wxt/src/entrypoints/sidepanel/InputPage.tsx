@@ -19,6 +19,7 @@ export default function InputPage({ callModel }: { callModel: Function }) {
 
 	// call model on text from the input
 	async function analyzeText() {
+		await browser.storage.local.remove('storedResult');
 		await browser.storage.local.set({ selectedText: tempText });
 		await callModel();
 	}

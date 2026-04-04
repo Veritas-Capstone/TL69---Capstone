@@ -1,4 +1,4 @@
-import { AnalysisResult } from '@/types';
+import { AnalysisResult, TokenAttribution  } from '@/types';
 
 export interface SentenceBias {
 	text: string;
@@ -11,7 +11,6 @@ export interface SentenceBias {
 		Center: number;
 		Right: number;
 	};
-	top_tokens: { token: string; score: number }[];
 }
 
 // export default async function fetchAPI(text: string) {
@@ -146,10 +145,7 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 			category: sentence.category,
 			description: sentence.description,
 			valid: sentence.bias === 'Center' || sentence.confidence < 0.5,
-			top_tokens: (sentence.top_tokens || []).map((t: { token: string; score: number }) => ({
-				token: t.token,
-				score: t.score,
-			})),
+			confidence: sentence.confidence,
 		}));
 
 		return {
@@ -163,6 +159,26 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	} catch (error) {
 		console.error('Error calling bias detection API:', error);
 		throw error;
+	}
+}
+
+export async function fetchExplain(text: string): Promise<TokenAttribution[]> {
+	try {
+		const response = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/bias/explain`, {
+			headers: { 'Content-Type': 'application/json' },
+			method: 'POST',
+			body: JSON.stringify({ text }),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Explain request failed: ${response.status}`);
+		}
+
+		const data = await response.json();
+		return data.top_tokens || [];
+	} catch (error) {
+		console.error('Error calling explain API:', error);
+		return [];
 	}
 }
 
