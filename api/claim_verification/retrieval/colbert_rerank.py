@@ -110,6 +110,99 @@ class ColBERTReranker:
         return reranked[: int(top_k)]
 
 
+class ClaimEvidenceRetriever:
+    """
+    Reusable ER pipeline:
+      BM25 -> ColBERT -> confidence gate -> optional live news fallback
+
+    Main callable:
+      retrieve(claim) -> {
+          "claim": str,
+          "evidence": List[str],
+          "confidence": bool,
+          "force_nei": bool,
+          "source": str,
+          "reranked": List[Dict[str, Any]]
+      }
+    """
+
+    def __init__(
+        self,
+        bm25_index: str = "api/claim_verification/data/wiki_corpus/bm25_index",
+        checkpoint: str = "colbert-ir/colbertv2.0",
+        query_maxlen: int = 64,
+        doc_maxlen: int = 180,
+        use_gpu: bool = True,
+        batch_size: int = 16,
+        bm25_k: int = 200,
+        top_k: int = 10,
+        evidence_k: int = 5,
+        enable_live_news: bool = True,
+        news_limit: int = 8,
+        news_hours_back: int = 72,
+        news_language: str = "en",
+        allow_untrusted_domains: bool = False,
+    ):
+        self.bm25 = BM25Retriever(index_path=bm25_index, k=bm25_k)
+        self.reranker = ColBERTReranker(
+            checkpoint=checkpoint,
+            query_maxlen=query_maxlen,
+            doc_maxlen=doc_maxlen,
+            use_gpu=use_gpu,
+            batch_size=batch_size,
+        )
+
+        self.top_k = int(top_k)
+        self.evidence_k = int(evidence_k)
+
+        self.enable_live_news = enable_live_news
+        self.news_limit = int(news_limit)
+        self.news_hours_back = int(news_hours_back)
+        self.news_language = news_language
+        self.allow_untrusted_domains = allow_untrusted_domains
+
+    def retrieve(self, claim: str) -> Dict[str, Any]:
+        candidates = self.bm25.retrieve(claim)
+        reranked = self.reranker.rerank(claim, candidates, top_k=self.top_k)
+        confident = has_sufficient_evidence(reranked)
+
+        source = "local"
+        final_reranked = reranked
+
+        if (not confident) and self.enable_live_news:
+            web_candidates = live_news_passages(
+                claim,
+                language=self.news_language,
+                limit=self.news_limit,
+                hours_back=self.news_hours_back,
+                trusted_only=(not self.allow_untrusted_domains),
+                max_chunks_per_article=6,
+            )
+
+            if web_candidates:
+                merged_candidates = candidates + web_candidates
+                final_reranked = self.reranker.rerank(
+                    claim,
+                    merged_candidates,
+                    top_k=self.top_k,
+                )
+                confident = has_sufficient_evidence(final_reranked)
+                source = "local+web"
+
+        evidence = [
+            r["text"] for r in final_reranked[: self.evidence_k] if r.get("text")
+        ]
+
+        return {
+            "claim": claim,
+            "evidence": evidence,
+            "confidence": bool(confident),
+            "force_nei": (not confident),
+            "source": source,
+            "reranked": final_reranked,
+        }
+
+
 def print_results(reranked: List[Dict[str, Any]], header: str):
     print(f"\n=== {header} ===")
     for i, r in enumerate(reranked, 1):
@@ -134,6 +227,7 @@ def main():
     )
     parser.add_argument("--bm25_k", type=int, default=200)
     parser.add_argument("--top_k", type=int, default=10)
+    parser.add_argument("--evidence_k", type=int, default=5)
 
     parser.add_argument("--checkpoint", type=str, default="colbert-ir/colbertv2.0")
     parser.add_argument("--query_maxlen", type=int, default=64)
@@ -150,46 +244,29 @@ def main():
 
     args = parser.parse_args()
 
-    bm25 = BM25Retriever(index_path=args.bm25_index, k=args.bm25_k)
-    candidates = bm25.retrieve(args.query)
-
-    reranker = ColBERTReranker(
+    retriever = ClaimEvidenceRetriever(
+        bm25_index=args.bm25_index,
         checkpoint=args.checkpoint,
         query_maxlen=args.query_maxlen,
         doc_maxlen=args.doc_maxlen,
         use_gpu=(not args.cpu),
         batch_size=args.batch_size,
+        bm25_k=args.bm25_k,
+        top_k=args.top_k,
+        evidence_k=args.evidence_k,
+        enable_live_news=args.enable_live_news,
+        news_limit=args.news_limit,
+        news_hours_back=args.news_hours_back,
+        news_language=args.news_language,
+        allow_untrusted_domains=args.allow_untrusted_domains,
     )
 
-    reranked = reranker.rerank(args.query, candidates, top_k=args.top_k)
-    confidence = has_sufficient_evidence(reranked)
+    result = retriever.retrieve(args.query)
 
-    print("\nInitial evidence confidence:", confidence)
-    print_results(reranked, "Top results after local ColBERT rerank")
-
-    if (not confidence) and args.enable_live_news:
-        print("\nLocal evidence insufficient. Fetching live news...")
-
-        web_candidates = live_news_passages(
-            args.query,
-            language=args.news_language,
-            limit=args.news_limit,
-            hours_back=args.news_hours_back,
-            trusted_only=(not args.allow_untrusted_domains),
-            max_chunks_per_article=6,
-        )
-
-        print(f"\nFetched {len(web_candidates)} live-news passages.")
-
-        if web_candidates:
-            merged_candidates = candidates + web_candidates
-            reranked = reranker.rerank(args.query, merged_candidates, top_k=args.top_k)
-            confidence = has_sufficient_evidence(reranked)
-
-            print("\nPost-live-news evidence confidence:", confidence)
-            print_results(reranked, "Top results after merged local + live-news rerank")
-
-    print("\nFinal evidence confidence:", confidence)
+    print("\nFinal evidence confidence:", result["confidence"])
+    print("Force NEI:", result["force_nei"])
+    print("Source:", result["source"])
+    print_results(result["reranked"], "Top results after ER pipeline")
 
 
 if __name__ == "__main__":

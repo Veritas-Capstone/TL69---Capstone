@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 from api.claim_extraction.claim_extraction import extract_claims
 from api.claim_verification.inference import baseline
+from api.claim_verification.retrieval.colbert_rerank import ClaimEvidenceRetriever
 
 # -----------------------------------------------------------------------------
 # FastAPI app setup
@@ -45,6 +46,7 @@ class PassageRequest(BaseModel):
 class ClaimEvidence(BaseModel):
     claim: str
     evidence: List[str]
+    gold_label: Optional[str] = None
 
 
 class ClaimVerificationResult(BaseModel):
@@ -64,6 +66,17 @@ class ClaimExtractionResult(BaseModel):
 class ClaimVerificationDirectRequest(BaseModel):
     items: List[ClaimEvidence]
 
+
+class ClaimRequest(BaseModel):
+    claim: str
+
+
+class EvidenceRetrievalResult(BaseModel):
+    claim: str
+    evidence: List[str]
+    confidence: bool
+    force_nei: bool
+    source: str
 
 # -----------------------------------------------------------------------------
 # Claim verification model
@@ -161,6 +174,49 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
 EXTRACTION_MODEL = os.getenv("CLAIM_EXTRACTION_MODEL", "mistral")
 EXTRACTION_MAX_CLAIMS = int(os.getenv("CLAIM_EXTRACTION_MAX", "10"))
 
+# -----------------------------------------------------------------------------
+# Evidence retrieval config (env vars)
+# -----------------------------------------------------------------------------
+
+RETRIEVER_BM25_INDEX = os.getenv(
+    "CLAIM_RETRIEVAL_BM25_INDEX",
+    "api/claim_verification/data/wiki_corpus/bm25_index",
+)
+RETRIEVER_COLBERT_CHECKPOINT = os.getenv(
+    "CLAIM_RETRIEVAL_COLBERT_CHECKPOINT",
+    "colbert-ir/colbertv2.0",
+)
+
+print(f"[ClaimServer] Loading evidence retriever from BM25 index: {RETRIEVER_BM25_INDEX}")
+claim_retriever = ClaimEvidenceRetriever(
+    bm25_index=RETRIEVER_BM25_INDEX,
+    checkpoint=RETRIEVER_COLBERT_CHECKPOINT,
+    use_gpu=True,
+    batch_size=16,
+    bm25_k=200,
+    top_k=10,
+    evidence_k=5,
+    enable_live_news=True,
+    news_limit=8,
+    news_hours_back=72,
+    news_language="en",
+    allow_untrusted_domains=False,
+)
+print("[ClaimServer] Evidence retriever loaded!")
+
+def retrieve_single_claim_evidence(claim: str):
+    """
+    Directly callable ER pipeline function.
+    Returns:
+      {
+        "claim": ...,
+        "evidence": [...],
+        "confidence": bool,
+        "force_nei": bool,
+        "source": ...
+      }
+    """
+    return claim_retriever.retrieve(claim)
 
 # -----------------------------------------------------------------------------
 # DEMO: stub for claim extraction + evidence retrieval
@@ -325,12 +381,30 @@ async def extract_claims_endpoint(
         count=len(claims),
     )
 
+@app.post("/retrieve-evidence", response_model=EvidenceRetrievalResult)
+async def retrieve_evidence_endpoint(request: ClaimRequest):
+    claim = request.claim.strip()
+    if not claim:
+        raise HTTPException(status_code=400, detail="Claim cannot be empty.")
+
+    try:
+        result = retrieve_single_claim_evidence(claim)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Evidence retrieval failed: {exc}")
+
+    return EvidenceRetrievalResult(
+        claim=result["claim"],
+        evidence=result["evidence"],
+        confidence=result["confidence"],
+        force_nei=result["force_nei"],
+        source=result["source"],
+    )
 
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
 async def verify_claims_from_passage(
     request: PassageRequest,
     mock_claims: bool = True,
-    mock_retrieve: bool = True,
+    mock_retrieve: bool = False,
 ):
     """
     Entry point for the Chrome extension for claim verification.
@@ -367,9 +441,23 @@ async def verify_claims_from_passage(
     for claim in claims:
         if mock_retrieve:
             evidence = get_mock_evidence(claim)
+            force_nei = False
         else:
-            evidence = []
-        label, probs = verify_single_claim(claim, evidence)
+            try:
+                retrieval_result = retrieve_single_claim_evidence(claim)
+            except Exception as exc:
+                raise HTTPException(status_code=500, detail=f"Evidence retrieval failed for claim '{claim}': {exc}")
+            evidence = retrieval_result["evidence"]
+            force_nei = retrieval_result["force_nei"]
+        if force_nei:
+            label = "NOT ENOUGH INFO"
+            probs = {
+                "REFUTED": 0.0,
+                "NOT ENOUGH INFO": 1.0,
+                "SUPPORTED": 0.0,
+            }
+        else:
+            label, probs = verify_single_claim(claim, evidence)
         results.append(
             ClaimVerificationResult(
                 claim=claim,
