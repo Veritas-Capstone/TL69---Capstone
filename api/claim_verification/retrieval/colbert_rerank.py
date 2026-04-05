@@ -170,14 +170,20 @@ class ClaimEvidenceRetriever:
         final_reranked = reranked
 
         if (not confident) and self.enable_live_news:
-            web_candidates = live_news_passages(
-                claim,
-                language=self.news_language,
-                limit=self.news_limit,
-                hours_back=self.news_hours_back,
-                trusted_only=(not self.allow_untrusted_domains),
-                max_chunks_per_article=6,
-            )
+            try:
+                web_candidates = live_news_passages(
+                    claim,
+                    language=self.news_language,
+                    limit=self.news_limit,
+                    hours_back=self.news_hours_back,
+                    trusted_only=(not self.allow_untrusted_domains),
+                    max_chunks_per_article=6,
+                )
+            except Exception as exc:
+                # Keep retrieval resilient: if live-news lookup fails,
+                # continue with local corpus evidence instead of crashing.
+                print(f"[ClaimEvidenceRetriever] Live-news fallback failed: {exc}")
+                web_candidates = []
 
             if web_candidates:
                 merged_candidates = candidates + web_candidates
