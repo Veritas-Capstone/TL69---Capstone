@@ -9,16 +9,21 @@ and only handles claim verification.
 """
 
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
 from api.claim_extraction.claim_extraction import extract_claims
 from api.claim_verification.inference import baseline
 from api.claim_verification.retrieval.colbert_rerank import ClaimEvidenceRetriever
+
+# Load environment variables from local .env (if present).
+load_dotenv()
 
 # -----------------------------------------------------------------------------
 # FastAPI app setup
@@ -186,6 +191,10 @@ RETRIEVER_COLBERT_CHECKPOINT = os.getenv(
     "CLAIM_RETRIEVAL_COLBERT_CHECKPOINT",
     "colbert-ir/colbertv2.0",
 )
+THENEWSAPI_TOKEN = os.getenv("THENEWSAPI_TOKEN")
+ENABLE_LIVE_NEWS = bool(THENEWSAPI_TOKEN)
+if not ENABLE_LIVE_NEWS:
+    print("[ClaimServer] THENEWSAPI_TOKEN not set; disabling live-news fallback.")
 
 print(f"[ClaimServer] Loading evidence retriever from BM25 index: {RETRIEVER_BM25_INDEX}")
 claim_retriever = ClaimEvidenceRetriever(
@@ -196,13 +205,49 @@ claim_retriever = ClaimEvidenceRetriever(
     bm25_k=200,
     top_k=10,
     evidence_k=5,
-    enable_live_news=True,
+    enable_live_news=ENABLE_LIVE_NEWS,
     news_limit=8,
     news_hours_back=72,
     news_language="en",
     allow_untrusted_domains=False,
 )
 print("[ClaimServer] Evidence retriever loaded!")
+
+
+URL_LINE_PATTERN = re.compile(r"^\s*URL:\s*\S+\s*$", re.IGNORECASE | re.MULTILINE)
+RAW_URL_PATTERN = re.compile(r"https?://\S+")
+MULTISPACE_PATTERN = re.compile(r"\s+")
+
+
+def clean_evidence_text(text: str) -> str:
+    """
+    Remove URL-only lines and inline URLs from retrieval passages
+    so UI shows readable evidence text.
+    """
+    if not text:
+        return ""
+
+    cleaned = URL_LINE_PATTERN.sub(" ", text)
+    cleaned = RAW_URL_PATTERN.sub("", cleaned)
+    cleaned = MULTISPACE_PATTERN.sub(" ", cleaned).strip()
+    return cleaned
+
+
+def sanitize_evidence_list(evidence: List[str]) -> List[str]:
+    seen = set()
+    cleaned_evidence: List[str] = []
+
+    for item in evidence or []:
+        cleaned = clean_evidence_text(item)
+        if not cleaned:
+            continue
+        if cleaned in seen:
+            continue
+        seen.add(cleaned)
+        cleaned_evidence.append(cleaned)
+
+    return cleaned_evidence
+
 
 def retrieve_single_claim_evidence(claim: str):
     """
@@ -216,7 +261,9 @@ def retrieve_single_claim_evidence(claim: str):
         "source": ...
       }
     """
-    return claim_retriever.retrieve(claim)
+    result = claim_retriever.retrieve(claim)
+    result["evidence"] = sanitize_evidence_list(result.get("evidence", []))
+    return result
 
 # -----------------------------------------------------------------------------
 # DEMO: stub for claim extraction + evidence retrieval
