@@ -25,14 +25,7 @@ var/
 *.egg
 
 # Virtual environments
-.venv/
-venv/
-ENV/
-env/
-gpu_venv/
-.gpu_venv/
-api/claim_verification/gpu_venv/
-Bias-Detection/biasenv/
+*env/
 
 # Pytest cache
 .pytest_cache/
