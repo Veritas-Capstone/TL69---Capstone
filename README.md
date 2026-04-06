@@ -34,11 +34,7 @@ Given a news article (URL or pasted text), the system:
 
 ### Claim verification
 - FEVER — Wikipedia-derived claims with labels and evidence sentences for supervised verification.
-- FEVEROUS — Claims with evidence from both text and tables for multi-hop reasoning.
-- MultiFC — Multi-domain claims aggregated from fact-checking sites with real-world variability.
 - AVeriTeC — Real-world claims linked to online evidence and textual justifications.
-- LIAR — PolitiFact statements with fine-grained truth labels and metadata.
-- PolitiFact archives — Fact-check articles and verdicts for political claims.
 
 ### Bias detection
 - MBIC — Media bias annotations with sentence/word-level labels and annotator context.
@@ -49,7 +45,6 @@ Given a news article (URL or pasted text), the system:
 
 ### Retrieval and real-time sources
 - Wikipedia passages — Static corpus for broad coverage and reproducible retrieval.
-- Multi-site fact checks — Sources aggregated across fact-checking outlets to reduce single-site bias.
 - Real-time news search — General news API integration for fresh, time-sensitive evidence when static similarity is low.
 
 ## Principles & Ethics
@@ -65,7 +60,7 @@ Given a news article (URL or pasted text), the system:
 - **ML Models:**  
   - Claim extraction: fine-tuned transformer (e.g., BERT, RoBERTa, or open-source GPT variant)  
   - Bias detection: classifier trained on labeled partisan datasets  
-  - Claim verification: retrieval + NLI pipeline with optional LLM fallback  
+  - Claim verification: retrieval + NLI pipeline 
 - **Deployment:** Docker + cloud hosting (AWS/GCP/Azure)
 
 # Coding and Documentation Standards
