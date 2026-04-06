@@ -37,11 +37,14 @@ Given a news article (URL or pasted text), the system:
 - AVeriTeC — Real-world claims linked to online evidence and textual justifications.
 
 ### Bias detection
-- MBIC — Media bias annotations with sentence/word-level labels and annotator context.
-- BABE — Expert-annotated sentences with bias labels and rationale spans.
-- AllSides ratings — Outlet-level Left/Center/Right labels for distant supervision and aggregation.
-- QBias — Articles curated for balanced perspectives and bias research.
-- NewsMediaBias (full) — Multi-dimensional bias labels for auxiliary training and analysis.
+- article_bias_prediction — News articles labelled by political leaning from various outlets.
+- dem_rep_party_platform_topics — Excerpts from Democratic and Republican party platforms.
+- gpt4_political_bias — GPT-4 generated politically biased text samples.
+- gpt4_political_ideologies — GPT-4 generated text representing different political ideologies.
+- political_tweets — Tweets labelled by political leaning.
+- qbias — Articles curated for balanced perspectives and bias research.
+- webis_bias_flipper_18 — News articles with bias labels and neutralized rewrites.
+- webis_news_bias_20 — News sentences annotated for biased and neutral language.
 
 ### Retrieval and real-time sources
 - Wikipedia passages — Static corpus for broad coverage and reproducible retrieval.
