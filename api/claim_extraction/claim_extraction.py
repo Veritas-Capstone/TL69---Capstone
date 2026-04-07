@@ -24,12 +24,34 @@ EXTRACTION_PROMPT_TEMPLATE = """\
 Your task is to extract factual claims from a passage of text.
 
 Rules:
-- Extract only atomic, self-contained, independently verifiable claims.
+- Extract all atomic, self-contained, independently verifiable claims.
 - Split any compound statements into separate claims.
 - Omit opinions, questions, and rhetorical statements that cannot be fact-checked.
 - Each claim must be understandable on its own without needing extra context.
 - Return ONLY a JSON object with a single key "claims" whose value is a list of claim strings.
 - Do not include any explanation, preamble, or markdown formatting.
+
+Example
+-------
+Passage:
+"Marie Curie was born in Warsaw in 1867 and became the first woman to win a Nobel Prize. \
+She won the Nobel Prize in Physics in 1903 and the Nobel Prize in Chemistry in 1911, \
+making her the only person to win Nobel Prizes in two different sciences."
+
+Output:
+{{"claims": [
+  "Marie Curie was born in Warsaw.",
+  "Marie Curie was born in 1867.",
+  "Marie Curie was the first woman to win a Nobel Prize.",
+  "Marie Curie won the Nobel Prize in Physics in 1903.",
+  "Marie Curie won the Nobel Prize in Chemistry in 1911.",
+  "Marie Curie is the only person to win Nobel Prizes in two different sciences."
+]}}
+
+Notice how the example:
+- Splits "born in Warsaw in 1867" into two separate claims
+- Replaces "She" and "her" with "Marie Curie" in every claim
+- Extracts 6 claims from 2 sentences — don't merge what can be kept separate
 
 Passage:
 {passage}
@@ -72,7 +94,7 @@ def _parse_claims_from_response(raw: str) -> List[str]:
 def extract_claims(
     passage: str,
     model: str = MODEL,
-    max_claims: int = 10,
+    max_claims: int = None,
 ) -> List[str]:
     """
     Use a local Ollama model to extract atomic, verifiable claims from a passage.
@@ -110,4 +132,5 @@ def extract_claims(
             f"Claim extraction returned no parseable claims. Raw response:\n{raw_content}"
         )
 
-    return claims[:max_claims]
+    if max_claims is not None:
+        return claims[:max_claims]
