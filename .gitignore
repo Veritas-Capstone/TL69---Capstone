@@ -96,3 +96,5 @@ hs_err_pid*
 
 # Generated figures
 *.png
+
+*.pdf

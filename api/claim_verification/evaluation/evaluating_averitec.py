@@ -13,6 +13,7 @@
 # %%
 import os
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 import torch
@@ -31,7 +32,12 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 
-from .eval_helpers import collate_multi_evidence, PairwiseExpansionDataset, collate_pairwise
+from .eval_helpers import (
+    collate_multi_evidence,
+    PairwiseExpansionDataset,
+    collate_pairwise,
+    parse_evidence_field,
+)
 from api.claim_verification.training.training_joint_helpers import (
     JointEvidenceDataset,
     collate_joint_batch,
@@ -70,6 +76,11 @@ def eval_averitec(
     use_attention_model=None,
     output_root=None,
     num_heads=4,
+    nei_threshold=None,
+    nei_margin=None,
+    fever_score=False,
+    gold_data_path=None,
+    run_name=None,
 ):
     """
     Evaluate RoBERTa on the *entire* AveriTeC dataset.
@@ -100,6 +111,18 @@ def eval_averitec(
     print(f"[EVAL] Loading dataset from: {data_path}")
     df = pd.read_csv(data_path)
 
+    if gold_data_path is None and fever_score and str(data_path).endswith("_er.csv"):
+        candidate = Path(str(data_path).replace("_er.csv", ".csv"))
+        if candidate.exists():
+            gold_data_path = candidate
+        else:
+            print(f"[EVAL] Warning: gold_data_path not found at {candidate}")
+
+    if gold_data_path is not None:
+        gold_data_path = Path(gold_data_path)
+        if not gold_data_path.exists():
+            raise FileNotFoundError(f"Gold data not found at {gold_data_path}")
+
     # ---- Resolve init weights ----
     if init_weights != "hf":
         ckpt_path = Path(init_weights)
@@ -115,6 +138,16 @@ def eval_averitec(
     # Auto-detect architecture if not specified
     if use_attention_model is None:
         use_attention_model = ckpt_state is not None and _looks_like_attention_checkpoint(ckpt_state)
+
+    # If checkpoint encodes multi-head count, align num_heads automatically
+    if use_attention_model and ckpt_state is not None and "W_c" in ckpt_state:
+        try:
+            ckpt_heads = int(ckpt_state["W_c"].shape[0])
+            if ckpt_heads != num_heads:
+                print(f"[EVAL] Overriding num_heads={num_heads} -> {ckpt_heads} to match checkpoint")
+                num_heads = ckpt_heads
+        except Exception:
+            pass
 
     # Dataset + loader based on architecture
     print(f"[EVAL] Total examples: {len(df)}")
@@ -202,7 +235,22 @@ def eval_averitec(
                 labels = labels.to(device)
                 outputs = model(**enc)
                 logits = outputs.logits
-            preds = torch.argmax(logits, dim=-1)
+            probs = torch.softmax(logits, dim=-1)
+            preds = torch.argmax(probs, dim=-1)
+
+            if nei_threshold is not None or nei_margin is not None:
+                # Apply NEI post-processing based on confidence/margin
+                nei_id = LABEL_MAP["NOT ENOUGH INFO"]
+                top2 = torch.topk(probs, k=2, dim=-1)
+                top1_prob = top2.values[:, 0]
+                top2_prob = top2.values[:, 1]
+                margin = top1_prob - top2_prob
+                mask = torch.zeros_like(top1_prob, dtype=torch.bool)
+                if nei_threshold is not None:
+                    mask |= top1_prob < float(nei_threshold)
+                if nei_margin is not None:
+                    mask |= margin < float(nei_margin)
+                preds = torch.where(mask, torch.tensor(nei_id, device=preds.device), preds)
 
             all_preds.extend(preds.cpu().numpy().tolist())
             all_labels.extend(labels.cpu().numpy().tolist())
@@ -212,6 +260,80 @@ def eval_averitec(
 
     all_labels = np.array(all_labels)
     all_preds = np.array(all_preds)
+
+    def _normalize_text(text):
+        text = re.sub(r"\s+", " ", str(text)).strip().lower()
+        return text
+
+    def _evidence_match(gold_list, pred_list):
+        if not gold_list or not pred_list:
+            return False
+        gold_norm = [_normalize_text(x) for x in gold_list if isinstance(x, str) and x.strip()]
+        pred_norm = [_normalize_text(x) for x in pred_list if isinstance(x, str) and x.strip()]
+        if not gold_norm or not pred_norm:
+            return False
+        for g in gold_norm:
+            for p in pred_norm:
+                if g in p or p in g:
+                    return True
+        return False
+
+    fever_score_value = None
+    evidence_hit_rate = None
+
+    if fever_score or gold_data_path is not None:
+        gold_df = None
+        if gold_data_path is not None:
+            gold_df = pd.read_csv(gold_data_path)
+
+        # Pre-parse predicted evidence from eval data (respect max_evidence)
+        pred_evidence = [
+            parse_evidence_field(row.get("evidence"))[:max_evidence]
+            for _, row in df.iterrows()
+        ]
+
+        gold_evidence = []
+        if gold_df is None:
+            gold_evidence = [
+                parse_evidence_field(row.get("evidence")) for _, row in df.iterrows()
+            ]
+        else:
+            # Build claim+label -> list of evidence lists
+            lookup = {}
+            for _, row in gold_df.iterrows():
+                key = (row.get("claim"), row.get("label"))
+                lookup.setdefault(key, []).append(parse_evidence_field(row.get("evidence")))
+            for _, row in df.iterrows():
+                key = (row.get("claim"), row.get("label"))
+                items = lookup.get(key)
+                if items:
+                    gold_evidence.append(items.pop(0))
+                else:
+                    gold_evidence.append([])
+
+        nei_id = LABEL_MAP["NOT ENOUGH INFO"]
+        fever_hits = 0
+        evidence_hits = 0
+        evidence_total = 0
+        for idx in range(len(all_labels)):
+            gold_label = int(all_labels[idx])
+            pred_label = int(all_preds[idx])
+            if gold_label == nei_id:
+                evidence_ok = True
+            else:
+                evidence_ok = _evidence_match(gold_evidence[idx], pred_evidence[idx])
+                evidence_total += 1
+                if evidence_ok:
+                    evidence_hits += 1
+            if pred_label == gold_label and evidence_ok:
+                fever_hits += 1
+
+        fever_score_value = float(fever_hits / len(all_labels)) if len(all_labels) else 0.0
+        evidence_hit_rate = (
+            float(evidence_hits / evidence_total) if evidence_total else 0.0
+        )
+        print(f"[EVAL] FEVER score: {fever_score_value:.4f}")
+        print(f"[EVAL] Evidence hit rate (non-NEI): {evidence_hit_rate:.4f}")
 
     # ---- Metrics ----
     acc = accuracy_score(all_labels, all_preds)
@@ -253,7 +375,9 @@ def eval_averitec(
         base_name = os.path.basename(str(ckpt_path))
         model_tag = os.path.splitext(base_name)[0]
 
-    out_dir = output_root / f"{data_set}_{model_tag}_{run_id}"
+    if run_name is None:
+        run_name = data_set
+    out_dir = output_root / f"{run_name}_{model_tag}_{run_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     metrics = {
@@ -270,6 +394,10 @@ def eval_averitec(
         "num_examples": int(len(all_labels)),
         "label_map": LABEL_MAP,
         "classification_report": report_dict,
+        "fever_score": fever_score_value,
+        "evidence_hit_rate": evidence_hit_rate,
+        "gold_data_path": str(gold_data_path) if gold_data_path is not None else None,
+        "run_name": run_name,
     }
 
     metrics_path = out_dir / "metrics.json"

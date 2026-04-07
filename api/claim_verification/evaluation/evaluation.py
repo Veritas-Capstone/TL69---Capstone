@@ -29,37 +29,63 @@ MODELS_DIR = PKG_ROOT / "models"
 
 EVAL_PLAN = [
     # Example 1: HF baseline on AveriTeC
-    {
-        "dataset": "averitec",
-        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",   # this needs to be baked invariant to cwd
-        "mode": "eval",
-        "init_from": "hf",          # <- baseline
-    },
-    {
-        "dataset": "averitec",
-        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv", 
-        "mode": "eval",
-        "init_from": "fever_averitec_mix",         # <- use ../models/fever_train_claims_80/latest.pt         
-    },
-    {
-        "dataset": "averitec",
-        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",  
-        "mode": "eval",
-        "init_from": "averitec_80",         
-    },
-    # Example 2 (optional): evaluate AveriTeC model trained on AveriTeC
-    {
-        "dataset": "averitec",
-        "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",
-        "mode": "eval",
-        "init_from": "fever_train_claims_80",   # <- use ../models/fever_train_claims_80/latest.pt
-    },
+    # {
+    #     "dataset": "averitec",
+    #     "dataset_path": DATA_DIR / "processed" / f"averitec_20_er.csv", 
+    #     "mode": "eval",
+    #     "init_from": "averitec_er_r60_h4",
+    #     "run_name": "averitec_baseline",
+    # },
     # {
     #     "dataset": "fever",
-    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20.csv",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20_er.csv", 
     #     "mode": "eval",
-    #     "init_from": "fever_averitec_mix",   # <- use ../models/fever_train_claims_80/latest.pt
+    #     "fever_score": True,
+    #     "init_from": "hf",
+    #     "run_name": "fever_baseline",
     # },
+    # {
+    #     "dataset": "averitec",
+    #     "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv", 
+    #     "mode": "eval",
+    #     "init_from": "fever_averitec_mix",         # <- use ../models/fever_train_claims_80/latest.pt         
+    # },
+    # {
+    #     "dataset": "averitec",
+    #     "dataset_path": DATA_DIR / "processed" / f"averitec_20.csv",  
+    #     "mode": "eval",
+    #     "init_from": "averitec_80",         
+    # },
+    # {
+    #     "dataset": "averitec",
+    #     "dataset_path": DATA_DIR / "processed" / f"averitec_20_er.csv",
+    #     "mode": "eval",
+    #     "init_from": "fever_averitec_er_r50_h4",   # <- use ../models/fever_averitec_er_r60_h4/latest.pt   
+    #     "fever_score": True,
+    # },
+    # {
+    #     "dataset": "fever",
+    #     "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20_er.csv",
+    #     "mode": "eval",
+    #     "init_from": "fever_averitec_er_r50_h4",   # <- use ../models/fever_averitec_er_r60_h4/latest.pt
+    #     "fever_score": True,
+    # },
+    {
+        "dataset": "averitec",
+        "dataset_path": DATA_DIR / "processed" / f"averitec_20_er.csv",
+        "mode": "eval",
+        "init_from": "fever_averitec_er_r50_h4",    
+        "fever_score": True,
+        "run_name": "fever_averitec_new_er_r50_h4",
+    },
+    {
+        "dataset": "fever",
+        "dataset_path": DATA_DIR / "processed" / f"fever_train_claims_20_er.csv",
+        "mode": "eval",
+        "init_from": "fever_averitec_er_r50_h4",  
+        "fever_score": True,
+        "run_name": "fever_averitec_new_er_r50_h4",
+    },
 ]
 
 
@@ -99,7 +125,6 @@ def main():
             if mode != "eval":
                 raise ValueError(f"Unknown mode={mode!r} for dataset={dataset!r}; expected 'eval'.")
 
-            # Both AveriTeC and FEVER-family splits use the same evaluator today
             if dataset != "averitec" and "fever_train_claims" not in dataset and dataset != "fever":
                 raise ValueError(f"Unknown dataset {dataset!r} for evaluation")
 
@@ -109,6 +134,11 @@ def main():
                 data_path=data_path,
                 output_root=EVAL_OUT_DIR,
                 num_heads=step.get("num_heads", 4),
+                nei_threshold=step.get("nei_threshold"),
+                nei_margin=step.get("nei_margin"),
+                fever_score=step.get("fever_score", False),
+                gold_data_path=step.get("gold_data_path"),
+                run_name=step.get("run_name") or step.get("name"),
             )
 
 

@@ -41,6 +41,8 @@ def eval_claim_model(
     use_attention_model=None,
     output_root=None,
     num_heads=4,
+    nei_threshold=None,
+    nei_margin=None,
     model_name="FacebookAI/roberta-large-mnli",
     label_map=None,
     data_dir=None,
@@ -163,7 +165,20 @@ def eval_claim_model(
                 labels = labels.to(device)
                 outputs = model(**enc)
                 logits = outputs.logits
-            preds = torch.argmax(logits, dim=-1)
+            probs = torch.softmax(logits, dim=-1)
+            preds = torch.argmax(probs, dim=-1)
+            if nei_threshold is not None or nei_margin is not None:
+                nei_id = label_map["NOT ENOUGH INFO"]
+                top2 = torch.topk(probs, k=2, dim=-1)
+                top1_prob = top2.values[:, 0]
+                top2_prob = top2.values[:, 1]
+                margin = top1_prob - top2_prob
+                mask = torch.zeros_like(top1_prob, dtype=torch.bool)
+                if nei_threshold is not None:
+                    mask |= top1_prob < float(nei_threshold)
+                if nei_margin is not None:
+                    mask |= margin < float(nei_margin)
+                preds = torch.where(mask, torch.tensor(nei_id, device=preds.device), preds)
 
             all_preds.extend(preds.cpu().numpy().tolist())
             all_labels.extend(labels.cpu().numpy().tolist())

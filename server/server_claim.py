@@ -403,7 +403,7 @@ async def retrieve_evidence_endpoint(request: ClaimRequest):
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
 async def verify_claims_from_passage(
     request: PassageRequest,
-    mock_claims: bool = True,
+    mock_claims: bool = False,
     mock_retrieve: bool = False,
 ):
     """
@@ -412,11 +412,7 @@ async def verify_claims_from_passage(
     Pipeline:
       - Claim extraction (mock or real via ?mock_claims=false)
       - Evidence retrieval (mock via ?mock_retrieve=true, or empty if false)
-      - Claim verification (always real model)
-
-    Query params:
-      - mock_claims:   If false, uses Ollama via claim_extraction.py to extract claims.
-      - mock_retrieve: If false, evidence list will be empty (until retrieval is implemented).
+      - Claim verification
     """
     text = request.text.strip()
     if not text:
