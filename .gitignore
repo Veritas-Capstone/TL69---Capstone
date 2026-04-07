@@ -82,6 +82,7 @@ api/claim_verification/data/
 # Evaluation outputs
 api/claim_verification/evaluation/*.json
 api/claim_verification/evaluation/*.csv
+api/claim_extraction/eval/results_*.json
 
 # Metrics logs
 api/claim_verification/eval_metrics/
