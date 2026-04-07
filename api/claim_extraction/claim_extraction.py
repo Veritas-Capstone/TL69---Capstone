@@ -25,7 +25,6 @@ Your task is to extract factual claims from a passage of text.
 
 Rules:
 - Extract all atomic, self-contained, independently verifiable claims.
-- Split any compound statements into separate claims.
 - Omit opinions, questions, and rhetorical statements that cannot be fact-checked.
 - Each claim must be understandable on its own without needing extra context.
 - Return ONLY a JSON object with a single key "claims" whose value is a list of claim strings.
@@ -40,8 +39,7 @@ making her the only person to win Nobel Prizes in two different sciences."
 
 Output:
 {{"claims": [
-  "Marie Curie was born in Warsaw.",
-  "Marie Curie was born in 1867.",
+  "Marie Curie was born in Warsaw in 1867.",
   "Marie Curie was the first woman to win a Nobel Prize.",
   "Marie Curie won the Nobel Prize in Physics in 1903.",
   "Marie Curie won the Nobel Prize in Chemistry in 1911.",
@@ -49,9 +47,8 @@ Output:
 ]}}
 
 Notice how the example:
-- Splits "born in Warsaw in 1867" into two separate claims
 - Replaces "She" and "her" with "Marie Curie" in every claim
-- Extracts 6 claims from 2 sentences — don't merge what can be kept separate
+- Extracts 5 claims from 2 sentences — don't merge what can be kept separate
 
 Passage:
 {passage}
@@ -134,3 +131,13 @@ def extract_claims(
 
     if max_claims is not None:
         return claims[:max_claims]
+    
+# Run from this file
+# passage = """For weapons expert Mark Steele, 5G constitutes a heinous crime. He said 5G is a compartmentalized weapons deployment system that masquerades as a benign technological advancement for enhanced communications and faster downloads.
+# Steele said 5G has the capability to target, acquire and attack vaccinated individuals through the nano-metamaterial antenna in Wuhan coronavirus (COVID-19) vaccines. The Lethal Autonomous Weapons Systems (LAWS) will need 5G networks to maintain geo-position and navigate their environment to the target because these weapons cannot rely simply on satellite communications, which can be affected by inclement weather events and signal latency.
+
+# A weapon can be a device, tool or action fashioned to cause physical or psychological harm. People in the United Kingdom have been concerned about its dangers and "conspiracy theorists," as the media tried to paint it, have been accused of attacking cellphone towers in an attempt to stop 5G rollout.
+
+# "The compartmentalization of weapons systems development has played a crucial role in not alerting those within the regulatory authorities and telecommunications industry to the real purpose and intentions of those ultimately driving and funding the deployment of 5G and biological chemical weapons masquerading as COVID-19 vaccines for a planned control and command kill grid," Steele wrote in his report about 5G."""
+# passage = "Steele said 5G has the capability to target, acquire and attack vaccinated individuals through the nano-metamaterial antenna in Wuhan coronavirus (COVID-19) vaccines."
+# print(extract_claims(passage, model="mistral", max_claims=50))
