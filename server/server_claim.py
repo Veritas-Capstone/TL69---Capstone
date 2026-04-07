@@ -9,16 +9,24 @@ and only handles claim verification.
 """
 
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
-from api.claim_extraction.claim_extraction import extract_claims
+from api.claim_extraction.claim_extraction import (
+    extract_claims,
+    extract_claims_with_provenance,
+)
 from api.claim_verification.inference import baseline
 from api.claim_verification.retrieval.colbert_rerank import ClaimEvidenceRetriever
+
+# Load environment variables from local .env (if present).
+load_dotenv()
 
 # -----------------------------------------------------------------------------
 # FastAPI app setup
@@ -54,6 +62,10 @@ class ClaimVerificationResult(BaseModel):
     evidence: List[str]
     label: str
     probabilities: Dict[str, float]
+    # Provenance fields — always present when using verify_claims_from_passage.
+    # None only in verify_claims_direct (where no passage was split).
+    sentence_id: Optional[int] = None
+    source_sentence: Optional[str] = None
 
 
 class ClaimExtractionResult(BaseModel):
@@ -77,6 +89,7 @@ class EvidenceRetrievalResult(BaseModel):
     confidence: bool
     force_nei: bool
     source: str
+
 
 # -----------------------------------------------------------------------------
 # Claim verification model
@@ -186,6 +199,10 @@ RETRIEVER_COLBERT_CHECKPOINT = os.getenv(
     "CLAIM_RETRIEVAL_COLBERT_CHECKPOINT",
     "colbert-ir/colbertv2.0",
 )
+THENEWSAPI_TOKEN = os.getenv("THENEWSAPI_TOKEN")
+ENABLE_LIVE_NEWS = bool(THENEWSAPI_TOKEN)
+if not ENABLE_LIVE_NEWS:
+    print("[ClaimServer] THENEWSAPI_TOKEN not set; disabling live-news fallback.")
 
 print(f"[ClaimServer] Loading evidence retriever from BM25 index: {RETRIEVER_BM25_INDEX}")
 claim_retriever = ClaimEvidenceRetriever(
@@ -196,13 +213,49 @@ claim_retriever = ClaimEvidenceRetriever(
     bm25_k=200,
     top_k=10,
     evidence_k=5,
-    enable_live_news=True,
+    enable_live_news=ENABLE_LIVE_NEWS,
     news_limit=8,
     news_hours_back=72,
     news_language="en",
     allow_untrusted_domains=False,
 )
 print("[ClaimServer] Evidence retriever loaded!")
+
+
+URL_LINE_PATTERN = re.compile(r"^\s*URL:\s*\S+\s*$", re.IGNORECASE | re.MULTILINE)
+RAW_URL_PATTERN = re.compile(r"https?://\S+")
+MULTISPACE_PATTERN = re.compile(r"\s+")
+
+
+def clean_evidence_text(text: str) -> str:
+    """
+    Remove URL-only lines and inline URLs from retrieval passages
+    so UI shows readable evidence text.
+    """
+    if not text:
+        return ""
+
+    cleaned = URL_LINE_PATTERN.sub(" ", text)
+    cleaned = RAW_URL_PATTERN.sub("", cleaned)
+    cleaned = MULTISPACE_PATTERN.sub(" ", cleaned).strip()
+    return cleaned
+
+
+def sanitize_evidence_list(evidence: List[str]) -> List[str]:
+    seen = set()
+    cleaned_evidence: List[str] = []
+
+    for item in evidence or []:
+        cleaned = clean_evidence_text(item)
+        if not cleaned:
+            continue
+        if cleaned in seen:
+            continue
+        seen.add(cleaned)
+        cleaned_evidence.append(cleaned)
+
+    return cleaned_evidence
+
 
 def retrieve_single_claim_evidence(claim: str):
     """
@@ -216,7 +269,10 @@ def retrieve_single_claim_evidence(claim: str):
         "source": ...
       }
     """
-    return claim_retriever.retrieve(claim)
+    result = claim_retriever.retrieve(claim)
+    result["evidence"] = sanitize_evidence_list(result.get("evidence", []))
+    return result
+
 
 # -----------------------------------------------------------------------------
 # DEMO: stub for claim extraction + evidence retrieval
@@ -381,6 +437,7 @@ async def extract_claims_endpoint(
         count=len(claims),
     )
 
+
 @app.post("/retrieve-evidence", response_model=EvidenceRetrievalResult)
 async def retrieve_evidence_endpoint(request: ClaimRequest):
     claim = request.claim.strip()
@@ -400,6 +457,7 @@ async def retrieve_evidence_endpoint(request: ClaimRequest):
         source=result["source"],
     )
 
+
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
 async def verify_claims_from_passage(
     request: PassageRequest,
@@ -410,31 +468,58 @@ async def verify_claims_from_passage(
     Entry point for the Chrome extension for claim verification.
 
     Pipeline:
-      - Claim extraction (mock or real via ?mock_claims=false)
-      - Evidence retrieval (mock via ?mock_retrieve=true, or empty if false)
-      - Claim verification
+      1. Claim extraction  — mock or real (Ollama, per-sentence with provenance)
+      2. Evidence retrieval — mock or real (ColBERT + BM25)
+      3. Claim verification — always real model
+
+    Each result carries sentence_id and source_sentence so the frontend can
+    group or highlight claims by the sentence they came from, without needing
+    a separate join step.
+
+    Query params:
+      - mock_claims:   If false, uses extract_claims_with_provenance() for real extraction.
+      - mock_retrieve: If true, uses hard-coded mock evidence instead of the retriever.
     """
     text = request.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Text cannot be empty")
 
+    # ------------------------------------------------------------------
+    # Step 1 — Claim extraction
+    # Build a flat list of (claim, sentence_id, source_sentence) tuples
+    # so provenance travels through the rest of the pipeline as plain data.
+    # ------------------------------------------------------------------
     if mock_claims:
-        claims = get_mock_claims()
+        # Mock path: no sentence provenance available, use sentinel None values
+        claim_tuples = [
+            (claim, None, None) for claim in get_mock_claims()
+        ]
     else:
         try:
-            claims = extract_claims(
+            extraction = extract_claims_with_provenance(
                 passage=text,
                 model=EXTRACTION_MODEL,
-                max_claims=EXTRACTION_MAX_CLAIMS,
+                max_claims_per_sentence=EXTRACTION_MAX_CLAIMS,
             )
         except RuntimeError as exc:
             raise HTTPException(status_code=502, detail=str(exc))
 
-    if not claims:
+        claim_tuples = [
+            (claim, sc.sentence_id, sc.sentence)
+            for sc in extraction.sentence_claims
+            for claim in sc.claims
+        ]
+
+    if not claim_tuples:
         raise HTTPException(status_code=400, detail="No claims extracted from passage.")
 
+    # ------------------------------------------------------------------
+    # Steps 2 + 3 — Evidence retrieval and verification
+    # ------------------------------------------------------------------
     results: List[ClaimVerificationResult] = []
-    for claim in claims:
+
+    for claim, sentence_id, source_sentence in claim_tuples:
+        # Evidence retrieval
         if mock_retrieve:
             evidence = get_mock_evidence(claim)
             force_nei = False
@@ -442,24 +527,28 @@ async def verify_claims_from_passage(
             try:
                 retrieval_result = retrieve_single_claim_evidence(claim)
             except Exception as exc:
-                raise HTTPException(status_code=500, detail=f"Evidence retrieval failed for claim '{claim}': {exc}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Evidence retrieval failed for claim '{claim}': {exc}",
+                )
             evidence = retrieval_result["evidence"]
             force_nei = retrieval_result["force_nei"]
+
+        # Claim verification
         if force_nei:
             label = "NOT ENOUGH INFO"
-            probs = {
-                "REFUTED": 0.0,
-                "NOT ENOUGH INFO": 1.0,
-                "SUPPORTED": 0.0,
-            }
+            probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
         else:
             label, probs = verify_single_claim(claim, evidence)
+
         results.append(
             ClaimVerificationResult(
                 claim=claim,
                 evidence=evidence,
                 label=label,
                 probabilities=probs,
+                sentence_id=sentence_id,
+                source_sentence=source_sentence,
             )
         )
 
@@ -474,17 +563,13 @@ async def verify_claims_direct(request: ClaimVerificationDirectRequest):
     Body:
       {
         "items": [
-          {
-            "claim": "...",
-            "evidence": ["...", "..."]
-          },
+          { "claim": "...", "evidence": ["...", "..."] },
           ...
         ]
       }
 
-    Useful for:
-      - testing the verifier independently of extraction/retrieval
-      - quick local experiments in a notebook / Postman.
+    Useful for testing the verifier independently of extraction/retrieval.
+    sentence_id and source_sentence will be null in these responses.
     """
     results: List[ClaimVerificationResult] = []
 
@@ -498,6 +583,9 @@ async def verify_claims_direct(request: ClaimVerificationDirectRequest):
                 evidence=item.evidence,
                 label=label,
                 probabilities=probs,
+                # No passage context available in the direct endpoint
+                sentence_id=None,
+                source_sentence=None,
             )
         )
 

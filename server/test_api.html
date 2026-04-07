@@ -73,9 +73,18 @@
     
     <label for="modeSelect"><strong>Select API:</strong></label>
     <select id="modeSelect" onchange="checkHealth()">
-        <option value="bias">Bias Detection (server.py @ :8000)</option>
-        <option value="claim">Claim Verification (server_claim.py @ :8001)</option>
+        <option value="bias">Bias Detection (/bias)</option>
+        <option value="claim">Claim Verification (/claim)</option>
     </select>
+    <br><br>
+    <label for="backendUrl"><strong>Backend Base URL:</strong></label>
+    <input
+        id="backendUrl"
+        type="text"
+        style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;"
+        placeholder="http://localhost:8000"
+    />
+    <button onclick="saveBackendUrl()">Save Backend URL</button>
     
     <div class="status" id="healthStatus">Checking server status...</div>
     
@@ -88,17 +97,40 @@
     <div id="result"></div>
 
     <script>
+        function inferDefaultBackendUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const fromQuery = params.get('api');
+            if (fromQuery) return fromQuery;
+
+            const saved = localStorage.getItem('veritas_api_base_url');
+            if (saved) return saved;
+
+            return 'http://localhost:8000';
+        }
+
+        function getBackendBaseUrl() {
+            const input = document.getElementById('backendUrl');
+            const value = (input?.value || '').trim();
+            return value || inferDefaultBackendUrl();
+        }
+
+        function saveBackendUrl() {
+            const value = getBackendBaseUrl();
+            localStorage.setItem('veritas_api_base_url', value);
+            checkHealth();
+        }
+
         const MODES = {
             bias: {
                 name: 'Bias Detection',
-                apiUrl: 'http://localhost:8000/bias', // combined server prefix
+                pathPrefix: '/bias',
                 healthPath: '/health',
                 testPath: '/analyze',
                 buildBody: (text) => ({ text }),
             },
             claim: {
                 name: 'Claim Verification',
-                apiUrl: 'http://localhost:8000/claim', // combined server prefix
+                pathPrefix: '/claim',
                 healthPath: '/health',
                 testPath: '/verify-claims-from-passage', // uses stubbed claims/evidence
                 buildBody: (text) => ({ text }),
@@ -111,16 +143,20 @@
         window.addEventListener('load', checkHealth);
 
         function getModeConfig() {
-            return MODES[modeSelect.value] || MODES.bias;
+            const mode = MODES[modeSelect.value] || MODES.bias;
+            return {
+                ...mode,
+                apiUrl: `${getBackendBaseUrl()}${mode.pathPrefix}`,
+            };
         }
 
         async function checkHealth() {
             const status = document.getElementById('healthStatus');
             status.textContent = 'Checking server...';
             status.className = 'status';
+            const mode = getModeConfig();
             
             try {
-                const mode = getModeConfig();
                 const response = await fetch(`${mode.apiUrl}${mode.healthPath}`);
                 const data = await response.json();
                 
@@ -137,7 +173,7 @@
                     document.getElementById('testBtn').disabled = true;
                 }
             } catch (error) {
-                status.textContent = `❌ Cannot connect to server at ${API_URL}. Make sure it's running!`;
+                status.textContent = `❌ Cannot connect to server at ${mode.apiUrl}. Make sure it's running and reachable from this device.`;
                 status.className = 'status error';
                 document.getElementById('testBtn').disabled = true;
                 console.error('Health check failed:', error);
@@ -240,6 +276,9 @@
                 </div>
             `;
         }
+
+        // Initialize URL input on first load
+        document.getElementById('backendUrl').value = inferDefaultBackendUrl();
     </script>
 </body>
 </html>
