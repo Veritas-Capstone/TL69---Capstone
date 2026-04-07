@@ -2,7 +2,7 @@
 FastAPI server for CLAIM VERIFICATION demo.
 
 Run from repo root:
-    uvicorn server.claim_server:app --reload --port 8001
+    uvicorn server.server_claim:app --reload --port 8001
 
 This server is independent of the bias-detection server.py
 and only handles claim verification.
@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import torch
 
 from api.claim_extraction.claim_extraction import extract_claims
 from api.claim_verification.inference import baseline
@@ -24,6 +25,10 @@ from api.claim_verification.retrieval.colbert_rerank import ClaimEvidenceRetriev
 
 # Load environment variables from local .env (if present).
 load_dotenv()
+
+GPU_DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+if GPU_DEVICE.type == "cuda":
+    torch.cuda.set_device(0)
 
 # -----------------------------------------------------------------------------
 # FastAPI app setup
@@ -125,6 +130,7 @@ if ckpt:
         claim_tokenizer, claim_model = baseline.load_attention_verifier(
             model_name=MODEL_ARCH,
             state_dict_path=ckpt,
+            map_location=GPU_DEVICE,
         )
         use_attention = True
         print("[ClaimServer] Loaded attention-based verifier.")
@@ -133,12 +139,16 @@ if ckpt:
         claim_tokenizer, claim_model = baseline.load_claim_verifier(
             model_name=MODEL_ARCH,
             state_dict_path=ckpt,
+            map_location=GPU_DEVICE,
         )
 else:
     claim_tokenizer, claim_model = baseline.load_claim_verifier(
         model_name=MODEL_ARCH,
         state_dict_path=ckpt,
+        map_location=GPU_DEVICE,
     )
+
+claim_model = claim_model.to(GPU_DEVICE)
 
 print("[ClaimServer] Claim verification model loaded!")
 
@@ -159,6 +169,7 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
             evidence_list,
             tokenizer=claim_tokenizer,
             model=claim_model,
+            device=GPU_DEVICE,
         )
     else:
         label, probs = baseline.verify_claim(
@@ -166,6 +177,7 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
             evidence_list,
             tokenizer=claim_tokenizer,
             model=claim_model,
+            device=GPU_DEVICE,
         )
     return label, probs
 
@@ -176,17 +188,35 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
 
 # CLAIM_EXTRACTION_MODEL -> Ollama model to use (default: mistral)
 # CLAIM_EXTRACTION_MAX   -> max claims to return per passage (default: 10)
-EXTRACTION_MODEL = os.getenv("CLAIM_EXTRACTION_MODEL", "mistral")
+EXTRACTION_MODEL = os.getenv("CLAIM_EXTRACTION_MODEL", "phi3")
 EXTRACTION_MAX_CLAIMS = int(os.getenv("CLAIM_EXTRACTION_MAX", "10"))
 
 # -----------------------------------------------------------------------------
 # Evidence retrieval config (env vars)
 # -----------------------------------------------------------------------------
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _resolve_repo_path(path_value: str) -> Path:
+    path = Path(path_value)
+    if path.is_absolute():
+        return path
+    return (REPO_ROOT / path).resolve()
+
 RETRIEVER_BM25_INDEX = os.getenv(
     "CLAIM_RETRIEVAL_BM25_INDEX",
     "api/claim_verification/data/wiki_corpus/bm25_index",
 )
+RETRIEVER_BM25_INDEX_PATH = _resolve_repo_path(RETRIEVER_BM25_INDEX)
+if not RETRIEVER_BM25_INDEX_PATH.exists() and os.getenv("CLAIM_RETRIEVAL_BM25_INDEX"):
+    default_bm25_index = _resolve_repo_path("api/claim_verification/data/wiki_corpus/bm25_index")
+    if default_bm25_index.exists():
+        print(
+            "[ClaimServer] CLAIM_RETRIEVAL_BM25_INDEX points to a missing path "
+            f"({RETRIEVER_BM25_INDEX_PATH}); falling back to {default_bm25_index}."
+        )
+        RETRIEVER_BM25_INDEX_PATH = default_bm25_index
 RETRIEVER_COLBERT_CHECKPOINT = os.getenv(
     "CLAIM_RETRIEVAL_COLBERT_CHECKPOINT",
     "colbert-ir/colbertv2.0",
@@ -196,22 +226,29 @@ ENABLE_LIVE_NEWS = bool(THENEWSAPI_TOKEN)
 if not ENABLE_LIVE_NEWS:
     print("[ClaimServer] THENEWSAPI_TOKEN not set; disabling live-news fallback.")
 
-print(f"[ClaimServer] Loading evidence retriever from BM25 index: {RETRIEVER_BM25_INDEX}")
-claim_retriever = ClaimEvidenceRetriever(
-    bm25_index=RETRIEVER_BM25_INDEX,
-    checkpoint=RETRIEVER_COLBERT_CHECKPOINT,
-    use_gpu=True,
-    batch_size=16,
-    bm25_k=200,
-    top_k=10,
-    evidence_k=5,
-    enable_live_news=ENABLE_LIVE_NEWS,
-    news_limit=8,
-    news_hours_back=72,
-    news_language="en",
-    allow_untrusted_domains=False,
-)
-print("[ClaimServer] Evidence retriever loaded!")
+claim_retriever = None
+if RETRIEVER_BM25_INDEX_PATH.exists() and RETRIEVER_BM25_INDEX_PATH.is_dir():
+    print(f"[ClaimServer] Loading evidence retriever from BM25 index: {RETRIEVER_BM25_INDEX_PATH}")
+    claim_retriever = ClaimEvidenceRetriever(
+        bm25_index=str(RETRIEVER_BM25_INDEX_PATH),
+        checkpoint=RETRIEVER_COLBERT_CHECKPOINT,
+        use_gpu=True,
+        batch_size=16,
+        bm25_k=200,
+        top_k=10,
+        evidence_k=5,
+        enable_live_news=ENABLE_LIVE_NEWS,
+        news_limit=8,
+        news_hours_back=72,
+        news_language="en",
+        allow_untrusted_domains=False,
+    )
+    print("[ClaimServer] Evidence retriever loaded!")
+else:
+    print(
+        f"[ClaimServer] BM25 index not found at {RETRIEVER_BM25_INDEX_PATH}; "
+        "claim evidence retrieval is disabled until the index is built."
+    )
 
 
 URL_LINE_PATTERN = re.compile(r"^\s*URL:\s*\S+\s*$", re.IGNORECASE | re.MULTILINE)
@@ -250,20 +287,22 @@ def sanitize_evidence_list(evidence: List[str]) -> List[str]:
 
 
 def retrieve_single_claim_evidence(claim: str):
-    """
-    Directly callable ER pipeline function.
-    Returns:
-      {
-        "claim": ...,
-        "evidence": [...],
-        "confidence": bool,
-        "force_nei": bool,
-        "source": ...
-      }
-    """
-    result = claim_retriever.retrieve(claim)
-    result["evidence"] = sanitize_evidence_list(result.get("evidence", []))
-    return result
+        """
+        Directly callable ER pipeline function.
+        Returns:
+            {
+                "claim": ...,
+                "evidence": [...],
+                "confidence": bool,
+                "force_nei": bool,
+                "source": ...
+            }
+        """
+        if claim_retriever is None: raise RuntimeError(f"BM25 index is missing: {RETRIEVER_BM25_INDEX_PATH}. Build the index or set CLAIM_RETRIEVAL_BM25_INDEX to a valid directory.")
+
+        result = claim_retriever.retrieve(claim)
+        result["evidence"] = sanitize_evidence_list(result.get("evidence", []))
+        return result
 
 # -----------------------------------------------------------------------------
 # DEMO: stub for claim extraction + evidence retrieval
@@ -450,7 +489,7 @@ async def retrieve_evidence_endpoint(request: ClaimRequest):
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
 async def verify_claims_from_passage(
     request: PassageRequest,
-    mock_claims: bool = True,
+    mock_claims: bool = False,
     mock_retrieve: bool = False,
 ):
     """

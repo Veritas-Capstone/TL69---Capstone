@@ -73,7 +73,8 @@ api/claim_verification/models/
 /api/claim_verification/training_metrics/
 
 # ignore model folder
-experiments/models
+models/
+
 # Large data (your wiki DB etc.)
 api/claim_verification/data/
 

@@ -226,6 +226,7 @@ def verify_claim(
     evidence_list: List[str],
     tokenizer: AutoTokenizer,
     model: AutoModelForSequenceClassification,
+    device: Union[str, torch.device, None] = None,
     max_length: int = 256,
 ) -> Tuple[str, dict]:
     """
@@ -250,6 +251,10 @@ def verify_claim(
         return_tensors="pt",
     )
 
+    if device is not None:
+        model = model.to(device)
+        enc = {k: v.to(device) for k, v in enc.items()}
+
     with torch.no_grad():
         logits = model(**enc).logits
         probs = torch.softmax(logits, dim=-1).squeeze(0)
@@ -265,6 +270,7 @@ def verify_claim_attention(
     evidence_list: List[str],
     tokenizer: AutoTokenizer,
     model: ClaimEvidenceAttentionModel,
+    device: Union[str, torch.device, None] = None,
     max_evidence: int = 5,
     max_length: int = 256,
 ) -> Tuple[str, dict, List[Tuple[str, float]]]:
@@ -295,6 +301,12 @@ def verify_claim_attention(
     for k in ev_enc:
         ev_enc[k] = ev_enc[k].unsqueeze(0)  # [1, K, L]
     evid_mask = torch.ones(1, len(evidence_list), dtype=torch.long)
+
+    if device is not None:
+        model = model.to(device)
+        claim_enc = {k: v.to(device) for k, v in claim_enc.items()}
+        ev_enc = {k: v.to(device) for k, v in ev_enc.items()}
+        evid_mask = evid_mask.to(device)
 
     with torch.no_grad():
         outputs = model(claim_enc, ev_enc, evid_mask)

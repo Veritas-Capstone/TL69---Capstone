@@ -55,7 +55,7 @@ class ColBERTReranker:
             doc_maxlen=int(doc_maxlen),
         )
 
-        self.device = "cuda" if (use_gpu and torch.cuda.is_available()) else "cpu"
+        self.device = "cuda:0" if (use_gpu and torch.cuda.is_available()) else "cpu"
 
         self.ckpt = Checkpoint(self.checkpoint_name, colbert_config=self.config)
         self.ckpt = self.ckpt.to(self.device)

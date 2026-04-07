@@ -1,6 +1,7 @@
 """
 FastAPI server for bias detection model
-Run with: uvicorn server:app --reload --port 8000
+Run with from the repo root:
+    uvicorn server.server:app --reload --port 8000
 
 This script uses Model 4 as the baseline and takes in as input an article, 
 splits it into sentences, feeds each sentence to the model, and aggregates 
@@ -26,6 +27,10 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import spacy
 from typing import List, Dict
+
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+if DEVICE.type == "cuda":
+    torch.cuda.set_device(0)
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")
@@ -77,7 +82,7 @@ def load_model():
         "microsoft/deberta-v3-large",
         use_fast=False
     )
-    model.eval()
+    model.eval().to(DEVICE)
     return model, tokenizer
 
 
@@ -86,6 +91,7 @@ def load_model():
 # -----------------------
 def baseline_bias_detection(model, tokenizer, sentence):
     inputs = tokenizer(sentence, return_tensors="pt", truncation=True, padding=True)
+    inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
 
     with torch.no_grad():
         logits = model(**inputs).logits
@@ -96,9 +102,9 @@ def baseline_bias_detection(model, tokenizer, sentence):
 
     print(f"Sentence: {sentence}")
     print("Predicted Bias:", label_map[predicted])
-    print("Probabilities:", probs[0].tolist(), "\n")
+    print("Probabilities:", probs[0].detach().cpu().tolist(), "\n")
 
-    return label_map[predicted], probs[0]
+    return label_map[predicted], probs[0].detach().cpu()
 
 
 # -----------------------
@@ -248,7 +254,7 @@ async def analyze_text(request: AnalysisRequest):
         overall_bias, totals = AggregateBiasScores(probability_vectors, weights)
         
         # Normalize to get average probabilities
-        avg_probs = totals / len(probability_vectors)
+        avg_probs = (totals / len(probability_vectors)).detach().cpu()
         
         # Count checks and issues
         checks = len(sentences)

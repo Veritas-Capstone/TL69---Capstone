@@ -12,14 +12,42 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os, json, time, warnings
+from pathlib import Path
 import spacy
 from transformers import AutoModel, AutoModelForSequenceClassification, AutoTokenizer
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # model paths
-AA_MODEL_PATH = "/u50/shared/bias_detection/models/leace"
-POLITICALNESS_MODEL_PATH = "/u50/shared/bias_detection/models/politicalness_filter"
+BACKEND_DIR = Path(__file__).resolve().parent
+LOCAL_MODELS_DIR = BACKEND_DIR / "models"
+SHARED_MODELS_DIR = Path("/u50/shared/bias_detection/models")
+
+
+def _resolve_model_path(env_key: str, local_subdir: str, shared_subdir: str) -> str:
+    env_path = os.getenv(env_key)
+    if env_path:
+        candidate = Path(env_path).expanduser()
+        if candidate.exists():
+            return str(candidate)
+        print(f"[BiasServer] {env_key} not found at {candidate}; trying defaults.")
+
+    local_candidate = LOCAL_MODELS_DIR / local_subdir
+    if local_candidate.exists():
+        return str(local_candidate)
+
+    shared_candidate = SHARED_MODELS_DIR / shared_subdir
+    if shared_candidate.exists():
+        return str(shared_candidate)
+
+    # Fall back to local expected path for clearer error messages during startup.
+    return str(local_candidate)
+
+
+AA_MODEL_PATH = _resolve_model_path("BIAS_AA_MODEL_PATH", "leace", "leace")
+POLITICALNESS_MODEL_PATH = _resolve_model_path(
+    "BIAS_POLITICALNESS_MODEL_PATH", "politicalness_filter", "politicalness_filter"
+)
 
 # inference config
 LABELS = ["Left", "Center", "Right"]
@@ -102,7 +130,8 @@ class LeaceBiasModel(nn.Module):
 class BiasDetector:
     def __init__(self, aa_path, pol_path):
         if torch.cuda.is_available():
-            self.device = torch.device("cuda")
+            torch.cuda.set_device(0)
+            self.device = torch.device("cuda:0")
         else:
             self.device = torch.device("cpu")
             torch.set_num_threads(8)
@@ -426,7 +455,7 @@ def categorize_bias(bias, confidence):
     return "Centrist", "This statement presents a balanced or centrist perspective."
 
 
-@app.post("/bias/analyze", response_model=AnalysisResponse)
+@app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_text(request: AnalysisRequest):
     try:
         text = request.text.strip()
@@ -468,7 +497,7 @@ async def analyze_text(request: AnalysisRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/bias/explain", response_model=ExplainResponse)
+@app.post("/explain", response_model=ExplainResponse)
 async def explain_sentence(request: ExplainRequest):
     try:
         text = request.text.strip()
@@ -488,8 +517,13 @@ async def explain_sentence(request: ExplainRequest):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "device": str(detector.device),
-            "pipeline": "AA + LEACE", "fp16": detector.use_fp16}
+    return {
+        "status": "healthy",
+        "device": str(detector.device),
+        "pipeline": "AA + LEACE",
+        "fp16": detector.use_fp16,
+        "model_loaded": detector is not None,
+    }
 
 
 if __name__ == "__main__":
