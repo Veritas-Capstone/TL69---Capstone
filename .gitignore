@@ -25,14 +25,7 @@ var/
 *.egg
 
 # Virtual environments
-.venv/
-venv/
-ENV/
-env/
-gpu_venv/
-.gpu_venv/
-api/claim_verification/gpu_venv/
-Bias-Detection/biasenv/
+*env/
 
 # Pytest cache
 .pytest_cache/
@@ -40,6 +33,11 @@ Bias-Detection/biasenv/
 # IDEs and editors
 .vscode/
 .idea/
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
 
 # OS files
 .DS_Store
@@ -82,6 +80,7 @@ api/claim_verification/data/
 # Evaluation outputs
 api/claim_verification/evaluation/*.json
 api/claim_verification/evaluation/*.csv
+api/claim_extraction/eval/results_*.json
 
 # Metrics logs
 api/claim_verification/eval_metrics/

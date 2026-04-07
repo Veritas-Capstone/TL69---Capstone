@@ -1,0 +1,93 @@
+[
+  {
+    "id": "apollo_01",
+    "passage": "In 1969, NASA successfully landed the Apollo 11 spacecraft on the Moon. Neil Armstrong became the first human to walk on the lunar surface, and Buzz Aldrin joined him shortly after. The mission was launched from Kennedy Space Center in Florida on July 16, 1969. The Saturn V rocket used for the launch remains one of the most powerful rockets ever built. The Moon landing was broadcast live to an estimated 600 million people worldwide.",
+    "reference_claims": [
+      "NASA landed the Apollo 11 spacecraft on the Moon in 1969.",
+      "Neil Armstrong was the first human to walk on the Moon.",
+      "Buzz Aldrin also walked on the lunar surface during Apollo 11.",
+      "The Apollo 11 mission launched from Kennedy Space Center in Florida.",
+      "The Apollo 11 mission launched on July 16, 1969.",
+      "The Saturn V rocket is one of the most powerful rockets ever built.",
+      "The Moon landing was broadcast live to approximately 600 million people."
+    ]
+  },
+  {
+    "id": "apollo_02",
+    "passage": "Some critics argue that the Moon landing was staged, but no credible evidence has been found to support this claim. The United States spent approximately $25.4 billion on the Apollo program between 1961 and 1973. The Apollo program resulted in significant technological advancements, including improvements in computing and materials science. The Soviet Union never successfully landed a cosmonaut on the Moon.",
+    "reference_claims": [
+      "No credible evidence has been found to support claims that the Moon landing was staged.",
+      "The United States spent approximately $25.4 billion on the Apollo program.",
+      "The Apollo program ran between 1961 and 1973.",
+      "The Apollo program led to advances in computing and materials science.",
+      "The Soviet Union never landed a cosmonaut on the Moon."
+    ]
+  },
+  {
+    "id": "5g_factual",
+    "passage": "5G is the fifth generation of wireless communication technology, designed to provide faster data speeds, lower latency, and improved connectivity compared to 4G. It operates across multiple frequency bands, including low-band, mid-band, and high-band millimetre wave spectrum. The global rollout of 5G began in 2019, with South Korea and the United States among the first countries to deploy commercial 5G networks.",
+    "reference_claims": [
+      "5G is the fifth generation of wireless communication technology.",
+      "5G provides faster data speeds than 4G.",
+      "5G has lower latency than 4G.",
+      "5G operates across low-band, mid-band, and high-band millimetre wave spectrum.",
+      "The global rollout of 5G began in 2019.",
+      "South Korea was among the first countries to deploy commercial 5G.",
+      "The United States was among the first countries to deploy commercial 5G."
+    ]
+  },
+  {
+    "id": "climate_01",
+    "passage": "The Intergovernmental Panel on Climate Change (IPCC) was established in 1988 by the United Nations Environment Programme and the World Meteorological Organization. The IPCC does not conduct its own research but assesses published scientific literature. Its Sixth Assessment Report, released in stages between 2021 and 2022, concluded that human influence has warmed the climate at an unprecedented rate.",
+    "reference_claims": [
+      "The IPCC was established in 1988.",
+      "The IPCC was established by the United Nations Environment Programme and the World Meteorological Organization.",
+      "The IPCC does not conduct original research.",
+      "The IPCC assesses published scientific literature.",
+      "The IPCC Sixth Assessment Report was released between 2021 and 2022.",
+      "The Sixth Assessment Report concluded that human influence has warmed the climate at an unprecedented rate."
+    ]
+  },
+  {
+    "id": "vaccine_factual",
+    "passage": "The Pfizer-BioNTech COVID-19 vaccine was the first COVID-19 vaccine to receive emergency use authorization from the FDA, in December 2020. It uses messenger RNA technology to instruct cells to produce a protein that triggers an immune response. Clinical trials showed an efficacy of approximately 95% against symptomatic COVID-19.",
+    "reference_claims": [
+      "The Pfizer-BioNTech COVID-19 vaccine was the first COVID-19 vaccine to receive FDA emergency use authorization.",
+      "The Pfizer-BioNTech vaccine received FDA emergency use authorization in December 2020.",
+      "The Pfizer-BioNTech vaccine uses mRNA technology.",
+      "The vaccine instructs cells to produce a protein that triggers an immune response.",
+      "Clinical trials showed approximately 95% efficacy against symptomatic COVID-19."
+    ]
+  },
+  {
+    "id": "mixed_opinion_fact",
+    "passage": "Albert Einstein was born in Ulm, Germany in 1879. He developed the theory of special relativity in 1905, which many consider his most elegant work. Einstein was awarded the Nobel Prize in Physics in 1921, not for relativity, but for his discovery of the photoelectric effect. He emigrated to the United States in 1933.",
+    "reference_claims": [
+      "Albert Einstein was born in Ulm, Germany.",
+      "Albert Einstein was born in 1879.",
+      "Einstein developed the theory of special relativity in 1905.",
+      "Einstein was awarded the Nobel Prize in Physics in 1921.",
+      "Einstein received the Nobel Prize for discovering the photoelectric effect, not for relativity.",
+      "Einstein emigrated to the United States in 1933."
+    ]
+  },
+  {
+    "id": "short_passage",
+    "passage": "The Great Wall of China stretches over 13,000 miles and was built over many centuries, primarily during the Ming dynasty.",
+    "reference_claims": [
+      "The Great Wall of China is over 13,000 miles long.",
+      "The Great Wall was built over many centuries.",
+      "The Great Wall was primarily built during the Ming dynasty."
+    ]
+  },
+  {
+    "id": "compound_statements",
+    "passage": "Water covers approximately 71% of Earth's surface and is essential for all known life. The human body is composed of roughly 60% water, and a person can survive only about three days without it.",
+    "reference_claims": [
+      "Water covers approximately 71% of Earth's surface.",
+      "Water is essential for all known life.",
+      "The human body is composed of roughly 60% water.",
+      "A person can survive approximately three days without water."
+    ]
+  }
+]
