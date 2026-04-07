@@ -18,15 +18,15 @@ from transformers import AutoModel, AutoModelForSequenceClassification, AutoToke
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # model paths
-AA_MODEL_PATH = "/u50/shared/bias_detection/models/leace"
-POLITICALNESS_MODEL_PATH = "/u50/shared/bias_detection/models/politicalness_filter"
+AA_MODEL_PATH = "C:/Users/kazim/Desktop/models/bias_models/bias"
+POLITICALNESS_MODEL_PATH = "C:/Users/kazim/Desktop/models/bias_models/filter"
 
 # inference config
 LABELS = ["Left", "Center", "Right"]
 BIAS_CONFIDENCE_THRESHOLD = 0.55
 OVERALL_HIGH_CONFIDENCE = 0.55
 OVERALL_LOW_CONFIDENCE = 0.45
-POLITICALNESS_THRESHOLD = 0.5
+POLITICALNESS_THRESHOLD = 0.4
 WINDOW_RADIUS = 2
 
 POLITICALNESS_HYPOTHESES = [
@@ -35,6 +35,11 @@ POLITICALNESS_HYPOTHESES = [
     "This text is about legislation, regulation, or political debate.",
     "This text discusses government officials or political parties.",
     "This text discusses social policy like healthcare, immigration, or civil rights.",
+    "This text discusses government regulation, public health policy, or government overreach.",
+    "This text discusses military operations, weapons systems, or national security.",
+    "This text discusses economic policy, taxes, trade, or government spending.",
+    "This text discusses elections, voting, or political campaigns.",
+    "This text discusses foreign policy or international relations.",
 ]
 
 STOP_WORDS = frozenset({
