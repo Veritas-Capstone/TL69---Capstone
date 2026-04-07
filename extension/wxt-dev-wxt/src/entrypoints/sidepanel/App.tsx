@@ -9,9 +9,10 @@ import { AnalysisResult } from '@/types';
 import { Button } from '@/components/ui/button';
 import Profile from './Profile';
 import logo from '../../assets/logo.png';
+import { MODEL_BACKEND, USER_AUTH_BACKEND } from '@/config';
 
 function App() {
-	const modelBackend = import.meta.env.WXT_MODEL_BACKEND || 'http://localhost:8000';
+	const modelBackend = MODEL_BACKEND;
 	const [result, setResult] = useState<AnalysisResult | undefined>();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string>();
@@ -74,7 +75,7 @@ function App() {
 	// update user stats in profile
 	async function updateStats(data: AnalysisResult) {
 		if (localStorage.getItem('username')) {
-			await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/stats`, {
+			await fetch(`${USER_AUTH_BACKEND}/stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({

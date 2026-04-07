@@ -1,4 +1,5 @@
-import { AnalysisResult, TokenAttribution  } from '@/types';
+import { AnalysisResult, TokenAttribution } from '@/types';
+import { MODEL_BACKEND } from '@/config';
 
 export interface SentenceBias {
 	text: string;
@@ -114,14 +115,14 @@ function generateMockFactChecks(text: string): Array<{
 
 export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	try {
-		const response = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/bias/analyze`, {
+		const response = await fetch(`${MODEL_BACKEND}/bias/analyze`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
 		});
 		let fact_checks_response = []; // TODO: probably remove the try catch around this since this is only currently done because this API is not ready
 		try {
-			const response2 = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/claim/verify-claims-from-passage`, {
+			const response2 = await fetch(`${MODEL_BACKEND}/claim/verify-claims-from-passage`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ text }),
@@ -164,7 +165,7 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 
 export async function fetchExplain(text: string): Promise<TokenAttribution[]> {
 	try {
-		const response = await fetch(`${import.meta.env.WXT_MODEL_BACKEND}/bias/explain`, {
+		const response = await fetch(`${MODEL_BACKEND}/bias/explain`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),

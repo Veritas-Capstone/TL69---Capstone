@@ -100,7 +100,7 @@ class EvidenceRetrievalResult(BaseModel):
 #   CLAIM_MODEL_CHECKPOINT-> explicit path to a .pt state_dict
 #   CLAIM_MODEL_ARCH      -> HF model id / local HF directory for the base architecture
 MODEL_ARCH = os.getenv("CLAIM_MODEL_ARCH", baseline.MODEL)
-MODEL_DATASET = os.getenv("CLAIM_MODEL_DATASET", "fever_averitec_mix")
+MODEL_DATASET = os.getenv("CLAIM_MODEL_DATASET", "fever_averitec_er_r50_h4") 
 MODEL_CHECKPOINT = os.getenv("CLAIM_MODEL_CHECKPOINT")
 
 
@@ -461,8 +461,8 @@ async def retrieve_evidence_endpoint(request: ClaimRequest):
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
 async def verify_claims_from_passage(
     request: PassageRequest,
-    mock_claims: bool = False,
-    mock_retrieve: bool = False,
+    mock_claims: bool = True,
+    mock_retrieve: bool = True,
 ):
     """
     Entry point for the Chrome extension for claim verification.
