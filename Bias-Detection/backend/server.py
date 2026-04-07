@@ -1,6 +1,6 @@
 """
-Veritas bias detection server (AA + LEACE pipeline).
-Auto-detects GPU/CPU. Endpoints: /bias/analyze, /bias/explain.
+Veritas bias detection server
+Auto-detects GPU/CPU. Endpoints: /bias/analyze, /bias/explain
 Run with: uvicorn server:app --reload --port 8000
 """
 
@@ -11,7 +11,8 @@ from typing import List, Dict
 import torch
 import torch.nn as nn
 import numpy as np
-import re, os, json, time, warnings
+import os, json, time, warnings
+import spacy
 from transformers import AutoModel, AutoModelForSequenceClassification, AutoTokenizer
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -73,12 +74,12 @@ class MLPClassifier(nn.Module):
 
 class LeaceBiasModel(nn.Module):
     def __init__(self, model_name, leace_projection, num_labels=3,
-                 num_domains=8, lambda_adv=0.7, hidden_dim=256):
+                    num_domains=8, lambda_adv=0.7, hidden_dim=256):
         super().__init__()
         self.encoder = AutoModel.from_pretrained(model_name)
         hidden_size = self.encoder.config.hidden_size
         self.register_buffer("leace_proj",
-                             torch.tensor(leace_projection, dtype=torch.float32))
+                                torch.tensor(leace_projection, dtype=torch.float32))
         self.classifier = MLPClassifier(hidden_size, num_labels, hidden_dim)
         self.bias_classifier = nn.Sequential(
             nn.Dropout(0.1), nn.Linear(hidden_size, num_labels))
@@ -109,7 +110,10 @@ class BiasDetector:
 
         self.use_fp16 = self.device.type == "cuda"
         self.max_batch_size = 8 if self.device.type == "cuda" else 4
-        print(f"  Device: {self.device}  |  FP16: {self.use_fp16}  |  Batch: {self.max_batch_size}")
+        print(f"  Device: {self.device},  FP16: {self.use_fp16},  Batch: {self.max_batch_size}")
+
+        self.nlp = spacy.load("en_core_web_sm")
+        print("  spaCy en_core_web_sm loaded")
 
         self._load_bias_model(aa_path)
         self._load_pol_model(pol_path)
@@ -351,16 +355,12 @@ class BiasDetector:
                 "sentences": sentence_results,
                 "elapsed": time.time() - start}
 
-    @staticmethod
-    def _split_sentences(text):
-        raw = re.split(r'(?<=[.!?])\s+(?=[A-Z"\'])', text)
-        expanded = []
-        for chunk in raw:
-            parts = chunk.split("\n\n")
-            expanded.extend(p.strip() for p in parts if p.strip())
+    def _split_sentences(self, text):
+        doc = self.nlp(text)
+        raw = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
 
         merged = []
-        for s in expanded:
+        for s in raw:
             if merged and len(s.split()) < 8:
                 merged[-1] += " " + s
             else:
@@ -452,8 +452,8 @@ async def analyze_text(request: AnalysisRequest):
 
         checks = len(sentence_results)
         issues = sum(1 for s in sentence_results
-                     if s.confidence >= BIAS_CONFIDENCE_THRESHOLD
-                     and s.bias not in ("Center", "Uncertain"))
+                        if s.confidence >= BIAS_CONFIDENCE_THRESHOLD
+                        and s.bias not in ("Center", "Uncertain"))
 
         return AnalysisResponse(
             overall_bias=result["prediction"] or "Uncertain",
@@ -485,12 +485,6 @@ async def explain_sentence(request: ExplainRequest):
         print(f"Error: {e}")
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/analyze", response_model=AnalysisResponse)
-async def analyze_text_legacy(request: AnalysisRequest):
-    return await analyze_text(request)
-
 
 @app.get("/health")
 async def health_check():
