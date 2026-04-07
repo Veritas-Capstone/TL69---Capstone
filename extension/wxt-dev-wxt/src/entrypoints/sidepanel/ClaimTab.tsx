@@ -78,7 +78,7 @@ export default function ClaimTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%
@@ -89,7 +89,7 @@ export default function ClaimTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%

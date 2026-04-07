@@ -188,7 +188,7 @@ def verify_single_claim(claim: str, evidence_list: List[str]):
 
 # CLAIM_EXTRACTION_MODEL -> Ollama model to use (default: mistral)
 # CLAIM_EXTRACTION_MAX   -> max claims to return per passage (default: 10)
-EXTRACTION_MODEL = os.getenv("CLAIM_EXTRACTION_MODEL", "phi3")
+EXTRACTION_MODEL = os.getenv("CLAIM_EXTRACTION_MODEL", "mistral")
 EXTRACTION_MAX_CLAIMS = int(os.getenv("CLAIM_EXTRACTION_MAX", "10"))
 
 # -----------------------------------------------------------------------------
