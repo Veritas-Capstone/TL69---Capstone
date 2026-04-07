@@ -1,0 +1,26 @@
+claim,latency_seconds,evidence_count,confidence,force_nei,source,claim_length_chars,claim_length_words
+Hunter Biden had no experience in Ukraine or in the energy sector when he joined the board of Burisma.,0.6431047301739454,3,True,False,local,102,19
+"Joe Biden voted for the Irag War and supported war in Serbia, Syria and Libya.",0.19808776304125786,3,True,False,local,78,15
+"Joe Biden voted for the Iraq War and he supported wars in Serbia, Syria, and Libya.",0.18903273809701204,3,True,False,local,83,16
+Donald Trump has kept his promises to voters,0.1897035464644432,3,True,False,local,44,8
+There is a ‘global average’ for the number of judges and magistrates to number of people,0.198754595592618,3,True,False,local,88,16
+"In Kenya, one Magistrate serves 77,000 people.",0.17470625136047602,3,True,False,local,46,7
+No Democrats have condemned the rioting that has occurred alongside recent protests.,0.19717927929013968,3,True,False,local,84,12
+"A pizza place in Washington, D.C. -- Comet Ping Pong has ties to Hillary Clinton and other leading Democrats",0.18293398153036833,3,True,False,local,108,19
+South Africans are among the top drinkers in the world.,0.18491703178733587,3,True,False,local,55,10
+South Africans drink more per person than anywhere else in Africa,0.19371865876019,3,True,False,local,65,11
+Only 31% of South Africans drink alcohol.,0.1903011603280902,3,True,False,local,41,7
+Joe Biden officiated a gay wedding at the White House in 2016.,0.19657661486417055,3,True,False,local,62,12
+Democratic Arizona Superintendent of Public Instruction Kathy Hoffman is “pushing” for sex education that would teach kindergartners about masturbation and sexual positions.,0.20794039871543646,3,True,False,local,173,22
+Democratic Arizona Superintendent of Public Instruction Kathy Hoffman was sworn into office on a Dr. Seuss book.,0.19228434190154076,3,True,False,local,112,17
+India's Supreme Court recently changed its motto from ‘Satyamev Jayate’ to ‘Yato Dharmastato Jai’.,0.2012899136170745,3,True,False,local,98,14
+Candace Owens was fired from her show at One America News after a  racist outburst.,0.2267809398472309,3,True,False,local,83,15
+President Trump is the most pro-gay president in American history.,0.17770871240645647,3,True,False,local,66,10
+"Messages in Google Earth show the ""Deep States New Home,"" which shows up on the map as ""Setatspeed Emohwen Gardens"" near Guantanamo Bay, Cuba.",0.2243385361507535,3,True,False,local,142,24
+Donald Trump is trying to take away the health care by getting rid of the Affordable Care Act.,0.18946148920804262,3,True,False,local,94,18
+Trumps January 2018 travel ban was unlawful.,0.16986534651368856,3,True,False,local,44,7
+"Drinking traditional Chinese medicine (TCM) or steroids, along with antibiotics at the onset of symptoms cures COVID-19.",0.18136364128440619,3,True,False,local,120,17
+"Nigeria is the largest producer of rice in Africa, ranking 14th in the world.",0.1961205806583166,3,True,False,local,77,14
+"In the US, envelopes used for mail-in ballots in general elections reveal the party affiliation of the voter allowing postal workers to toss votes.",0.20376431848853827,3,True,False,local,147,24
+A sharp decline recently in novel coronavirus cases in New York was down to Gov. Andrew M. Cuomo handling of the situation.,0.19770447071641684,3,True,False,local,123,22
+Social Security beneficiaries count on the post office to get their checks.,0.19151284638792276,3,True,False,local,75,12

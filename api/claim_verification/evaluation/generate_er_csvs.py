@@ -70,7 +70,7 @@ def main():
     TOP_K = 5
     EVIDENCE_K = 2
 
-    ENABLE_LIVE_NEWS = True
+    ENABLE_LIVE_NEWS = False
     PROGRESS_EVERY = 100
     NEWS_LIMIT = 3
     NEWS_HOURS_BACK = 168
@@ -80,8 +80,8 @@ def main():
     # -----------------------------
     # DATASETS
     # -----------------------------
-    RUN_AVERITEC = True
-    RUN_FEVER = False
+    RUN_AVERITEC = False
+    RUN_FEVER = True
 
     AVERITEC_INPUT = "api/claim_verification/data/processed/averitec.csv"
     AVERITEC_OUTPUT = "api/claim_verification/evaluation/averitec_full_er.csv"
