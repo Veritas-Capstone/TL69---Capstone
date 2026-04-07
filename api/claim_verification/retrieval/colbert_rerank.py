@@ -1,4 +1,5 @@
 import argparse
+import re
 from typing import List, Dict, Any
 
 import torch
@@ -18,6 +19,23 @@ def _safe_text(c: Dict[str, Any]) -> str:
     if not isinstance(t, str):
         t = str(t)
     return t.strip()
+
+
+_URL_LINE_RE = re.compile(r"^\s*URL:\s*https?://\S+\s*$", re.IGNORECASE)
+_BARE_URL_RE = re.compile(r"^\s*https?://\S+\s*$", re.IGNORECASE)
+
+
+def _strip_url_lines(text: str) -> str:
+    if not text:
+        return ""
+
+    cleaned_lines = []
+    for line in text.splitlines():
+        if _URL_LINE_RE.match(line) or _BARE_URL_RE.match(line):
+            continue
+        cleaned_lines.append(line.rstrip())
+
+    return "\n".join(cleaned_lines).strip()
 
 
 class ColBERTReranker:
@@ -93,7 +111,7 @@ class ColBERTReranker:
             reranked.append(
                 {
                     "docid": docid,
-                    "text": _safe_text(c),
+                    "text": _strip_url_lines(_safe_text(c)),
                     "bm25_score": float(c.get("score", 0.0)),
                     "colbert_score": float(score),
                     "source_type": c.get("source_type", "local"),
@@ -170,14 +188,20 @@ class ClaimEvidenceRetriever:
         final_reranked = reranked
 
         if (not confident) and self.enable_live_news:
-            web_candidates = live_news_passages(
-                claim,
-                language=self.news_language,
-                limit=self.news_limit,
-                hours_back=self.news_hours_back,
-                trusted_only=(not self.allow_untrusted_domains),
-                max_chunks_per_article=6,
-            )
+            try:
+                web_candidates = live_news_passages(
+                    claim,
+                    language=self.news_language,
+                    limit=self.news_limit,
+                    hours_back=self.news_hours_back,
+                    trusted_only=(not self.allow_untrusted_domains),
+                    max_chunks_per_article=6,
+                )
+            except Exception as exc:
+                # Keep retrieval resilient: if live-news lookup fails,
+                # continue with local corpus evidence instead of crashing.
+                print(f"[ClaimEvidenceRetriever] Live-news fallback failed: {exc}")
+                web_candidates = []
 
             if web_candidates:
                 merged_candidates = candidates + web_candidates
