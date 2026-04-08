@@ -150,6 +150,11 @@ export default function ClaimTab({
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
+										{claim.source_sentence && (
+											<p className="mt-2 text-xs text-gray-500 italic">
+												From sentence {(claim.sentence_id ?? 0) + 1}: {claim.source_sentence}
+											</p>
+										)}
 									</CardContent>
 								</Card>
 							</TooltipTrigger>
