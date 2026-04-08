@@ -12,7 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "node scripts/patch-wxt-virtual-modules.cjs && wxt prepare"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.8",

@@ -22,6 +22,7 @@ export interface AnalysisResult {
 		sentence_id?: number | null;
 		source_sentence?: string | null;
 	}[];
+	claim_error?: string;
 }
 
 export interface TokenAttribution {
