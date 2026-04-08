@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Stats } from '@/types';
+import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
 
 export default function UserAuth({
 	setUserData,
@@ -23,10 +24,12 @@ export default function UserAuth({
 
 	async function login() {
 		setError(undefined);
-		const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/user`, {
+		const response = await fetchWithTimeout(`${import.meta.env.WXT_USER_AUTH_BACKEND}/user`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ username: username, password: password }),
+			timeoutMs: 15_000,
+			retries: 1,
 		});
 
 		const data = await response.json();
@@ -36,10 +39,12 @@ export default function UserAuth({
 			localStorage.setItem('username', data.username);
 			setUserData(data.username);
 
-			const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
+			const response = await fetchWithTimeout(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ username: username }),
+				timeoutMs: 15_000,
+				retries: 1,
 			});
 			const data2 = await response.json();
 			setStats(data2);
@@ -48,10 +53,12 @@ export default function UserAuth({
 
 	async function register() {
 		setError(undefined);
-		const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/create-user`, {
+		const response = await fetchWithTimeout(`${import.meta.env.WXT_USER_AUTH_BACKEND}/create-user`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ username: username, password: password }),
+			timeoutMs: 15_000,
+			retries: 1,
 		});
 
 		const data = await response.json();
@@ -61,10 +68,12 @@ export default function UserAuth({
 			localStorage.setItem('username', data.username);
 			setUserData(data.username);
 
-			const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
+			const response = await fetchWithTimeout(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ username: username }),
+				timeoutMs: 15_000,
+				retries: 1,
 			});
 			const data2 = await response.json();
 			setStats(data2);

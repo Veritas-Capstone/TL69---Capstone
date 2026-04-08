@@ -5,6 +5,7 @@ import UserAuth from './UserAuth';
 import { Stats } from '@/types';
 import CountUp from '@/components/ui/count-up';
 import { Separator } from '@/components/ui/separator';
+import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
 
 export default function Profile() {
 	const [userData, setUserData] = useState<string | undefined>(localStorage.getItem('username') ?? undefined);
@@ -12,10 +13,12 @@ export default function Profile() {
 
 	useEffect(() => {
 		async function updateStats() {
-			const response = await fetch(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
+			const response = await fetchWithTimeout(`${import.meta.env.WXT_USER_AUTH_BACKEND}/get-stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ username: localStorage.getItem('username') }),
+				timeoutMs: 15_000,
+				retries: 1,
 			});
 			const data = await response.json();
 			setStats(data);

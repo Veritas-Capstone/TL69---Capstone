@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import Profile from './Profile';
 import logo from '../../assets/logo.png';
 import { MODEL_BACKEND, USER_AUTH_BACKEND } from '@/config';
+import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
 
 function App() {
 	const modelBackend = MODEL_BACKEND;
@@ -75,7 +76,7 @@ function App() {
 	// update user stats in profile
 	async function updateStats(data: AnalysisResult) {
 		if (localStorage.getItem('username')) {
-			await fetch(`${USER_AUTH_BACKEND}/stats`, {
+			await fetchWithTimeout(`${USER_AUTH_BACKEND}/stats`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({
@@ -89,6 +90,8 @@ function App() {
 					refutedClaim: data?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
 					noInfoClaim: data?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
 				}),
+				timeoutMs: 15_000,
+				retries: 1,
 			});
 		}
 	}
