@@ -12,6 +12,7 @@ Access our demo video here: [:movie_camera:](https://www.macvideo.ca/media/Verit
   
   <img width="325" height="400" alt="image" src="https://github.com/user-attachments/assets/95c1061d-0aca-4201-b580-b5c0a431c275" />
 - Text can then be selected and pasted into the side panel for analysis
+> **_NOTE:_**  Be patient and please give it a few minutes for processing since it's heavily dependent on hardware!
 
   
 ## Overview
