@@ -64,16 +64,6 @@ Given a news article (URL or pasted text), the system:
 - Generation is clearly marked, grounded, and checked; unverifiable outputs are rejected.
 - Decision support only; human oversight is expected for critical use.
 
-## Tech Stack (Planned)  
-- **Frontend:** React / Next.js or Flutter Web  
-- **Backend:** FastAPI (Python)  
-- **Database:** MongoDB or PostgreSQL (for storing user history, claims, and bias results)  
-- **ML Models:**  
-  - Claim extraction: fine-tuned transformer (e.g., BERT, RoBERTa, or open-source GPT variant)  
-  - Bias detection: classifier trained on labeled partisan datasets  
-  - Claim verification: retrieval + NLI pipeline 
-- **Deployment:** Docker + cloud hosting (AWS/GCP/Azure)
-
 # Coding and Documentation Standards
 - For python backend, we should follow Pep 8 guidelines
 - With React/Node, we can follow the Google Typescript guide
