@@ -70,6 +70,7 @@ export default function BiasTab({
 	const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 	const [tokenCache, setTokenCache] = useState<Record<number, TokenAttribution[]>>({});
 	const [loadingTokens, setLoadingTokens] = useState<Set<number>>(new Set());
+	const biasClaims = result?.bias_claims ?? [];
 
 	const toggleExpand = async (idx: number, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -102,20 +103,19 @@ export default function BiasTab({
 	const chartData = [
 		{
 			name: 'Left',
-			value: result?.bias_claims.filter((x) => x.category === 'Left-leaning').length ?? 0,
+			value: biasClaims.filter((x) => x.category.includes('Left')).length,
 		},
 		{
 			name: 'Right',
-			value: result?.bias_claims.filter((x) => x.category === 'Right-leaning').length ?? 0,
+			value: biasClaims.filter((x) => x.category.includes('Right')).length,
 		},
 		{
 			name: 'Center',
-			value:
-				result?.bias_claims.filter((x) => x.category === 'Centrist' || x.category === 'Neutral/Balanced')
-					.length ?? 0,
+			value: biasClaims.filter((x) => !x.category.includes('Left') && !x.category.includes('Right')).length,
 		},
 	];
-	console.log(result?.bias_claims);
+	const total = chartData[0].value + chartData[1].value + chartData[2].value;
+	const percent = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
 
 	return (
 		<>
@@ -142,7 +142,7 @@ export default function BiasTab({
 							isAnimationActive={true}
 							innerRadius={55}
 						>
-							<Label value={`${result?.bias_claims.length} Checks`} position={'center'} />
+							<Label value={`${biasClaims.length} Checks`} position={'center'} />
 							{chartData.map((entry, i) => (
 								<Cell
 									key={`cell-${i}`}
@@ -157,38 +157,17 @@ export default function BiasTab({
 								<div className="flex justify-between w-full">
 									<p>Left</p>
 									<Separator className="flex-[0.85] mt-3" />
-									<p>
-										{Math.round(
-											(chartData[0].value /
-												(chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
-										%
-									</p>
+									<p>{percent(chartData[0].value)}%</p>
 								</div>
 								<div className="flex justify-between w-full">
 									<p>Center</p>
 									<Separator className="flex-[0.85] mt-3" />
-									<p>
-										{Math.round(
-											(chartData[2].value /
-												(chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
-										%
-									</p>
+									<p>{percent(chartData[2].value)}%</p>
 								</div>
 								<div className="flex justify-between w-full">
 									<p>Right</p>
 									<Separator className="flex-[0.85] mt-3" />
-									<p>
-										{Math.round(
-											(chartData[1].value /
-												(chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
-										%
-									</p>
+									<p>{percent(chartData[1].value)}%</p>
 								</div>
 							</div>
 						</div>

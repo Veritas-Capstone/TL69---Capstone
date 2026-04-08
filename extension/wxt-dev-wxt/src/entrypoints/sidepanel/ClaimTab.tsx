@@ -18,18 +18,19 @@ export default function ClaimTab({
 	handleHighlight,
 	failedUnderlinesArr,
 }: ClaimTabProps) {
+	const factCheckClaims = result?.fact_check_claims ?? [];
 	const chartData = [
 		{
 			name: 'Supported',
-			value: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
+			value: factCheckClaims.filter((x) => x.label === 'SUPPORTED').length,
 		},
 		{
 			name: 'Refuted',
-			value: result?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
+			value: factCheckClaims.filter((x) => x.label === 'REFUTED').length,
 		},
 		{
 			name: 'Not enough info',
-			value: result?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
+			value: factCheckClaims.filter((x) => x.label === 'NOT ENOUGH INFO').length,
 		},
 	];
 
@@ -49,7 +50,7 @@ export default function ClaimTab({
 							isAnimationActive={true}
 							innerRadius={55}
 						>
-							<Label value={`${result?.fact_check_claims.length} Checks`} position={'center'} />
+							<Label value={`${factCheckClaims.length} Checks`} position={'center'} />
 							{chartData.map((entry) => (
 								<Cell
 									fill={
@@ -105,7 +106,17 @@ export default function ClaimTab({
 					<p className="text-xl text-center">Sentence-Level Claims</p>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-4 pl-4 pr-2 max-h-[300px] overflow-auto">
-					{result?.fact_check_claims.map((claim, idx) => (
+					{result?.claim_error && (
+						<p className="text-sm text-center text-red-600 pr-2">
+							{result.claim_error}
+						</p>
+					)}
+					{factCheckClaims.length === 0 && (
+						<p className="text-sm text-center text-gray-500 pr-2">
+							No claim verification results were returned for this scan.
+						</p>
+					)}
+					{factCheckClaims.map((claim, idx) => (
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<Card

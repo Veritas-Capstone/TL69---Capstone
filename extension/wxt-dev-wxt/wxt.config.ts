@@ -4,7 +4,7 @@ import path from 'path';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-	modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
+	modules: ['@wxt-dev/module-react'],
 	vite: () => ({
 		plugins: [tailwindcss()],
 		resolve: {
@@ -13,19 +13,15 @@ export default defineConfig({
 			},
 		},
 	}),
-	autoIcons: {
-		developmentIndicator: false,
-		sizes: [16, 32, 48, 96, 128],
-	},
 	manifest: {
 		permissions: ['contextMenus', 'storage', 'scripting', 'activeTab', 'sidePanel'],
 		name: 'Veritas',
 		icons: {
-			16: 'icons/16.png',
-			32: 'icons/32.png',
-			48: 'icons/48.png',
-			96: 'icons/96.png',
-			128: 'icons/128.png',
+			16: 'icon/16.png',
+			32: 'icon/32.png',
+			48: 'icon/48.png',
+			96: 'icon/96.png',
+			128: 'icon/128.png',
 		},
 		side_panel: {
 			default_path: 'entrypoints/sidepanel.html',
