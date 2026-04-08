@@ -1,9 +1,9 @@
 # Project Veritas - Group 19
-A chrome extension for sentence-level claim verification, partisan bias detection with rationales, and concise, evidence-tagged counterpoints. Core prediction relies on purpose-trained classifiers; generation is used only for presentation and grounded by retrieved sources.
+A chrome extension for sentence-level claim verification and partisan bias detection with rationales. Core prediction relies on purpose-trained classifiers; generation is used only for presentation and grounded by retrieved sources.
 
 Access our demo video here: [:movie_camera:](https://www.macvideo.ca/media/Veritas+-+ComputingSoftware.mp4/1_2ajmmnum/397464013)
 
-## User Guide
+## Installation/User Guide
 - Download the .output directory from extension/wxt-dev-wxt
 - Open up manage extension on chrome and turn on developer mode
 - Click load unpacked and from the .output folder from above, find and select the chrome-mv3 folder
@@ -17,8 +17,8 @@ Access our demo video here: [:movie_camera:](https://www.macvideo.ca/media/Verit
 Given a news article (URL or pasted text), the system:
 - Extracts checkable, sentence-level claims.
 - Retrieves supporting evidence from reputable sources and verifies each claim (Supported / Refuted / Not Enough Evidence).
-- Detects partisan bias at claim and article levels and highlights rationale phrases.
-- Presents concise counterpoints grounded in retrieved evidence, clearly tagged and checked for support.
+- Detects partisan bias at claim and article levels and highlights rationale phrases as well as provided the key words that most influence that passage towards it's bias.
+
 
 ## Objectives
 - Deliver trustworthy, transparent analysis of claims in news articles.
@@ -31,16 +31,32 @@ Given a news article (URL or pasted text), the system:
 - Evidence retrieval and reranking across static and recent sources.
 - Structured claim verification with confidence and evidence snippets.
 - Bias detection with rationale highlighting and article-level aggregation.
-- Evidence-based counterpoints with explicit source tags and support checks.
+
 
 ## How It Works (High Level)
+*Claim Verification*
 1. Ingest: Fetch and clean article content; segment into sentences and paragraphs.
+
 2. Extract: Identify concise factual claims suitable for verification.
 3. Route: Use static retrieval first; fall back to real-time search for low-similarity or time-sensitive claims.
 4. Retrieve & Rerank: Collect candidate passages and prioritize the most relevant evidence.
 5. Verify & Classify: Produce a verdict with confidence; predict claim-level and article-level bias with rationale spans.
-6. Counterpoints: Generate concise, evidence-tagged counterpoints grounded in retrieved snippets; reject unsupported text.
-7. Output: Return a structured JSON payload with claims, verdicts, evidence, bias, counterpoints, and diagnostics.
+6. Output: Return a structured JSON payload with claims, verdicts, evidence, bias and diagnostics.
+
+*Bias Detection*
+
+1. Ingest: Fetch and clean article content; segment into sentences and paragraphs.
+
+2. Extract: Identify political and framing-relevant text spans suitable for bias assessment.
+
+3. Route: Use politicalness detection first; route political content to the bias pipeline and bypass non-political content.
+
+4. Retrieve & Rerank: Collect local and document-level context, then prioritize the most informative evidence for bias interpretation.
+
+5. Analyze & Classify: Produce sentence-level and article-level bias predictions with confidence, and attach rationale spans explaining ideological framing.
+
+6. Output: Return a structured JSON payload with bias labels, rationale spans, confidence scores, summaries, and diagnostics.
+
 
 ## Datasets
 
