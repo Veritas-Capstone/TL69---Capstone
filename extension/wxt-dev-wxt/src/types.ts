@@ -17,6 +17,8 @@ export interface AnalysisResult {
 	fact_check_claims: {
 		claim: string;
 		evidence: string[];
+		evidence_links?: string[];
+		evidence_source?: string;
 		label: 'SUPPORTED' | 'REFUTED' | 'NOT ENOUGH INFO';
 		valid: boolean;
 		sentence_id?: number | null;

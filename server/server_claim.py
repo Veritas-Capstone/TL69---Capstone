@@ -11,11 +11,11 @@ and only handles claim verification.
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from api.claim_extraction.claim_extraction import (
@@ -54,12 +54,15 @@ class PassageRequest(BaseModel):
 class ClaimEvidence(BaseModel):
     claim: str
     evidence: List[str]
+    evidence_links: Optional[List[str]] = None
     gold_label: Optional[str] = None
 
 
 class ClaimVerificationResult(BaseModel):
     claim: str
     evidence: List[str]
+    evidence_links: List[str] = Field(default_factory=list)
+    evidence_source: Optional[str] = None
     label: str
     probabilities: Dict[str, float]
     # Provenance fields — always present when using verify_claims_from_passage.
@@ -86,6 +89,7 @@ class ClaimRequest(BaseModel):
 class EvidenceRetrievalResult(BaseModel):
     claim: str
     evidence: List[str]
+    evidence_links: List[str]
     confidence: bool
     force_nei: bool
     source: str
@@ -212,7 +216,7 @@ claim_retriever = ClaimEvidenceRetriever(
     batch_size=16,
     bm25_k=200,
     top_k=10,
-    evidence_k=5,
+    evidence_k=3,
     enable_live_news=ENABLE_LIVE_NEWS,
     news_limit=8,
     news_hours_back=72,
@@ -241,11 +245,17 @@ def clean_evidence_text(text: str) -> str:
     return cleaned
 
 
-def sanitize_evidence_list(evidence: List[str]) -> List[str]:
+def sanitize_evidence_list_with_links(
+    evidence: List[str],
+    evidence_links: Optional[List[str]] = None,
+) -> Tuple[List[str], List[str]]:
     seen = set()
     cleaned_evidence: List[str] = []
+    cleaned_links: List[str] = []
 
-    for item in evidence or []:
+    links = evidence_links or []
+
+    for idx, item in enumerate(evidence or []):
         cleaned = clean_evidence_text(item)
         if not cleaned:
             continue
@@ -253,8 +263,10 @@ def sanitize_evidence_list(evidence: List[str]) -> List[str]:
             continue
         seen.add(cleaned)
         cleaned_evidence.append(cleaned)
+        link = links[idx] if idx < len(links) else ""
+        cleaned_links.append(link if isinstance(link, str) else str(link))
 
-    return cleaned_evidence
+    return cleaned_evidence, cleaned_links
 
 
 def retrieve_single_claim_evidence(claim: str):
@@ -270,7 +282,12 @@ def retrieve_single_claim_evidence(claim: str):
       }
     """
     result = claim_retriever.retrieve(claim)
-    result["evidence"] = sanitize_evidence_list(result.get("evidence", []))
+    cleaned_evidence, cleaned_links = sanitize_evidence_list_with_links(
+        result.get("evidence", []),
+        result.get("evidence_links", []),
+    )
+    result["evidence"] = cleaned_evidence
+    result["evidence_links"] = cleaned_links
     return result
 
 
@@ -452,6 +469,7 @@ async def retrieve_evidence_endpoint(request: ClaimRequest):
     return EvidenceRetrievalResult(
         claim=result["claim"],
         evidence=result["evidence"],
+        evidence_links=result.get("evidence_links", []),
         confidence=result["confidence"],
         force_nei=result["force_nei"],
         source=result["source"],
@@ -522,7 +540,9 @@ async def verify_claims_from_passage(
         # Evidence retrieval
         if mock_retrieve:
             evidence = get_mock_evidence(claim)
+            evidence_links = [""] * len(evidence)
             force_nei = False
+            evidence_source = "mock"
         else:
             try:
                 retrieval_result = retrieve_single_claim_evidence(claim)
@@ -532,12 +552,27 @@ async def verify_claims_from_passage(
                     detail=f"Evidence retrieval failed for claim '{claim}': {exc}",
                 )
             evidence = retrieval_result["evidence"]
+            evidence_links = retrieval_result.get("evidence_links", [""] * len(evidence))
             force_nei = retrieval_result["force_nei"]
+            evidence_source = retrieval_result.get("source")
 
         # Claim verification
         if force_nei:
-            label = "NOT ENOUGH INFO"
-            probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
+            if evidence:
+                gated_label, gated_probs = verify_single_claim(claim, evidence)
+                max_prob = max(gated_probs.values()) if gated_probs else 0.0
+
+                # If retriever confidence is low, default to NEI unless
+                # the verifier is confident and decisive.
+                if gated_label != "NOT ENOUGH INFO" and max_prob >= 0.60:
+                    label = gated_label
+                    probs = gated_probs
+                else:
+                    label = "NOT ENOUGH INFO"
+                    probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
+            else:
+                label = "NOT ENOUGH INFO"
+                probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
         else:
             label, probs = verify_single_claim(claim, evidence)
 
@@ -545,6 +580,8 @@ async def verify_claims_from_passage(
             ClaimVerificationResult(
                 claim=claim,
                 evidence=evidence,
+                evidence_links=evidence_links,
+                evidence_source=evidence_source,
                 label=label,
                 probabilities=probs,
                 sentence_id=sentence_id,
@@ -577,10 +614,13 @@ async def verify_claims_direct(request: ClaimVerificationDirectRequest):
         if not item.claim.strip():
             continue
         label, probs = verify_single_claim(item.claim, item.evidence)
+        evidence_links = item.evidence_links or [""] * len(item.evidence)
         results.append(
             ClaimVerificationResult(
                 claim=item.claim,
                 evidence=item.evidence,
+                evidence_links=evidence_links,
+                evidence_source="direct_input",
                 label=label,
                 probabilities=probs,
                 # No passage context available in the direct endpoint

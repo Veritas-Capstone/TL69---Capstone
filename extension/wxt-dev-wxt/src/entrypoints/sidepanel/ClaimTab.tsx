@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { CheckCheckIcon, CheckIcon, CircleQuestionMarkIcon, SearchXIcon, XIcon } from 'lucide-react';
+import { CheckIcon, SearchXIcon, XIcon } from 'lucide-react';
 import { AnalysisResult } from '@/types';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -19,6 +19,38 @@ export default function ClaimTab({
 	failedUnderlinesArr,
 }: ClaimTabProps) {
 	const factCheckClaims = result?.fact_check_claims ?? [];
+
+	const formatSourceLabel = (sourceRef?: string) => {
+		if (!sourceRef) {
+			return 'Source unavailable';
+		}
+
+		try {
+			const url = new URL(sourceRef);
+			return url.hostname.replace(/^www\./, '');
+		} catch {
+			return sourceRef;
+		}
+	};
+
+	const isHttpUrl = (value?: string) => Boolean(value && /^https?:\/\//i.test(value));
+
+	const formatEvidenceSource = (source?: string) => {
+		if (!source) {
+			return 'Wikipedia';
+		}
+
+		if (source === 'local+web') {
+			return 'Wikipedia + live web fallback';
+		}
+
+		if (source === 'local') {
+			return 'Wikipedia';
+		}
+
+		return source.replace(/_/g, ' ');
+	};
+
 	const chartData = [
 		{
 			name: 'Supported',
@@ -65,32 +97,26 @@ export default function ClaimTab({
 						<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
 							<div className="flex justify-between gap-2 flex-col w-full text-base">
 								<div className="flex justify-between w-full">
-									<p>Supported</p>
+									<p>Supported ({chartData[0].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
-										{Math.round(
-											(total ? (chartData[0].value / total) * 100 : 0),
-										)}
+										{Math.round(total ? (chartData[0].value / total) * 100 : 0)}
 										%
 									</p>
 								</div>
 								<div className="flex justify-between w-full">
-									<p>Refuted</p>
+									<p>Refuted ({chartData[1].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
-										{Math.round(
-											(total ? (chartData[1].value / total) * 100 : 0),
-										)}
+										{Math.round(total ? (chartData[1].value / total) * 100 : 0)}
 										%
 									</p>
 								</div>
 								<div className="flex justify-between w-full">
-									<p>Not Enough Info</p>
+									<p>Not Enough Info ({chartData[2].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
-										{Math.round(
-											(total ? (chartData[2].value / total) * 100 : 0),
-										)}
+										{Math.round(total ? (chartData[2].value / total) * 100 : 0)}
 										%
 									</p>
 								</div>
@@ -102,23 +128,15 @@ export default function ClaimTab({
 			<Card className="rounded-4xl shadow-none gap-4 py-5">
 				<CardHeader className="flex gap-2 items-center justify-center">
 					<p className="text-xl text-center">Sentence-Level Claims</p>
+					<p className="text-xs text-gray-500 text-center px-3">
+						Evidence is retrieved from Wikipedia (with optional web fallback) and linked sources are shown when available.
+					</p>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-4 pl-4 pr-2 max-h-[300px] overflow-auto">
-					{result?.claim_error && (
-						<p className="text-sm text-center text-red-600 pr-2">
-							{result.claim_error}
-						</p>
-					)}
-					{factCheckClaims.length === 0 && (
-						<p className="text-sm text-center text-gray-500 pr-2">
-							No claim verification results were returned for this scan.
-						</p>
-					)}
 					{factCheckClaims.map((claim, idx) => (
-						<Tooltip>
+						<Tooltip key={`fact-${idx}`}>
 							<TooltipTrigger asChild>
 								<Card
-									key={`fact-${idx}`}
 									className={`flex flex-col p-0! gap-0 items-center hover:cursor-pointer border border-gray-200 rounded-xl ${
 										claim.label === 'SUPPORTED'
 											? 'hover:border-green-400!'
@@ -159,11 +177,56 @@ export default function ClaimTab({
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
-										{claim.source_sentence && (
-											<p className="mt-2 text-xs text-gray-500 italic">
-												From sentence {(claim.sentence_id ?? 0) + 1}: {claim.source_sentence}
+										{claim.source_sentence ? (
+											<p className="mt-2 text-xs italic text-gray-500 leading-5">
+												From sentence
+												{typeof claim.sentence_id === 'number' ? ` ${claim.sentence_id + 1}` : ''}
+												: {claim.source_sentence}
 											</p>
-										)}
+										) : null}
+										<details className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 group">
+											<summary className="flex items-center justify-between gap-2 list-none cursor-pointer">
+												<div>
+													<p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Cited Evidence</p>
+													<p className="text-[11px] text-gray-500 mt-1">Source: {formatEvidenceSource(claim.evidence_source)}</p>
+												</div>
+												<div className="text-right">
+													<p className="text-[11px] text-gray-400">{claim.evidence?.length ?? 0} snippet(s)</p>
+													<p className="text-[11px] text-blue-600 group-open:hidden">Show</p>
+													<p className="text-[11px] text-blue-600 hidden group-open:block">Hide</p>
+												</div>
+											</summary>
+											<div className="mt-3 space-y-2">
+												{claim.evidence?.length ? (
+													claim.evidence.map((snippet, evidenceIdx) => {
+														const sourceRef = claim.evidence_links?.[evidenceIdx] ?? '';
+														const sourceLabel = formatSourceLabel(sourceRef);
+														const sourceHref = isHttpUrl(sourceRef) ? sourceRef : undefined;
+
+														return (
+															<div key={`fact-${idx}-evidence-${evidenceIdx}`} className="rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
+																<p className="text-sm leading-5 text-gray-700">{snippet}</p>
+																<div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-gray-500">
+																	<span className="truncate">{sourceLabel}</span>
+																	{sourceHref ? (
+																		<a
+																			href={sourceHref}
+																			target="_blank"
+																			rel="noreferrer"
+																			className="shrink-0 font-medium text-blue-600 hover:underline"
+																		>
+																			Open source
+																		</a>
+																	) : null}
+																</div>
+															</div>
+														);
+													})
+												) : (
+													<p className="text-sm text-gray-400">No cited evidence returned for this claim.</p>
+												)}
+											</div>
+										</details>
 									</CardContent>
 								</Card>
 							</TooltipTrigger>
