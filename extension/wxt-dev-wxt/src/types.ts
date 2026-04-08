@@ -21,7 +21,10 @@ export interface AnalysisResult {
 		evidence_source?: string;
 		label: 'SUPPORTED' | 'REFUTED' | 'NOT ENOUGH INFO';
 		valid: boolean;
+		sentence_id?: number | null;
+		source_sentence?: string | null;
 	}[];
+	claim_error?: string;
 }
 
 export interface TokenAttribution {

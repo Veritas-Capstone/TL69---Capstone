@@ -52,17 +52,18 @@ export default function ClaimTab({
 	const chartData = [
 		{
 			name: 'Supported',
-			value: result?.fact_check_claims.filter((x) => x.label === 'SUPPORTED').length ?? 0,
+			value: factCheckClaims.filter((x) => x.label === 'SUPPORTED').length,
 		},
 		{
 			name: 'Refuted',
-			value: result?.fact_check_claims.filter((x) => x.label === 'REFUTED').length ?? 0,
+			value: factCheckClaims.filter((x) => x.label === 'REFUTED').length,
 		},
 		{
 			name: 'Not enough info',
-			value: result?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
+			value: factCheckClaims.filter((x) => x.label === 'NOT ENOUGH INFO').length,
 		},
 	];
+	const total = chartData[0].value + chartData[1].value + chartData[2].value;
 
 	return (
 		<>
@@ -80,7 +81,7 @@ export default function ClaimTab({
 							isAnimationActive={true}
 							innerRadius={55}
 						>
-							<Label value={`${result?.fact_check_claims.length} Checks`} position={'center'} />
+							<Label value={`${factCheckClaims.length} Checks`} position={'center'} />
 							{chartData.map((entry) => (
 								<Cell
 									fill={
@@ -98,8 +99,7 @@ export default function ClaimTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
+											(total ? (chartData[0].value / total) * 100 : 0),
 										)}
 										%
 									</p>

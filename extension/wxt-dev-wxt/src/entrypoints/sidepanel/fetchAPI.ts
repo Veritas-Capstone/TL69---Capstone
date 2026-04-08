@@ -120,7 +120,8 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 			method: 'POST',
 			body: JSON.stringify({ text }),
 		});
-		let fact_checks_response = []; // TODO: probably remove the try catch around this since this is only currently done because this API is not ready
+		let fact_checks_response = [];
+		let claim_error: string | undefined;
 		try {
 			const response2 = await fetch(`${MODEL_BACKEND}/claim/verify-claims-from-passage`, {
 				headers: { 'Content-Type': 'application/json' },
@@ -129,8 +130,19 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 			});
 			if (response2.ok) {
 				fact_checks_response = await response2.json();
+			} else {
+				let detail = '';
+				try {
+					const errorBody = await response2.json();
+					detail = errorBody?.detail ? `: ${errorBody.detail}` : '';
+				} catch {
+					// ignore JSON parsing issues for error responses
+				}
+				claim_error = `Claim verification failed (${response2.status})${detail}`;
+				console.warn('Claim verification unavailable:', claim_error);
 			}
 		} catch (e) {
+			claim_error = e instanceof Error ? e.message : 'Unable to reach claim verification service';
 			console.warn('Claim verification unavailable:', e);
 		}
 
@@ -156,6 +168,7 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 			overall_probabilities: data.overall_probabilities,
 			bias_claims,
 			fact_check_claims: fact_checks_response,
+			claim_error,
 		};
 	} catch (error) {
 		console.error('Error calling bias detection API:', error);

@@ -93,22 +93,35 @@ Passage:
 {passage}
 """
 
-# Lighter prompt used for single-sentence extraction where the sentence
-# provides full context on its own.
-SINGLE_SENTENCE_PROMPT_TEMPLATE = """\
-Your task is to extract factual claims from a single sentence.
+# Lighter prompt used for sentence-level extraction. It includes a tiny
+# local context window so pronouns in the target sentence can be resolved
+# without paying the cost of full-passage extraction for every sentence.
+SINGLE_SENTENCE_WITH_CONTEXT_PROMPT_TEMPLATE = """\
+Your task is to extract factual claims from one target sentence.
+
+You are also given a small amount of surrounding context. Use that context
+only to resolve references such as pronouns, titles, or abbreviated names.
+Extract claims from the TARGET SENTENCE only.
 
 Rules:
-- Extract all atomic, self-contained, independently verifiable claims.
+- Extract all atomic, self-contained, independently verifiable claims from the TARGET SENTENCE only.
+- Do not extract claims from the surrounding context sentences.
 - Omit opinions, questions, and rhetorical statements that cannot be fact-checked.
-- Replace all pronouns with the entity they refer to.
+- Replace pronouns and other references in the TARGET SENTENCE with the entity they refer to using the surrounding context when needed.
+- If a reference is ambiguous, keep the original wording instead of guessing.
 - Do not split compound facts that belong together.
 - Return ONLY a JSON object with a single key "claims" whose value is a list of claim strings.
 - Do not include any explanation, preamble, or markdown formatting.
-- If the sentence contains no verifiable factual claims, return {{"claims": []}}.
+- If the TARGET SENTENCE contains no verifiable factual claims, return {{"claims": []}}.
 
-Sentence:
-{passage}
+Previous sentence:
+{previous_sentence}
+
+TARGET SENTENCE:
+{target_sentence}
+
+Next sentence:
+{next_sentence}
 """
 
 
@@ -325,6 +338,7 @@ def extract_claims_with_provenance(
     max_claims_per_sentence: int = None,
     skip_short_sentences: bool = True,
     min_sentence_length: int = 15,
+    context_window: int = 1,
 ) -> ExtractionResult:
     """
     Extract claims with sentence-level provenance.
@@ -340,6 +354,10 @@ def extract_claims_with_provenance(
                                  characters are skipped (avoids wasted LLM calls on
                                  headings, bylines, etc.).
         min_sentence_length:     Character threshold for skip_short_sentences.
+        context_window:          Number of sentences on each side of the target
+                                 sentence to provide as lightweight context for
+                                 pronoun/reference resolution. Extraction still
+                                 happens only for the target sentence.
 
     Returns:
         ExtractionResult with per-sentence claim lists.
@@ -359,8 +377,17 @@ def extract_claims_with_provenance(
             continue
 
         try:
+            prev_context = " ".join(sentences[max(0, idx - context_window):idx]).strip()
+            next_context = " ".join(
+                sentences[idx + 1:min(len(sentences), idx + 1 + context_window)]
+            ).strip()
+            prompt_input = SINGLE_SENTENCE_WITH_CONTEXT_PROMPT_TEMPLATE.format(
+                previous_sentence=prev_context or "(none)",
+                target_sentence=sentence,
+                next_sentence=next_context or "(none)",
+            )
             claims = _extract_from_text(
-                sentence, model, SINGLE_SENTENCE_PROMPT_TEMPLATE
+                prompt_input, model, "{passage}"
             )
             if max_claims_per_sentence is not None:
                 claims = claims[:max_claims_per_sentence]
