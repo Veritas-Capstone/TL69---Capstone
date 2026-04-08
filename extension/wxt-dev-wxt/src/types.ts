@@ -18,6 +18,7 @@ export interface AnalysisResult {
 		claim: string;
 		evidence: string[];
 		evidence_links?: string[];
+		evidence_source?: string;
 		label: 'SUPPORTED' | 'REFUTED' | 'NOT ENOUGH INFO';
 		valid: boolean;
 	}[];

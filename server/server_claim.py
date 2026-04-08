@@ -62,6 +62,7 @@ class ClaimVerificationResult(BaseModel):
     claim: str
     evidence: List[str]
     evidence_links: List[str] = Field(default_factory=list)
+    evidence_source: Optional[str] = None
     label: str
     probabilities: Dict[str, float]
     # Provenance fields — always present when using verify_claims_from_passage.
@@ -215,7 +216,7 @@ claim_retriever = ClaimEvidenceRetriever(
     batch_size=16,
     bm25_k=200,
     top_k=10,
-    evidence_k=5,
+    evidence_k=3,
     enable_live_news=ENABLE_LIVE_NEWS,
     news_limit=8,
     news_hours_back=72,
@@ -541,6 +542,7 @@ async def verify_claims_from_passage(
             evidence = get_mock_evidence(claim)
             evidence_links = [""] * len(evidence)
             force_nei = False
+            evidence_source = "mock"
         else:
             try:
                 retrieval_result = retrieve_single_claim_evidence(claim)
@@ -552,11 +554,25 @@ async def verify_claims_from_passage(
             evidence = retrieval_result["evidence"]
             evidence_links = retrieval_result.get("evidence_links", [""] * len(evidence))
             force_nei = retrieval_result["force_nei"]
+            evidence_source = retrieval_result.get("source")
 
         # Claim verification
         if force_nei:
-            label = "NOT ENOUGH INFO"
-            probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
+            if evidence:
+                gated_label, gated_probs = verify_single_claim(claim, evidence)
+                max_prob = max(gated_probs.values()) if gated_probs else 0.0
+
+                # If retriever confidence is low, default to NEI unless
+                # the verifier is confident and decisive.
+                if gated_label != "NOT ENOUGH INFO" and max_prob >= 0.60:
+                    label = gated_label
+                    probs = gated_probs
+                else:
+                    label = "NOT ENOUGH INFO"
+                    probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
+            else:
+                label = "NOT ENOUGH INFO"
+                probs = {"REFUTED": 0.0, "NOT ENOUGH INFO": 1.0, "SUPPORTED": 0.0}
         else:
             label, probs = verify_single_claim(claim, evidence)
 
@@ -565,6 +581,7 @@ async def verify_claims_from_passage(
                 claim=claim,
                 evidence=evidence,
                 evidence_links=evidence_links,
+                evidence_source=evidence_source,
                 label=label,
                 probabilities=probs,
                 sentence_id=sentence_id,
@@ -603,6 +620,7 @@ async def verify_claims_direct(request: ClaimVerificationDirectRequest):
                 claim=item.claim,
                 evidence=item.evidence,
                 evidence_links=evidence_links,
+                evidence_source="direct_input",
                 label=label,
                 probabilities=probs,
                 # No passage context available in the direct endpoint

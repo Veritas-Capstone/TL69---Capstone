@@ -33,6 +33,22 @@ export default function ClaimTab({
 
 	const isHttpUrl = (value?: string) => Boolean(value && /^https?:\/\//i.test(value));
 
+	const formatEvidenceSource = (source?: string) => {
+		if (!source) {
+			return 'Wikipedia';
+		}
+
+		if (source === 'local+web') {
+			return 'Wikipedia + live web fallback';
+		}
+
+		if (source === 'local') {
+			return 'Wikipedia';
+		}
+
+		return source.replace(/_/g, ' ');
+	};
+
 	const chartData = [
 		{
 			name: 'Supported',
@@ -78,7 +94,7 @@ export default function ClaimTab({
 						<div className="text-sm ml-auto mr-auto text-gray-500 w-full flex justify-center">
 							<div className="flex justify-between gap-2 flex-col w-full text-base">
 								<div className="flex justify-between w-full">
-									<p>Supported</p>
+									<p>Supported ({chartData[0].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
@@ -89,22 +105,22 @@ export default function ClaimTab({
 									</p>
 								</div>
 								<div className="flex justify-between w-full">
-									<p>Refuted</p>
+									<p>Refuted ({chartData[1].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%
 									</p>
 								</div>
 								<div className="flex justify-between w-full">
-									<p>Not Enough Info</p>
+									<p>Not Enough Info ({chartData[2].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
+											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
 												100,
 										)}
 										%
@@ -118,6 +134,9 @@ export default function ClaimTab({
 			<Card className="rounded-4xl shadow-none gap-4 py-5">
 				<CardHeader className="flex gap-2 items-center justify-center">
 					<p className="text-xl text-center">Sentence-Level Claims</p>
+					<p className="text-xs text-gray-500 text-center px-3">
+						Evidence is retrieved from Wikipedia (with optional web fallback) and linked sources are shown when available.
+					</p>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-4 pl-4 pr-2 max-h-[300px] overflow-auto">
 					{result?.fact_check_claims.map((claim, idx) => (
@@ -164,13 +183,18 @@ export default function ClaimTab({
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
-										<div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3">
-											<div className="flex items-center justify-between gap-2">
-												<p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">
-													Cited Evidence
-												</p>
-												<p className="text-[11px] text-gray-400">{claim.evidence?.length ?? 0} snippet(s)</p>
-											</div>
+										<details className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 group">
+											<summary className="flex items-center justify-between gap-2 list-none cursor-pointer">
+												<div>
+													<p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Cited Evidence</p>
+													<p className="text-[11px] text-gray-500 mt-1">Source: {formatEvidenceSource(claim.evidence_source)}</p>
+												</div>
+												<div className="text-right">
+													<p className="text-[11px] text-gray-400">{claim.evidence?.length ?? 0} snippet(s)</p>
+													<p className="text-[11px] text-blue-600 group-open:hidden">Show</p>
+													<p className="text-[11px] text-blue-600 hidden group-open:block">Hide</p>
+												</div>
+											</summary>
 											<div className="mt-3 space-y-2">
 												{claim.evidence?.length ? (
 													claim.evidence.map((snippet, evidenceIdx) => {
@@ -201,7 +225,7 @@ export default function ClaimTab({
 													<p className="text-sm text-gray-400">No cited evidence returned for this claim.</p>
 												)}
 											</div>
-										</div>
+										</details>
 									</CardContent>
 								</Card>
 							</TooltipTrigger>
