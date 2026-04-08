@@ -1,5 +1,5 @@
 # Project Veritas - Group 19
-A web application for sentence-level claim verification, partisan bias detection with rationales, and concise, evidence-tagged counterpoints. Core prediction relies on purpose-trained classifiers; generation is used only for presentation and grounded by retrieved sources.
+A chrome extension for sentence-level claim verification, partisan bias detection with rationales, and concise, evidence-tagged counterpoints. Core prediction relies on purpose-trained classifiers; generation is used only for presentation and grounded by retrieved sources.
 
 Access our demo video here: [:movie_camera:](https://www.macvideo.ca/media/Veritas+-+ComputingSoftware.mp4/1_2ajmmnum/397464013)
 
