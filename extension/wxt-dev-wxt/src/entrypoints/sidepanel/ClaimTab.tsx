@@ -18,6 +18,8 @@ export default function ClaimTab({
 	handleHighlight,
 	failedUnderlinesArr,
 }: ClaimTabProps) {
+	const factCheckClaims = result?.fact_check_claims ?? [];
+
 	const formatSourceLabel = (sourceRef?: string) => {
 		if (!sourceRef) {
 			return 'Source unavailable';
@@ -98,9 +100,7 @@ export default function ClaimTab({
 									<p>Supported ({chartData[0].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
-										{Math.round(
-											(total ? (chartData[0].value / total) * 100 : 0),
-										)}
+										{Math.round(total ? (chartData[0].value / total) * 100 : 0)}
 										%
 									</p>
 								</div>
@@ -108,10 +108,7 @@ export default function ClaimTab({
 									<p>Refuted ({chartData[1].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
-										{Math.round(
-											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
+										{Math.round(total ? (chartData[1].value / total) * 100 : 0)}
 										%
 									</p>
 								</div>
@@ -119,10 +116,7 @@ export default function ClaimTab({
 									<p>Not Enough Info ({chartData[2].value})</p>
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
-										{Math.round(
-											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
-										)}
+										{Math.round(total ? (chartData[2].value / total) * 100 : 0)}
 										%
 									</p>
 								</div>
@@ -139,7 +133,7 @@ export default function ClaimTab({
 					</p>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-4 pl-4 pr-2 max-h-[300px] overflow-auto">
-					{result?.fact_check_claims.map((claim, idx) => (
+					{factCheckClaims.map((claim, idx) => (
 						<Tooltip key={`fact-${idx}`}>
 							<TooltipTrigger asChild>
 								<Card
@@ -183,6 +177,13 @@ export default function ClaimTab({
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
+										{claim.source_sentence ? (
+											<p className="mt-2 text-xs italic text-gray-500 leading-5">
+												From sentence
+												{typeof claim.sentence_id === 'number' ? ` ${claim.sentence_id + 1}` : ''}
+												: {claim.source_sentence}
+											</p>
+										) : null}
 										<details className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 group">
 											<summary className="flex items-center justify-between gap-2 list-none cursor-pointer">
 												<div>
