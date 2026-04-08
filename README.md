@@ -4,7 +4,7 @@ A chrome extension for sentence-level claim verification, partisan bias detectio
 Access our demo video here: [:movie_camera:](https://www.macvideo.ca/media/Veritas+-+ComputingSoftware.mp4/1_2ajmmnum/397464013)
 
 ## User Guide
-- Download the chrome-mv3 directory from extension/wxt-dev-wxt
+- Download the chrome-mv3 directory from extension/wxt-dev-wxt using https://download-directory.github.io/ with the URL "https://github.com/Veritas-Capstone/TL69---Capstone/tree/main/extension/wxt-dev-wxt/chrome-mv3"
 - Open up manage extension on chrome and turn on developer mode
 - Click load unpacked and find and select the chrome-mv3 folder
 - Veritas should now be added to extensions and can be accessed by navigating the extension options and clicking **open side panel** as follows:
