@@ -6,7 +6,7 @@ Tests are split into two classes:
   - TestExtractClaims            : integration tests for extract_claims() with Ollama mocked
 
 Run from repo root:
-    python -m pytest tests/test_claim_extraction.py -v
+    python -m pytest tests/CE_tests/test_claim_extraction.py -v
 """
 
 import unittest

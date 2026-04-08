@@ -290,7 +290,7 @@ def _extract_from_text(text: str, model: str, prompt_template: str) -> List[str]
 def extract_claims(
     passage: str,
     model: str = MODEL,
-    max_claims: int = None,
+    max_claims: int = 10,
 ) -> List[str]:
     """
     Use a local Ollama model to extract atomic, verifiable claims from a passage.
@@ -299,10 +299,10 @@ def extract_claims(
     Args:
         passage:    The input text to extract claims from.
         model:      Ollama model name (e.g. "mistral", "llama3", "phi3").
-        max_claims: Maximum number of claims to return.
+        max_claims: Maximum number of claims to return (default: 10).
 
     Returns:
-        A list of claim strings, capped at max_claims if set.
+        A list of claim strings, capped at max_claims.
 
     Raises:
         RuntimeError: If the Ollama call fails or returns an unparseable response.
@@ -316,7 +316,7 @@ def extract_claims(
             f"Claim extraction returned no parseable claims. Raw response:\n{raw}"
         )
 
-    return claims[:max_claims] if max_claims is not None else claims
+    return claims[:max_claims]
 
 
 def extract_claims_with_provenance(
