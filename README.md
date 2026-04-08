@@ -3,6 +3,16 @@ A chrome extension for sentence-level claim verification, partisan bias detectio
 
 Access our demo video here: [:movie_camera:](https://www.macvideo.ca/media/Veritas+-+ComputingSoftware.mp4/1_2ajmmnum/397464013)
 
+## User Guide
+- Download the chrome-mv3 directory from extension/wxt-dev-wxt
+- Open up manage extension on chrome and turn on developer mode
+- Click load unpacked and find and select the chrome-mv3 folder
+- Veritas should now be added to extensions and can be accessed by navigating the extension options and clicking **open side panel** as follows:
+  
+  <img width="325" height="400" alt="image" src="https://github.com/user-attachments/assets/95c1061d-0aca-4201-b580-b5c0a431c275" />
+- Text can then be selected and pasted into the side panel for analysis
+
+  
 ## Overview
 Given a news article (URL or pasted text), the system:
 - Extracts checkable, sentence-level claims.
@@ -57,16 +67,6 @@ Given a news article (URL or pasted text), the system:
 - Evidence-first transparency: show sources, snippets, and rationale highlights.
 - Generation is clearly marked, grounded, and checked; unverifiable outputs are rejected.
 - Decision support only; human oversight is expected for critical use.
-
-## Tech Stack (Planned)  
-- **Frontend:** React / Next.js or Flutter Web  
-- **Backend:** FastAPI (Python)  
-- **Database:** MongoDB or PostgreSQL (for storing user history, claims, and bias results)  
-- **ML Models:**  
-  - Claim extraction: fine-tuned transformer (e.g., BERT, RoBERTa, or open-source GPT variant)  
-  - Bias detection: classifier trained on labeled partisan datasets  
-  - Claim verification: retrieval + NLI pipeline 
-- **Deployment:** Docker + cloud hosting (AWS/GCP/Azure)
 
 # Coding and Documentation Standards
 - For python backend, we should follow Pep 8 guidelines
