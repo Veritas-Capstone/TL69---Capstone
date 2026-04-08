@@ -19,6 +19,8 @@ export interface AnalysisResult {
 		evidence: string[];
 		label: 'SUPPORTED' | 'REFUTED' | 'NOT ENOUGH INFO';
 		valid: boolean;
+		sentence_id?: number | null;
+		source_sentence?: string | null;
 	}[];
 }
 
