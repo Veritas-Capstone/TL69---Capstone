@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { CheckCheckIcon, CheckIcon, CircleQuestionMarkIcon, SearchXIcon, XIcon } from 'lucide-react';
+import { CheckIcon, SearchXIcon, XIcon } from 'lucide-react';
 import { AnalysisResult } from '@/types';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -18,6 +18,21 @@ export default function ClaimTab({
 	handleHighlight,
 	failedUnderlinesArr,
 }: ClaimTabProps) {
+	const formatSourceLabel = (sourceRef?: string) => {
+		if (!sourceRef) {
+			return 'Source unavailable';
+		}
+
+		try {
+			const url = new URL(sourceRef);
+			return url.hostname.replace(/^www\./, '');
+		} catch {
+			return sourceRef;
+		}
+	};
+
+	const isHttpUrl = (value?: string) => Boolean(value && /^https?:\/\//i.test(value));
+
 	const chartData = [
 		{
 			name: 'Supported',
@@ -106,10 +121,9 @@ export default function ClaimTab({
 				</CardHeader>
 				<CardContent className="flex flex-col gap-4 pl-4 pr-2 max-h-[300px] overflow-auto">
 					{result?.fact_check_claims.map((claim, idx) => (
-						<Tooltip>
+						<Tooltip key={`fact-${idx}`}>
 							<TooltipTrigger asChild>
 								<Card
-									key={`fact-${idx}`}
 									className={`flex flex-col p-0! gap-0 items-center hover:cursor-pointer border border-gray-200 rounded-xl ${
 										claim.label === 'SUPPORTED'
 											? 'hover:border-green-400!'
@@ -150,6 +164,44 @@ export default function ClaimTab({
 									</CardHeader>
 									<CardContent className="p-3! w-full">
 										<p className="text-sm line-clamp-6 text-gray-600">{claim.claim}</p>
+										<div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3">
+											<div className="flex items-center justify-between gap-2">
+												<p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">
+													Cited Evidence
+												</p>
+												<p className="text-[11px] text-gray-400">{claim.evidence?.length ?? 0} snippet(s)</p>
+											</div>
+											<div className="mt-3 space-y-2">
+												{claim.evidence?.length ? (
+													claim.evidence.map((snippet, evidenceIdx) => {
+														const sourceRef = claim.evidence_links?.[evidenceIdx] ?? '';
+														const sourceLabel = formatSourceLabel(sourceRef);
+														const sourceHref = isHttpUrl(sourceRef) ? sourceRef : undefined;
+
+														return (
+															<div key={`fact-${idx}-evidence-${evidenceIdx}`} className="rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
+																<p className="text-sm leading-5 text-gray-700">{snippet}</p>
+																<div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-gray-500">
+																	<span className="truncate">{sourceLabel}</span>
+																	{sourceHref ? (
+																		<a
+																			href={sourceHref}
+																			target="_blank"
+																			rel="noreferrer"
+																			className="shrink-0 font-medium text-blue-600 hover:underline"
+																		>
+																			Open source
+																		</a>
+																	) : null}
+																</div>
+															</div>
+														);
+													})
+												) : (
+													<p className="text-sm text-gray-400">No cited evidence returned for this claim.</p>
+												)}
+											</div>
+										</div>
 									</CardContent>
 								</Card>
 							</TooltipTrigger>
