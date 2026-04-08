@@ -12,6 +12,8 @@ Routes:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+import importlib.util
 
 app = FastAPI(title="Veritas API (combined)")
 
@@ -31,7 +33,13 @@ loaded_claim = False
 
 # Mount existing apps under prefixes if they load
 try:
-    import server.server as bias_server
+    # Load bias server from Bias-Detection/backend/server.py
+    bias_path = Path(__file__).resolve().parent.parent / "Bias-Detection" / "backend" / "server.py"
+    spec = importlib.util.spec_from_file_location("bias_server_external", bias_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load bias server from {bias_path}")
+    bias_server = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bias_server)
 
     app.mount("/bias", bias_server.app)
     loaded_bias = True
@@ -56,7 +64,13 @@ async def health():
         "status": "ok",
         "bias": {
             "loaded": loaded_bias,
-            "model_loaded": getattr(bias_server, "model", None) is not None if loaded_bias else False,
+            "model_loaded": (
+                getattr(bias_server, "model", None) is not None
+                if loaded_bias and hasattr(bias_server, "model")
+                else getattr(bias_server, "detector", None) is not None
+                if loaded_bias and hasattr(bias_server, "detector")
+                else False
+            ),
         },
         "claim": {
             "loaded": loaded_claim,

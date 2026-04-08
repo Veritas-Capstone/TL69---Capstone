@@ -461,8 +461,8 @@ async def retrieve_evidence_endpoint(request: ClaimRequest):
 @app.post("/verify-claims-from-passage", response_model=List[ClaimVerificationResult])
 async def verify_claims_from_passage(
     request: PassageRequest,
-    mock_claims: bool = True,
-    mock_retrieve: bool = True,
+    mock_claims: bool = False,
+    mock_retrieve: bool = False,
 ):
     """
     Entry point for the Chrome extension for claim verification.

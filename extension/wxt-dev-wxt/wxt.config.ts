@@ -37,6 +37,8 @@ export default defineConfig({
 			},
 		],
 		host_permissions: [
+			'https://api.haneeftaher.com/*',
+			'https://gray-scientists-waiting-military.trycloudflare.com/*',
 			'http://130.113.68.66/*',
 			'http://localhost:8000/*',
 			'http://127.0.0.1:8000/*',

@@ -17,9 +17,9 @@ from transformers import AutoModel, AutoModelForSequenceClassification, AutoToke
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# model paths
-AA_MODEL_PATH = "C:/Users/kazim/Desktop/models/bias_models/bias"
-POLITICALNESS_MODEL_PATH = "C:/Users/kazim/Desktop/models/bias_models/filter"
+# model paths (override with env vars on server)
+AA_MODEL_PATH = os.getenv("BIAS_AA_MODEL_PATH", "/u50/shared/bias_detection/models/leace")
+POLITICALNESS_MODEL_PATH = os.getenv("BIAS_POLITICALNESS_MODEL_PATH", "/u50/shared/bias_detection/models/politicalness_filter/")
 
 # inference config
 LABELS = ["Left", "Center", "Right"]
@@ -432,6 +432,7 @@ def categorize_bias(bias, confidence):
 
 
 @app.post("/bias/analyze", response_model=AnalysisResponse)
+@app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_text(request: AnalysisRequest):
     try:
         text = request.text.strip()
@@ -474,6 +475,7 @@ async def analyze_text(request: AnalysisRequest):
 
 
 @app.post("/bias/explain", response_model=ExplainResponse)
+@app.post("/explain", response_model=ExplainResponse)
 async def explain_sentence(request: ExplainRequest):
     try:
         text = request.text.strip()
