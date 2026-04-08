@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 def has_sufficient_evidence(
     reranked: List[Dict[str, Any]],
     k: int = 5,
-    min_top1: float = 0.75,
+    min_raw_spread: float = 2.0,
     min_gap: float = 0.08,
 ) -> bool:
     """
@@ -13,7 +13,7 @@ def has_sufficient_evidence(
     Stability improvements:
     1. Uses top-k only.
     2. Min-max normalizes scores within top-k.
-    3. Checks whether the best hit is strong after normalization.
+    3. Requires a minimum absolute spread in ColBERT scores.
     4. Checks whether the best hit is separated from the runner-up.
     """
     if not reranked:
@@ -36,14 +36,16 @@ def has_sufficient_evidence(
     if abs(smax - smin) < 1e-8:
         return False
 
+    # Absolute spread guards against weak/flat rankings that can still
+    # look strong after normalization.
+    if (smax - smin) < float(min_raw_spread):
+        return False
+
     norm = [(s - smin) / (smax - smin) for s in scores]
 
     top1 = norm[0]
     top2 = norm[1]
     gap = top1 - top2
-
-    if top1 < min_top1:
-        return False
 
     if gap < min_gap:
         return False
