@@ -32,6 +32,7 @@ export default function ClaimTab({
 			value: result?.fact_check_claims.filter((x) => x.label === 'NOT ENOUGH INFO').length ?? 0,
 		},
 	];
+	const total = chartData[0].value + chartData[1].value + chartData[2].value;
 
 	return (
 		<>
@@ -67,8 +68,7 @@ export default function ClaimTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[0].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
+											(total ? (chartData[0].value / total) * 100 : 0),
 										)}
 										%
 									</p>
@@ -78,8 +78,7 @@ export default function ClaimTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[2].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
+											(total ? (chartData[1].value / total) * 100 : 0),
 										)}
 										%
 									</p>
@@ -89,8 +88,7 @@ export default function ClaimTab({
 									<Separator className="flex-[0.85] mt-3" />
 									<p>
 										{Math.round(
-											(chartData[1].value / (chartData[0].value + chartData[1].value + chartData[2].value)) *
-												100,
+											(total ? (chartData[2].value / total) * 100 : 0),
 										)}
 										%
 									</p>
