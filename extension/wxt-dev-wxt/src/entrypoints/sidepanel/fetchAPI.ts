@@ -1,6 +1,5 @@
 import { AnalysisResult, TokenAttribution } from '@/types';
 import { MODEL_BACKEND } from '@/config';
-import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
 
 export interface SentenceBias {
 	text: string;
@@ -116,21 +115,17 @@ function generateMockFactChecks(text: string): Array<{
 
 export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 	try {
-		const response = await fetchWithTimeout(`${MODEL_BACKEND}/bias/analyze`, {
+		const response = await fetch(`${MODEL_BACKEND}/bias/analyze`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
-			timeoutMs: 30_000,
-			retries: 1,
 		});
 		let fact_checks_response = []; // TODO: probably remove the try catch around this since this is only currently done because this API is not ready
 		try {
-			const response2 = await fetchWithTimeout(`${MODEL_BACKEND}/claim/verify-claims-from-passage`, {
+			const response2 = await fetch(`${MODEL_BACKEND}/claim/verify-claims-from-passage`, {
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST',
 				body: JSON.stringify({ text }),
-				timeoutMs: 45_000,
-				retries: 1,
 			});
 			if (response2.ok) {
 				fact_checks_response = await response2.json();
@@ -170,12 +165,10 @@ export default async function fetchAPI(text: string): Promise<AnalysisResult> {
 
 export async function fetchExplain(text: string): Promise<TokenAttribution[]> {
 	try {
-		const response = await fetchWithTimeout(`${MODEL_BACKEND}/bias/explain`, {
+		const response = await fetch(`${MODEL_BACKEND}/bias/explain`, {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST',
 			body: JSON.stringify({ text }),
-			timeoutMs: 20_000,
-			retries: 1,
 		});
 
 		if (!response.ok) {
